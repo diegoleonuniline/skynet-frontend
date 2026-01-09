@@ -44,9 +44,47 @@
   display: none;
 }
 
-/* --- MODAL LARGE --- */
+/* --- INPUT CON BOTÓN --- */
+.input-with-btn {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-with-btn .form-select {
+  flex: 1;
+}
+
+.btn-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-icon .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+/* --- MODAL SIZES --- */
 .modal--lg {
   max-width: 48rem;
+}
+
+.modal--sm {
+  max-width: 28rem;
 }
 
 /* --- FORM SECTIONS --- */
@@ -68,6 +106,11 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-row--2 {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 /* --- ACCIONES TABLA --- */
@@ -84,6 +127,15 @@
 
 .table-actions .btn .material-symbols-outlined {
   font-size: 1.125rem;
+}
+
+/* --- MODAL ANIDADO --- */
+.modal-overlay.nested {
+  z-index: 1100;
+}
+
+.modal-overlay.nested .modal {
+  z-index: 1101;
 }
 
 /* --- RESPONSIVE --- */
@@ -121,7 +173,12 @@
     grid-template-columns: 1fr;
   }
   
-  .modal--lg {
+  .form-row--2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal--lg,
+  .modal--sm {
     max-width: 95%;
     margin: 1rem;
   }
@@ -138,5 +195,15 @@
   .table th:nth-child(6),
   .table td:nth-child(6) {
     display: none;
+  }
+  
+  .input-with-btn {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .btn-icon {
+    width: 100%;
+    height: 2.25rem;
   }
 }
