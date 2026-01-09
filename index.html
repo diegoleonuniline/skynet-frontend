@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Skynet - Iniciar Sesión</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<header class="header">
+  <div class="header__brand">
+    <svg class="header__logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+      <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4z" fill="currentColor"/>
+    </svg>
+    <span class="header__title">Skynet</span>
+  </div>
+</header>
+
+<main class="main">
+  <div class="login-card">
+    <div class="login-card__header">
+      <h1 class="login-card__title">Bienvenido a Skynet</h1>
+      <p class="login-card__subtitle">Portal Administrativo de Gestión ISP</p>
+    </div>
+
+    <form id="formLogin" class="login-form">
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <div class="input-wrapper">
+          <span class="material-symbols-outlined input-icon">person</span>
+          <input type="text" id="usuario" class="form-input" placeholder="Ingresa tu usuario"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <div class="input-wrapper">
+          <span class="material-symbols-outlined input-icon">lock</span>
+          <input type="password" id="contrasena" class="form-input" placeholder="Ingresa tu contraseña"/>
+          <span class="material-symbols-outlined input-icon-right toggle-password">visibility</span>
+        </div>
+      </div>
+
+      <div class="form-options">
+        <label class="checkbox-wrapper">
+          <input type="checkbox" class="checkbox"/>
+          <span class="checkbox-label">Mantener sesión iniciada</span>
+        </label>
+        <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <button type="submit" class="btn-login">Iniciar Sesión</button>
+
+      <p id="mensaje" class="error-message"></p>
+
+      <div class="secure-badge">
+        <span class="material-symbols-outlined secure-icon">verified_user</span>
+        <span class="secure-text">Acceso Administrativo Seguro</span>
+      </div>
+    </form>
+  </div>
+</main>
+
+<footer class="footer">
+  © 2024 Skynet Systems. Todos los derechos reservados. Versión 1.0.10
+</footer>
+
+<script>
+const API = "https://skynet-backend-a47423108e2a.herokuapp.com";
+
+document.getElementById("formLogin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const usuario = document.getElementById("usuario").value.trim();
+  const contrasena = document.getElementById("contrasena").value;
+  const msg = document.getElementById("mensaje");
+  msg.classList.remove("show");
+
+  if (!usuario || !contrasena) {
+    msg.textContent = "Ingresa usuario y contraseña";
+    msg.classList.add("show");
+    return;
+  }
+
+  try {
+    const r = await fetch(API + "/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario, contrasena })
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      msg.textContent = d.mensaje;
+      msg.classList.add("show");
+      return;
+    }
+    localStorage.setItem("token", d.token);
+    localStorage.setItem("usuario", JSON.stringify(d.usuario));
+    window.location.href = "/skynet-frontend/dashboard/";
+  } catch {
+    msg.textContent = "Error de conexión con el servidor";
+    msg.classList.add("show");
+  }
+});
+
+document.querySelector(".toggle-password").addEventListener("click", function() {
+  const input = document.getElementById("contrasena");
+  const esPassword = input.type === "password";
+  input.type = esPassword ? "text" : "password";
+  this.textContent = esPassword ? "visibility_off" : "visibility";
+});
+</script>
+
+</body>
+</html>
