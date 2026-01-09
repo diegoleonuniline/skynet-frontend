@@ -31,7 +31,7 @@ function inicializarEventos() {
 
   // Buscador
   let timeout;
-  document.getElementById('buscadorGlobal').addEventListener('input', (e) => {
+  document.getElementById('buscadorGlobal')?.addEventListener('input', (e) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       paginaActual = 1;
@@ -40,12 +40,12 @@ function inicializarEventos() {
   });
 
   // Cambio de ciudad para cargar colonias
-  document.getElementById('ciudadId').addEventListener('change', (e) => {
+  document.getElementById('ciudadId')?.addEventListener('change', (e) => {
     cargarColoniasPorCiudad(e.target.value);
   });
 
   // Cambio de plan para poner cuota
-  document.getElementById('planId').addEventListener('change', (e) => {
+  document.getElementById('planId')?.addEventListener('change', (e) => {
     const plan = planes.find(p => p.id === e.target.value);
     if (plan) {
       document.getElementById('cuotaMensual').value = plan.precio_mensual;
@@ -53,7 +53,10 @@ function inicializarEventos() {
   });
 }
 
-// Cargar catálogos
+// ========================================
+// CATÁLOGOS
+// ========================================
+
 async function cargarCatalogos() {
   try {
     // Ciudades
@@ -62,6 +65,7 @@ async function cargarCatalogos() {
       ciudades = rCiudades.ciudades;
       llenarSelect('ciudadId', ciudades, 'id', 'nombre');
       llenarSelect('filtroCiudad', ciudades, 'id', 'nombre', true);
+      llenarSelect('nuevaColoniaCiudad', ciudades, 'id', 'nombre');
     }
 
     // Planes
@@ -76,7 +80,6 @@ async function cargarCatalogos() {
   }
 }
 
-// Llenar select
 function llenarSelect(id, datos, valorKey, textoKey, conTodos = false) {
   const select = document.getElementById(id);
   if (!select) return;
@@ -88,7 +91,6 @@ function llenarSelect(id, datos, valorKey, textoKey, conTodos = false) {
   select.innerHTML = html;
 }
 
-// Cargar colonias por ciudad
 async function cargarColoniasPorCiudad(ciudadId) {
   const select = document.getElementById('coloniaId');
   
@@ -108,7 +110,10 @@ async function cargarColoniasPorCiudad(ciudadId) {
   }
 }
 
-// Cargar clientes
+// ========================================
+// CLIENTES
+// ========================================
+
 async function cargarClientes() {
   const tbody = document.getElementById('tablaClientes');
   tbody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando...</td></tr>';
@@ -160,10 +165,9 @@ async function cargarClientes() {
       </tr>
     `).join('');
 
-    // Actualizar contadores
     document.getElementById('totalClientes').textContent = data.total || data.clientes.length;
-    actualizarPaginacion(data.paginaActual, data.porPagina, data.total);
-    generarBotonesPaginacion(data.totalPaginas, data.paginaActual);
+    actualizarPaginacion(data.paginaActual || paginaActual, data.porPagina || porPagina, data.total || data.clientes.length);
+    generarBotonesPaginacion(data.totalPaginas || 1, data.paginaActual || paginaActual);
 
   } catch (err) {
     console.error('Error cargando clientes:', err);
@@ -171,7 +175,11 @@ async function cargarClientes() {
   }
 }
 
-// Actualizar info paginación
+function filtrarClientes() {
+  paginaActual = 1;
+  cargarClientes();
+}
+
 function actualizarPaginacion(pagina, porPag, total) {
   const inicio = total === 0 ? 0 : ((pagina - 1) * porPag) + 1;
   const fin = Math.min(pagina * porPag, total);
@@ -181,19 +189,18 @@ function actualizarPaginacion(pagina, porPag, total) {
   document.getElementById('paginaTotal').textContent = total;
 }
 
-// Generar botones paginación
-function generarBotonesPaginacion(totalPaginas, paginaActual) {
+function generarBotonesPaginacion(totalPaginas, paginaActualNum) {
   const contenedor = document.getElementById('paginacionBtns');
   if (!contenedor) return;
 
   let html = `
-    <button class="pagination__btn" onclick="irPagina(${paginaActual - 1})" ${paginaActual <= 1 ? 'disabled' : ''}>
+    <button class="pagination__btn" onclick="irPagina(${paginaActualNum - 1})" ${paginaActualNum <= 1 ? 'disabled' : ''}>
       <span class="material-symbols-outlined">chevron_left</span>
     </button>
   `;
 
   for (let i = 1; i <= Math.min(totalPaginas, 5); i++) {
-    html += `<button class="pagination__btn ${i === paginaActual ? 'active' : ''}" onclick="irPagina(${i})">${i}</button>`;
+    html += `<button class="pagination__btn ${i === paginaActualNum ? 'active' : ''}" onclick="irPagina(${i})">${i}</button>`;
   }
 
   if (totalPaginas > 5) {
@@ -202,7 +209,7 @@ function generarBotonesPaginacion(totalPaginas, paginaActual) {
   }
 
   html += `
-    <button class="pagination__btn" onclick="irPagina(${paginaActual + 1})" ${paginaActual >= totalPaginas ? 'disabled' : ''}>
+    <button class="pagination__btn" onclick="irPagina(${paginaActualNum + 1})" ${paginaActualNum >= totalPaginas ? 'disabled' : ''}>
       <span class="material-symbols-outlined">chevron_right</span>
     </button>
   `;
@@ -210,28 +217,29 @@ function generarBotonesPaginacion(totalPaginas, paginaActual) {
   contenedor.innerHTML = html;
 }
 
-// Ir a página
 function irPagina(pagina) {
   if (pagina < 1) return;
   paginaActual = pagina;
   cargarClientes();
 }
 
-// Toggle filtros
 function toggleFiltros() {
   document.getElementById('filtrosPanel').classList.toggle('hidden');
 }
 
-// Abrir modal nuevo cliente
+// ========================================
+// MODAL CLIENTE
+// ========================================
+
 function abrirModalNuevo() {
   document.getElementById('modalTitulo').textContent = 'Nuevo Cliente';
   document.getElementById('formCliente').reset();
   document.getElementById('clienteId').value = '';
   document.getElementById('fechaInstalacion').value = new Date().toISOString().split('T')[0];
+  document.getElementById('coloniaId').innerHTML = '<option value="">Seleccionar ciudad primero...</option>';
   document.getElementById('modalCliente').classList.add('active');
 }
 
-// Editar cliente
 async function editarCliente(id) {
   try {
     const data = await fetchGet(`/api/clientes/${id}`);
@@ -269,17 +277,14 @@ async function editarCliente(id) {
   }
 }
 
-// Ver cliente (detalle)
 function verCliente(id) {
   window.location.href = `detalle.html?id=${id}`;
 }
 
-// Cerrar modal
 function cerrarModal() {
   document.getElementById('modalCliente').classList.remove('active');
 }
 
-// Guardar cliente
 async function guardarCliente() {
   const id = document.getElementById('clienteId').value;
   
@@ -299,7 +304,6 @@ async function guardarCliente() {
     fecha_instalacion: document.getElementById('fechaInstalacion').value
   };
 
-  // Validar campos requeridos
   if (!datos.nombre || !datos.telefono || !datos.ciudad_id || !datos.colonia_id || !datos.direccion || !datos.plan_id) {
     alert('Por favor completa todos los campos requeridos');
     return;
@@ -326,7 +330,166 @@ async function guardarCliente() {
   }
 }
 
-// Exportar CSV
+// ========================================
+// MODAL CIUDAD
+// ========================================
+
+function abrirModalCiudad() {
+  document.getElementById('nuevaCiudadNombre').value = '';
+  document.getElementById('nuevaCiudadEstado').value = '';
+  document.getElementById('modalCiudad').classList.add('active');
+}
+
+function cerrarModalCiudad() {
+  document.getElementById('modalCiudad').classList.remove('active');
+}
+
+async function guardarCiudad() {
+  const nombre = document.getElementById('nuevaCiudadNombre').value.trim();
+  const estado = document.getElementById('nuevaCiudadEstado').value.trim();
+
+  if (!nombre) {
+    alert('El nombre de la ciudad es requerido');
+    return;
+  }
+
+  try {
+    const data = await fetchPost('/api/catalogos/ciudades', { nombre, estado_republica: estado });
+
+    if (data.ok) {
+      cerrarModalCiudad();
+      // Recargar ciudades y seleccionar la nueva
+      await cargarCatalogos();
+      if (data.ciudad?.id) {
+        document.getElementById('ciudadId').value = data.ciudad.id;
+        await cargarColoniasPorCiudad(data.ciudad.id);
+      }
+      alert('Ciudad creada');
+    } else {
+      alert(data.mensaje || 'Error al crear ciudad');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    alert('Error al crear ciudad');
+  }
+}
+
+// ========================================
+// MODAL COLONIA
+// ========================================
+
+function abrirModalColonia() {
+  document.getElementById('nuevaColoniaNombre').value = '';
+  document.getElementById('nuevaColoniaCP').value = '';
+  
+  // Preseleccionar la ciudad del formulario principal
+  const ciudadSeleccionada = document.getElementById('ciudadId').value;
+  llenarSelect('nuevaColoniaCiudad', ciudades, 'id', 'nombre');
+  if (ciudadSeleccionada) {
+    document.getElementById('nuevaColoniaCiudad').value = ciudadSeleccionada;
+  }
+  
+  document.getElementById('modalColonia').classList.add('active');
+}
+
+function cerrarModalColonia() {
+  document.getElementById('modalColonia').classList.remove('active');
+}
+
+async function guardarColonia() {
+  const ciudadId = document.getElementById('nuevaColoniaCiudad').value;
+  const nombre = document.getElementById('nuevaColoniaNombre').value.trim();
+  const cp = document.getElementById('nuevaColoniaCP').value.trim();
+
+  if (!ciudadId || !nombre) {
+    alert('La ciudad y el nombre de la colonia son requeridos');
+    return;
+  }
+
+  try {
+    const data = await fetchPost('/api/catalogos/colonias', { 
+      ciudad_id: ciudadId, 
+      nombre, 
+      codigo_postal: cp 
+    });
+
+    if (data.ok) {
+      cerrarModalColonia();
+      // Recargar colonias de la ciudad seleccionada
+      await cargarColoniasPorCiudad(ciudadId);
+      if (data.colonia?.id) {
+        document.getElementById('coloniaId').value = data.colonia.id;
+      }
+      alert('Colonia creada');
+    } else {
+      alert(data.mensaje || 'Error al crear colonia');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    alert('Error al crear colonia');
+  }
+}
+
+// ========================================
+// MODAL PLAN
+// ========================================
+
+function abrirModalPlan() {
+  document.getElementById('nuevoPlanNombre').value = '';
+  document.getElementById('nuevoPlanVelocidad').value = '';
+  document.getElementById('nuevoPlanPrecio').value = '';
+  document.getElementById('nuevoPlanInstalacion').value = '0';
+  document.getElementById('nuevoPlanDescripcion').value = '';
+  document.getElementById('modalPlan').classList.add('active');
+}
+
+function cerrarModalPlan() {
+  document.getElementById('modalPlan').classList.remove('active');
+}
+
+async function guardarPlan() {
+  const nombre = document.getElementById('nuevoPlanNombre').value.trim();
+  const velocidad = parseInt(document.getElementById('nuevoPlanVelocidad').value) || 0;
+  const precio = parseFloat(document.getElementById('nuevoPlanPrecio').value) || 0;
+  const instalacion = parseFloat(document.getElementById('nuevoPlanInstalacion').value) || 0;
+  const descripcion = document.getElementById('nuevoPlanDescripcion').value.trim();
+
+  if (!nombre || !velocidad || !precio) {
+    alert('El nombre, velocidad y precio son requeridos');
+    return;
+  }
+
+  try {
+    const data = await fetchPost('/api/catalogos/planes', { 
+      nombre, 
+      velocidad_mbps: velocidad,
+      precio_mensual: precio,
+      precio_instalacion: instalacion,
+      descripcion
+    });
+
+    if (data.ok) {
+      cerrarModalPlan();
+      // Recargar planes y seleccionar el nuevo
+      await cargarCatalogos();
+      if (data.plan?.id) {
+        document.getElementById('planId').value = data.plan.id;
+        document.getElementById('cuotaMensual').value = data.plan.precio_mensual;
+      }
+      alert('Plan creado');
+    } else {
+      alert(data.mensaje || 'Error al crear plan');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    alert('Error al crear plan');
+  }
+}
+
+// ========================================
+// EXPORTAR
+// ========================================
+
 function exportarCSV() {
   alert('Función de exportar CSV - Próximamente');
 }
