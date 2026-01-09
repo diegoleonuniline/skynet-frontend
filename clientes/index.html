@@ -12,7 +12,6 @@
 <body>
 
 <div class="app-layout">
-  <!-- Overlay móvil -->
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <!-- SIDEBAR -->
@@ -75,7 +74,6 @@
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="app-main">
-    <!-- HEADER -->
     <header class="header">
       <div class="header__left">
         <button class="header__btn header__menu-btn" onclick="toggleSidebar()">
@@ -106,16 +104,13 @@
       </div>
     </header>
 
-    <!-- CONTENIDO -->
     <div class="app-content">
-      <!-- Breadcrumb -->
       <div class="breadcrumb">
         <a href="/skynet-frontend/dashboard/">Skynet</a>
         <span class="material-symbols-outlined">chevron_right</span>
         <span class="breadcrumb__current">Directorio de Clientes</span>
       </div>
 
-      <!-- Page Header -->
       <div class="page-header">
         <div>
           <h1 class="page-header__title">Directorio de Clientes</h1>
@@ -133,10 +128,8 @@
         </div>
       </div>
 
-      <!-- Filtros y Tabla -->
       <div class="card">
         <div class="clientes-toolbar">
-          <!-- Tabs -->
           <div class="tabs">
             <button class="tabs__btn active" data-filtro="todos">Todos</button>
             <button class="tabs__btn" data-filtro="activo">Activos</button>
@@ -150,31 +143,29 @@
           </button>
         </div>
 
-        <!-- Filtros expandibles -->
         <div class="filtros-panel hidden" id="filtrosPanel">
           <div class="filtros-grid">
             <div class="form-group">
               <label class="form-label">Ciudad</label>
-              <select class="form-select" id="filtroCiudad">
+              <select class="form-select" id="filtroCiudad" onchange="filtrarClientes()">
                 <option value="">Todas</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Colonia</label>
-              <select class="form-select" id="filtroColonia">
+              <select class="form-select" id="filtroColonia" onchange="filtrarClientes()">
                 <option value="">Todas</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Plan</label>
-              <select class="form-select" id="filtroPlan">
+              <select class="form-select" id="filtroPlan" onchange="filtrarClientes()">
                 <option value="">Todos</option>
               </select>
             </div>
           </div>
         </div>
 
-        <!-- Tabla -->
         <div class="table-container">
           <table class="table">
             <thead>
@@ -196,14 +187,11 @@
           </table>
         </div>
 
-        <!-- Paginación -->
         <div class="pagination">
           <p class="pagination__info">
             Mostrando <span id="paginaInicio">0</span> a <span id="paginaFin">0</span> de <span id="paginaTotal">0</span> clientes
           </p>
-          <div class="pagination__buttons" id="paginacionBtns">
-            <!-- Se genera dinámicamente -->
-          </div>
+          <div class="pagination__buttons" id="paginacionBtns"></div>
         </div>
       </div>
     </div>
@@ -223,7 +211,6 @@
       <form id="formCliente">
         <input type="hidden" id="clienteId">
         
-        <!-- Datos personales -->
         <h4 class="form-section-title">Datos Personales</h4>
         <div class="form-row">
           <div class="form-group">
@@ -255,20 +242,29 @@
           </div>
         </div>
 
-        <!-- Dirección -->
         <h4 class="form-section-title">Dirección</h4>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Ciudad *</label>
-            <select class="form-select" id="ciudadId" required>
-              <option value="">Seleccionar...</option>
-            </select>
+            <div class="input-with-btn">
+              <select class="form-select" id="ciudadId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+              <button type="button" class="btn-icon" onclick="abrirModalCiudad()" title="Nueva Ciudad">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Colonia *</label>
-            <select class="form-select" id="coloniaId" required>
-              <option value="">Seleccionar...</option>
-            </select>
+            <div class="input-with-btn">
+              <select class="form-select" id="coloniaId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+              <button type="button" class="btn-icon" onclick="abrirModalColonia()" title="Nueva Colonia">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -282,14 +278,18 @@
           <input type="text" class="form-input" id="referencia" placeholder="Casa color azul, frente al parque...">
         </div>
 
-        <!-- Plan y Tarifa -->
         <h4 class="form-section-title">Plan y Tarifa</h4>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Plan *</label>
-            <select class="form-select" id="planId" required>
-              <option value="">Seleccionar...</option>
-            </select>
+            <div class="input-with-btn">
+              <select class="form-select" id="planId" required>
+                <option value="">Seleccionar...</option>
+              </select>
+              <button type="button" class="btn-icon" onclick="abrirModalPlan()" title="Nuevo Plan">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Cuota Mensual *</label>
@@ -305,6 +305,113 @@
     <div class="modal__footer">
       <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="guardarCliente()">
+        <span class="material-symbols-outlined">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA CIUDAD -->
+<div class="modal-overlay" id="modalCiudad">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h3 class="modal__title">Nueva Ciudad</h3>
+      <button class="modal__close" onclick="cerrarModalCiudad()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label">Nombre de la Ciudad *</label>
+        <input type="text" class="form-input" id="nuevaCiudadNombre" placeholder="Ej: Guadalajara">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <input type="text" class="form-input" id="nuevaCiudadEstado" placeholder="Ej: Jalisco">
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn-secondary" onclick="cerrarModalCiudad()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCiudad()">
+        <span class="material-symbols-outlined">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA COLONIA -->
+<div class="modal-overlay" id="modalColonia">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h3 class="modal__title">Nueva Colonia</h3>
+      <button class="modal__close" onclick="cerrarModalColonia()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label">Ciudad *</label>
+        <select class="form-select" id="nuevaColoniaCiudad">
+          <option value="">Seleccionar...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre de la Colonia *</label>
+        <input type="text" class="form-input" id="nuevaColoniaNombre" placeholder="Ej: Centro">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Código Postal</label>
+        <input type="text" class="form-input" id="nuevaColoniaCP" placeholder="Ej: 44100">
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn-secondary" onclick="cerrarModalColonia()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarColonia()">
+        <span class="material-symbols-outlined">save</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO PLAN -->
+<div class="modal-overlay" id="modalPlan">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h3 class="modal__title">Nuevo Plan</h3>
+      <button class="modal__close" onclick="cerrarModalPlan()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label">Nombre del Plan *</label>
+        <input type="text" class="form-input" id="nuevoPlanNombre" placeholder="Ej: Básico 25 Mbps">
+      </div>
+      <div class="form-row form-row--2">
+        <div class="form-group">
+          <label class="form-label">Velocidad (Mbps) *</label>
+          <input type="number" class="form-input" id="nuevoPlanVelocidad" placeholder="25">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Precio Mensual *</label>
+          <input type="number" class="form-input" id="nuevoPlanPrecio" step="0.01" placeholder="299.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio Instalación</label>
+        <input type="number" class="form-input" id="nuevoPlanInstalacion" step="0.01" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input type="text" class="form-input" id="nuevoPlanDescripcion" placeholder="Internet residencial básico">
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn-secondary" onclick="cerrarModalPlan()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPlan()">
         <span class="material-symbols-outlined">save</span>
         Guardar
       </button>
