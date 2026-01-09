@@ -2,7 +2,7 @@
    SKYNET LOGIN - CSS INDEPENDIENTE
    ======================================== */
 
-/* --- ROOT VARIABLES --- */
+/* --- VARIABLES ROOT --- */
 :root {
   --primary: #1E2A3A;
   --primary-hover: #2d3f54;
@@ -70,13 +70,13 @@ input {
   outline: none;
 }
 
-/* --- MATERIAL ICONS --- */
+/* --- ICONOS MATERIAL --- */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   user-select: none;
 }
 
-/* --- HEADER --- */
+/* --- ENCABEZADO --- */
 .header {
   display: flex;
   align-items: center;
@@ -104,7 +104,7 @@ input {
   letter-spacing: -0.015em;
 }
 
-/* --- MAIN --- */
+/* --- CONTENIDO PRINCIPAL --- */
 .main {
   flex: 1;
   display: flex;
@@ -113,7 +113,7 @@ input {
   padding: 1.5rem;
 }
 
-/* --- LOGIN CARD --- */
+/* --- TARJETA LOGIN --- */
 .login-card {
   width: 100%;
   max-width: 480px;
@@ -142,7 +142,7 @@ input {
   margin-top: 0.25rem;
 }
 
-/* --- LOGIN FORM --- */
+/* --- FORMULARIO LOGIN --- */
 .login-form {
   padding: 1rem 2rem 2.5rem;
   display: flex;
@@ -216,7 +216,7 @@ input {
   padding-right: 3rem;
 }
 
-/* --- FORM OPTIONS --- */
+/* --- OPCIONES FORMULARIO --- */
 .form-options {
   display: flex;
   align-items: center;
@@ -257,7 +257,7 @@ input {
   opacity: 0.8;
 }
 
-/* --- BUTTON --- */
+/* --- BOTON --- */
 .btn-login {
   width: 100%;
   height: 3rem;
@@ -279,7 +279,7 @@ input {
   transform: scale(0.98);
 }
 
-/* --- ERROR MESSAGE --- */
+/* --- MENSAJE DE ERROR --- */
 .error-message {
   display: none;
   text-align: center;
@@ -294,7 +294,7 @@ input {
   display: block;
 }
 
-/* --- SECURE BADGE --- */
+/* --- INSIGNIA SEGURIDAD --- */
 .secure-badge {
   display: flex;
   align-items: center;
@@ -316,7 +316,7 @@ input {
   letter-spacing: 0.05em;
 }
 
-/* --- FOOTER --- */
+/* --- PIE DE PAGINA --- */
 .footer {
   text-align: center;
   padding: 1.5rem;
@@ -346,7 +346,7 @@ input {
   }
 }
 
-/* Mobile */
+/* Movil */
 @media (max-width: 480px) {
   .header {
     padding: 0.75rem 1rem;
@@ -405,7 +405,7 @@ input {
   }
 }
 
-/* Small Mobile */
+/* Movil Pequeño */
 @media (max-width: 360px) {
   .login-card__title {
     font-size: 1.125rem;
@@ -421,7 +421,7 @@ input {
   }
 }
 
-/* Dark Mode (opcional) */
+/* Modo Oscuro (opcional) */
 @media (prefers-color-scheme: dark) {
   body.dark-mode {
     background-color: var(--bg-dark);
