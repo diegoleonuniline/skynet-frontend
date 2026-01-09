@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Skynet - Inicio de Sesión</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#1E2A3A",
+        "background-light": "#f6f7f7",
+        "background-dark": "#16191c",
+      },
+      fontFamily: {
+        display: ["Inter"]
+      }
+    }
+  }
+}
+</script>
+
+<style type="text/tailwindcss">
+body { font-family: 'Inter', sans-serif; }
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+}
+</style>
+</head>
+
+<body class="bg-background-light min-h-screen flex flex-col">
+
+<header class="flex items-center justify-between border-b px-10 py-3 bg-white">
+  <div class="flex items-center gap-3 text-primary font-bold text-lg">
+    Skynet
+  </div>
+</header>
+
+<main class="flex-1 flex items-center justify-center p-6">
+
+<div class="w-full max-w-[480px] bg-white rounded-xl shadow-xl border overflow-hidden">
+
+  <div class="pt-10 pb-4 text-center">
+    <h1 class="text-primary text-2xl font-bold">Bienvenido a Skynet</h1>
+    <p class="text-gray-500 text-sm mt-1">Portal Administrativo</p>
+  </div>
+
+  <!-- FORMULARIO LOGIN -->
+  <form id="formLogin" class="px-8 pb-10 pt-4 flex flex-col gap-5">
+
+    <!-- USUARIO -->
+    <div>
+      <label class="text-sm font-medium text-primary">Usuario</label>
+      <div class="relative mt-1">
+        <input
+          id="usuario"
+          type="text"
+          placeholder="Usuario"
+          class="form-input w-full rounded-lg border px-4 pl-10 h-12"
+        />
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          person
+        </span>
+      </div>
+    </div>
+
+    <!-- CONTRASEÑA -->
+    <div>
+      <label class="text-sm font-medium text-primary">Contraseña</label>
+      <div class="relative mt-1">
+        <input
+          id="contrasena"
+          type="password"
+          placeholder="Contraseña"
+          class="form-input w-full rounded-lg border px-4 pl-10 h-12"
+        />
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          lock
+        </span>
+      </div>
+    </div>
+
+    <!-- BOTÓN -->
+    <button
+      type="submit"
+      class="w-full h-12 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition">
+      Iniciar sesión
+    </button>
+
+    <p id="mensaje" class="text-center text-sm text-red-600 hidden"></p>
+
+  </form>
+
+</div>
+
+</main>
+
+<footer class="text-center text-xs text-gray-400 py-6">
+© 2024 Skynet Systems
+</footer>
+
+<!-- ================== JS DEL LOGIN ================== -->
+<script>
+const API_BASE = "https://skynet-backend-a47423108e2a.herokuapp.com";
+
+document.getElementById("formLogin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const usuario = document.getElementById("usuario").value.trim();
+  const contrasena = document.getElementById("contrasena").value;
+  const mensaje = document.getElementById("mensaje");
+
+  mensaje.classList.add("hidden");
+
+  if (!usuario || !contrasena) {
+    mensaje.textContent = "Ingrese usuario y contraseña";
+    mensaje.classList.remove("hidden");
+    return;
+  }
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usuario, contrasena })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok || !data.ok) {
+      mensaje.textContent = data.mensaje || "Credenciales inválidas";
+      mensaje.classList.remove("hidden");
+      return;
+    }
+
+    // Guardar sesión
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("usuario", JSON.stringify(data.usuario));
+
+    // Redirigir
+    window.location.href = "/dashboard/";
+
+  } catch (error) {
+    mensaje.textContent = "No se pudo conectar con el servidor";
+    mensaje.classList.remove("hidden");
+  }
+});
+</script>
+
+</body>
+</html>
