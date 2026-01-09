@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet Login</title>
+  <title>Skynet - Iniciar Sesión</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="login.css">
@@ -22,24 +22,24 @@
 <main class="main">
   <div class="login-card">
     <div class="login-card__header">
-      <h1 class="login-card__title">Welcome to Skynet</h1>
-      <p class="login-card__subtitle">ISP Management Administrative Portal</p>
+      <h1 class="login-card__title">Bienvenido a Skynet</h1>
+      <p class="login-card__subtitle">Portal Administrativo de Gestión ISP</p>
     </div>
 
     <form id="formLogin" class="login-form">
       <div class="form-group">
-        <label class="form-label">Username</label>
+        <label class="form-label">Usuario</label>
         <div class="input-wrapper">
           <span class="material-symbols-outlined input-icon">person</span>
-          <input type="text" id="usuario" class="form-input" placeholder="Enter your username"/>
+          <input type="text" id="usuario" class="form-input" placeholder="Ingresa tu usuario"/>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Password</label>
+        <label class="form-label">Contraseña</label>
         <div class="input-wrapper">
           <span class="material-symbols-outlined input-icon">lock</span>
-          <input type="password" id="contrasena" class="form-input" placeholder="Enter your password"/>
+          <input type="password" id="contrasena" class="form-input" placeholder="Ingresa tu contraseña"/>
           <span class="material-symbols-outlined input-icon-right toggle-password">visibility</span>
         </div>
       </div>
@@ -47,25 +47,25 @@
       <div class="form-options">
         <label class="checkbox-wrapper">
           <input type="checkbox" class="checkbox"/>
-          <span class="checkbox-label">Keep me logged in</span>
+          <span class="checkbox-label">Mantener sesión iniciada</span>
         </label>
-        <a href="#" class="forgot-link">Forgot password?</a>
+        <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
       </div>
 
-      <button type="submit" class="btn-login">Log In</button>
+      <button type="submit" class="btn-login">Iniciar Sesión</button>
 
       <p id="mensaje" class="error-message"></p>
 
       <div class="secure-badge">
         <span class="material-symbols-outlined secure-icon">verified_user</span>
-        <span class="secure-text">Secure Administrative Access</span>
+        <span class="secure-text">Acceso Administrativo Seguro</span>
       </div>
     </form>
   </div>
 </main>
 
 <footer class="footer">
-  © 2024 Skynet Systems. All rights reserved. Version 1.0.10
+  © 2024 Skynet Systems. Todos los derechos reservados. Versión 1.0.10
 </footer>
 
 <script>
@@ -79,7 +79,7 @@ document.getElementById("formLogin").addEventListener("submit", async (e) => {
   msg.classList.remove("show");
 
   if (!usuario || !contrasena) {
-    msg.textContent = "Ingrese usuario y contraseña";
+    msg.textContent = "Ingresa usuario y contraseña";
     msg.classList.add("show");
     return;
   }
@@ -107,9 +107,9 @@ document.getElementById("formLogin").addEventListener("submit", async (e) => {
 
 document.querySelector(".toggle-password").addEventListener("click", function() {
   const input = document.getElementById("contrasena");
-  const isPassword = input.type === "password";
-  input.type = isPassword ? "text" : "password";
-  this.textContent = isPassword ? "visibility_off" : "visibility";
+  const esPassword = input.type === "password";
+  input.type = esPassword ? "text" : "password";
+  this.textContent = esPassword ? "visibility_off" : "visibility";
 });
 </script>
 
