@@ -50,7 +50,6 @@
     </header>
 
     <div class="content">
-      <!-- Breadcrumb -->
       <nav class="breadcrumb">
         <a href="/skynet-frontend/clientes/">Clientes</a>
         <span class="material-symbols-outlined">chevron_right</span>
@@ -218,9 +217,38 @@
         <div class="panel">
           <div class="panel__header">
             <h3><span class="material-symbols-outlined">history</span>Historial de Pagos</h3>
+            <div class="panel__filters">
+              <input type="date" id="filtroFechaInicio" class="input input--sm" title="Desde">
+              <input type="date" id="filtroFechaFin" class="input input--sm" title="Hasta">
+              <select id="filtroEstadoPago" class="select select--sm">
+                <option value="todos">Todos</option>
+                <option value="activo">Activos</option>
+                <option value="cancelado">Cancelados</option>
+              </select>
+              <button class="btn btn--sm btn--secondary" onclick="filtrarPagos()"><span class="material-symbols-outlined">filter_list</span>Filtrar</button>
+            </div>
           </div>
-          <div class="pagos-lista" id="listaPagos">
-            <p class="empty">Cargando...</p>
+          <div class="pagos-resumen">
+            <span>Total Activos: <strong id="totalPagosActivos" class="text-success">$0.00</strong></span>
+            <span>Cancelados: <strong id="totalPagosCancelados" class="text-muted">$0.00</strong></span>
+          </div>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th>Método</th>
+                  <th>Referencia</th>
+                  <th>Aplicado a</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaPagos">
+                <tr><td colspan="7" class="empty">Cargando...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
