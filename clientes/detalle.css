@@ -559,3 +559,26 @@
     padding: 10px;
   }
 }
+/* ========================================
+   FIX ANCHO COMPLETO
+   ======================================== */
+.tabs {
+  width: 100% !important;
+}
+
+.tab-panel {
+  width: 100%;
+}
+
+.panel {
+  width: 100%;
+}
+
+.table-wrapper {
+  width: 100%;
+}
+
+.table {
+  width: 100%;
+  table-layout: auto;
+}
