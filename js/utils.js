@@ -320,3 +320,4 @@ const Utils = {
 // Shorthand
 const $ = Utils.$;
 const $$ = Utils.$$;
+const debounce = Utils.debounce.bind(Utils);
