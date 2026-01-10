@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle" id="currentDate"></p>
+    </div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <div class="grid grid-2" id="dashboardContent" style="display: none;">
+    <div class="card">
+      <h3 class="section-title">📊 Resumen del Mes</h3>
+      <div id="monthSummary"></div>
+    </div>
+    <div class="card">
+      <h3 class="section-title">💰 Últimos Pagos</h3>
+      <div id="recentPayments"></div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/layout.js"></script>
+  <script>
+    initLayout('dashboard');
+
+    // Fecha actual
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-MX', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    async function loadDashboard() {
+      const isAdmin = api.isAdmin();
+      
+      if (!isAdmin) {
+        document.getElementById('statsGrid').innerHTML = `
+          <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 48px;">
+            <h2>Bienvenido a Skynet</h2>
+            <p class="text-gray" style="margin: 16px 0;">Selecciona una opción del menú para comenzar</p>
+            <div style="display: flex; gap: 16px; justify-content: center; margin-top: 24px;">
+              <a href="clientes/lista.html" class="btn btn-outline">👥 Ver Clientes</a>
+              <a href="pagos/nuevo.html" class="btn btn-success">💰 Registrar Pago</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        const data = await api.get('/reportes/dashboard');
+        const d = data.data;
+
+        document.getElementById('statsGrid').innerHTML = `
+          <div class="stat-card">
+            <div>
+              <h3>Clientes Activos</h3>
+              <div class="value">${d.clientes?.activos || 0}</div>
+              <div class="subvalue">${d.clientes?.total || 0} total</div>
+            </div>
+            <div class="stat-icon blue">👥</div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <h3>Servicios Activos</h3>
+              <div class="value">${d.servicios?.activos || 0}</div>
+              <div class="subvalue">${utils.formatMoney(d.servicios?.ingreso_mensual)}/mes</div>
+            </div>
+            <div class="stat-icon green">📡</div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <h3>Cobrado Hoy</h3>
+              <div class="value">${utils.formatMoney(d.pagos_hoy?.monto)}</div>
+              <div class="subvalue">${d.pagos_hoy?.cantidad || 0} pagos</div>
+            </div>
+            <div class="stat-icon yellow">💵</div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <h3>Adeudo Total</h3>
+              <div class="value text-error">${utils.formatMoney(d.adeudo_total)}</div>
+              <div class="subvalue">Pendiente de cobro</div>
+            </div>
+            <div class="stat-icon red">⚠️</div>
+          </div>
+        `;
+
+        // Resumen del mes
+        document.getElementById('monthSummary').innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="padding: 16px; background: var(--gray-100); border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 700;">${d.pagos_mes?.cantidad || 0}</div>
+              <div style="font-size: 13px; color: var(--gray-500);">Pagos</div>
+            </div>
+            <div style="padding: 16px; background: var(--gray-100); border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 700; color: var(--success);">${utils.formatMoney(d.pagos_mes?.monto)}</div>
+              <div style="font-size: 13px; color: var(--gray-500);">Recaudado</div>
+            </div>
+            <div style="padding: 16px; background: var(--gray-100); border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 700; color: var(--secondary);">${d.instalaciones_pendientes || 0}</div>
+              <div style="font-size: 13px; color: var(--gray-500);">Instalaciones</div>
+            </div>
+            <div style="padding: 16px; background: var(--gray-100); border-radius: 8px; text-align: center;">
+              <div style="font-size: 24px; font-weight: 700;">${utils.formatMoney(d.servicios?.ingreso_mensual)}</div>
+              <div style="font-size: 13px; color: var(--gray-500);">Proyectado</div>
+            </div>
+          </div>
+        `;
+
+        // Últimos pagos
+        if (d.ultimos_pagos?.length > 0) {
+          document.getElementById('recentPayments').innerHTML = d.ultimos_pagos.map(p => `
+            <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--gray-100);">
+              <div>
+                <div style="font-weight: 500;">${p.cliente}</div>
+                <div style="font-size: 12px; color: var(--gray-400);">${p.numero_recibo}</div>
+              </div>
+              <div style="font-weight: 600; color: var(--success);">${utils.formatMoney(p.monto_total)}</div>
+            </div>
+          `).join('');
+        } else {
+          document.getElementById('recentPayments').innerHTML = '<p class="text-gray text-center">Sin pagos recientes</p>';
+        }
+
+        document.getElementById('dashboardContent').style.display = 'grid';
+
+      } catch (error) {
+        toast.error('Error al cargar dashboard');
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

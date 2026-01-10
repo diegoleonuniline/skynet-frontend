@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Usuarios</h1>
+      <p class="page-subtitle">Administra los usuarios del sistema</p>
+    </div>
+    <button class="btn btn-primary" onclick="showModal()">+ Nuevo Usuario</button>
+  </div>
+
+  <div class="card" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="usuariosBody">
+          <tr><td colspan="6" class="loading"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nuevo Usuario</h2>
+        <button class="btn-icon" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="usuarioForm">
+          <input type="hidden" id="userId">
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label class="form-label">Usuario *</label>
+              <input type="text" class="form-input" id="username" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="passwordLabel">Contraseña *</label>
+              <input type="password" class="form-input" id="password" minlength="6">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombre Completo *</label>
+            <input type="text" class="form-input" id="nombre_completo" required>
+          </div>
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="email">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono</label>
+              <input type="tel" class="form-input" id="telefono">
+            </div>
+          </div>
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label class="form-label">Rol *</label>
+              <select class="form-select" id="rol_id" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estado *</label>
+              <select class="form-select" id="estado_id" required></select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveUsuario()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('usuarios');
+
+    let roles = [];
+    let estados = [];
+    let editingId = null;
+
+    async function loadCatalogos() {
+      try {
+        const [rolesData, estadosData] = await Promise.all([
+          api.get('/catalogos/roles'),
+          api.get('/catalogos/estados_usuario')
+        ]);
+        roles = rolesData.data;
+        estados = estadosData.data;
+        
+        document.getElementById('rol_id').innerHTML = roles.map(r => `<option value="${r.id}">${r.nombre}</option>`).join('');
+        document.getElementById('estado_id').innerHTML = estados.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+      } catch (e) {}
+    }
+
+    async function loadUsuarios() {
+      try {
+        const data = await api.get('/usuarios');
+        
+        document.getElementById('usuariosBody').innerHTML = data.data.map(u => `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="user-avatar" style="width: 32px; height: 32px; font-size: 12px;">${utils.getInitials(u.nombre_completo)}</div>
+                <span class="font-semibold">${u.username}</span>
+              </div>
+            </td>
+            <td>${u.nombre_completo}</td>
+            <td>${u.email || '-'}</td>
+            <td><span class="badge ${u.rol_nombre === 'Administrador' ? 'badge-info' : 'badge-success'}">${u.rol_nombre}</span></td>
+            <td><span class="badge ${u.estado_nombre === 'Activo' ? 'badge-success' : 'badge-error'}">${u.estado_nombre}</span></td>
+            <td>
+              <button class="btn-icon" onclick="editUsuario(${JSON.stringify(u).replace(/"/g, '&quot;')})" title="Editar">✏️</button>
+              <button class="btn-icon" onclick="resetPassword(${u.id})" title="Cambiar contraseña">🔑</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        toast.error('Error al cargar');
+      }
+    }
+
+    function showModal(user = null) {
+      editingId = user?.id || null;
+      document.getElementById('modalTitle').textContent = user ? 'Editar Usuario' : 'Nuevo Usuario';
+      document.getElementById('userId').value = user?.id || '';
+      document.getElementById('username').value = user?.username || '';
+      document.getElementById('username').disabled = !!user;
+      document.getElementById('password').value = '';
+      document.getElementById('password').required = !user;
+      document.getElementById('passwordLabel').textContent = user ? 'Nueva Contraseña' : 'Contraseña *';
+      document.getElementById('nombre_completo').value = user?.nombre_completo || '';
+      document.getElementById('email').value = user?.email || '';
+      document.getElementById('telefono').value = user?.telefono || '';
+      document.getElementById('rol_id').value = user?.rol_id || roles[0]?.id;
+      document.getElementById('estado_id').value = user?.estado_id || estados.find(e => e.nombre === 'Activo')?.id;
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      editingId = null;
+    }
+
+    function editUsuario(user) {
+      showModal(user);
+    }
+
+    async function saveUsuario() {
+      const data = {
+        username: document.getElementById('username').value,
+        nombre_completo: document.getElementById('nombre_completo').value,
+        email: document.getElementById('email').value || null,
+        telefono: document.getElementById('telefono').value || null,
+        rol_id: document.getElementById('rol_id').value,
+        estado_id: document.getElementById('estado_id').value
+      };
+
+      const password = document.getElementById('password').value;
+      if (password) data.password = password;
+
+      try {
+        if (editingId) {
+          await api.put(`/usuarios/${editingId}`, data);
+          toast.success('Usuario actualizado');
+        } else {
+          await api.post('/usuarios', data);
+          toast.success('Usuario creado');
+        }
+        closeModal();
+        loadUsuarios();
+      } catch (e) {
+        toast.error(e.message || 'Error al guardar');
+      }
+    }
+
+    async function resetPassword(id) {
+      const password = prompt('Nueva contraseña (mínimo 6 caracteres):');
+      if (!password) return;
+      if (password.length < 6) {
+        toast.error('Mínimo 6 caracteres');
+        return;
+      }
+      try {
+        await api.post(`/usuarios/${id}/reset-password`, { password_nuevo: password });
+        toast.success('Contraseña actualizada');
+      } catch (e) {
+        toast.error('Error al actualizar');
+      }
+    }
+
+    loadCatalogos();
+    loadUsuarios();
+  </script>
+</body>
+</html>

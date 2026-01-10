@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogos - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Catálogos</h1>
+      <p class="page-subtitle">Administra los catálogos del sistema</p>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <!-- Tarifas -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title" style="margin: 0;">💰 Tarifas</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('tarifas')">+ Agregar</button>
+      </div>
+      <div id="tarifasList"></div>
+    </div>
+
+    <!-- Ciudades -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title" style="margin: 0;">🏙️ Ciudades</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('ciudades')">+ Agregar</button>
+      </div>
+      <div id="ciudadesList"></div>
+    </div>
+
+    <!-- Colonias -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title" style="margin: 0;">📍 Colonias</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('colonias')">+ Agregar</button>
+      </div>
+      <div id="coloniasList"></div>
+    </div>
+
+    <!-- Tipos de Pago -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title" style="margin: 0;">💳 Tipos de Pago</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('tipos_pago')">+ Agregar</button>
+      </div>
+      <div id="tiposPagoList"></div>
+    </div>
+
+    <!-- Tipos de Equipo -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title" style="margin: 0;">📦 Tipos de Equipo</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('tipos_equipo')">+ Agregar</button>
+      </div>
+      <div id="tiposEquipoList"></div>
+    </div>
+
+    <!-- Tipos de Cargo -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 class="section-title" style="margin: 0;">📄 Tipos de Cargo</h3>
+        <button class="btn btn-primary btn-sm" onclick="showModal('tipos_cargo')">+ Agregar</button>
+      </div>
+      <div id="tiposCargoList"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Agregar</h2>
+        <button class="btn-icon" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="catalogoForm">
+          <div class="form-group">
+            <label class="form-label">Nombre *</label>
+            <input type="text" class="form-input" id="itemNombre" required>
+          </div>
+          <div class="form-group hidden" id="velocidadGroup">
+            <label class="form-label">Velocidad (Mbps) *</label>
+            <input type="number" class="form-input" id="itemVelocidad">
+          </div>
+          <div class="form-group hidden" id="precioGroup">
+            <label class="form-label">Precio Mensual *</label>
+            <input type="number" step="0.01" class="form-input" id="itemPrecio">
+          </div>
+          <div class="form-group hidden" id="ciudadGroup">
+            <label class="form-label">Ciudad *</label>
+            <select class="form-select" id="itemCiudad"></select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveItem()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('catalogos');
+
+    let currentCatalogo = '';
+    let ciudades = [];
+
+    async function loadAll() {
+      await Promise.all([
+        loadCatalogo('tarifas'),
+        loadCatalogo('ciudades'),
+        loadCatalogo('colonias'),
+        loadCatalogo('tipos_pago'),
+        loadCatalogo('tipos_equipo'),
+        loadCatalogo('tipos_cargo')
+      ]);
+    }
+
+    async function loadCatalogo(tipo) {
+      try {
+        const data = await api.get(`/catalogos/${tipo}`);
+        const container = document.getElementById(`${tipo.replace('_', '')}List`) || 
+                         document.getElementById(`${tipo}List`);
+        
+        if (!container) return;
+
+        if (data.data.length === 0) {
+          container.innerHTML = '<p class="text-gray text-center">Sin registros</p>';
+          return;
+        }
+
+        if (tipo === 'tarifas') {
+          container.innerHTML = data.data.map(i => `
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+              <div>
+                <div style="font-weight: 500;">${i.nombre}</div>
+                <div style="font-size: 12px; color: var(--gray-400);">${i.velocidad_mbps} Mbps</div>
+              </div>
+              <span class="font-semibold text-success">${utils.formatMoney(i.precio_mensual)}</span>
+            </div>
+          `).join('');
+        } else if (tipo === 'colonias') {
+          container.innerHTML = data.data.map(i => `
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+              <span>${i.nombre}</span>
+              <span style="font-size: 12px; color: var(--gray-400);">${i.ciudad_nombre || ''}</span>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = data.data.map(i => `
+            <div style="padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+              ${i.nombre}
+            </div>
+          `).join('');
+        }
+
+        if (tipo === 'ciudades') {
+          ciudades = data.data;
+        }
+      } catch (e) {
+        console.error('Error cargando', tipo);
+      }
+    }
+
+    function showModal(tipo) {
+      currentCatalogo = tipo;
+      const titles = {
+        tarifas: 'Nueva Tarifa',
+        ciudades: 'Nueva Ciudad',
+        colonias: 'Nueva Colonia',
+        tipos_pago: 'Nuevo Tipo de Pago',
+        tipos_equipo: 'Nuevo Tipo de Equipo',
+        tipos_cargo: 'Nuevo Tipo de Cargo'
+      };
+      
+      document.getElementById('modalTitle').textContent = titles[tipo] || 'Agregar';
+      document.getElementById('itemNombre').value = '';
+      document.getElementById('itemVelocidad').value = '';
+      document.getElementById('itemPrecio').value = '';
+      
+      document.getElementById('velocidadGroup').classList.toggle('hidden', tipo !== 'tarifas');
+      document.getElementById('precioGroup').classList.toggle('hidden', tipo !== 'tarifas');
+      document.getElementById('ciudadGroup').classList.toggle('hidden', tipo !== 'colonias');
+      
+      if (tipo === 'colonias') {
+        document.getElementById('itemCiudad').innerHTML = ciudades.map(c => 
+          `<option value="${c.id}">${c.nombre}</option>`
+        ).join('');
+      }
+      
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      currentCatalogo = '';
+    }
+
+    async function saveItem() {
+      const nombre = document.getElementById('itemNombre').value.trim();
+      if (!nombre) {
+        toast.error('Ingresa el nombre');
+        return;
+      }
+
+      let data = { nombre };
+
+      if (currentCatalogo === 'tarifas') {
+        data.velocidad_mbps = parseInt(document.getElementById('itemVelocidad').value);
+        data.precio_mensual = parseFloat(document.getElementById('itemPrecio').value);
+        if (!data.velocidad_mbps || !data.precio_mensual) {
+          toast.error('Completa todos los campos');
+          return;
+        }
+      }
+
+      if (currentCatalogo === 'colonias') {
+        data.ciudad_id = document.getElementById('itemCiudad').value;
+      }
+
+      try {
+        await api.post(`/catalogos/${currentCatalogo}`, data);
+        toast.success('Guardado');
+        closeModal();
+        loadCatalogo(currentCatalogo);
+      } catch (e) {
+        toast.error(e.message || 'Error al guardar');
+      }
+    }
+
+    loadAll();
+  </script>
+</body>
+</html>

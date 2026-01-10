@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle Cliente - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="breadcrumb">
+    <a href="lista.html">Clientes</a>
+    <span>›</span>
+    <span>Detalle Cliente</span>
+  </div>
+
+  <div id="clienteContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('clientes');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const clienteId = urlParams.get('id');
+
+    if (!clienteId) {
+      window.location.href = 'lista.html';
+    }
+
+    let cliente = null;
+    let activeTab = 'equipos';
+
+    async function loadCliente() {
+      try {
+        const data = await api.get(`/clientes/${clienteId}`);
+        cliente = data.data;
+        renderCliente();
+        loadTabContent();
+      } catch (error) {
+        toast.error('Error al cargar cliente');
+        setTimeout(() => window.location.href = 'lista.html', 2000);
+      }
+    }
+
+    function renderCliente() {
+      const servicio = cliente.servicios?.[0];
+      const resumen = cliente.resumen_financiero || {};
+      
+      document.getElementById('clienteContent').innerHTML = `
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="client-header">
+            <div class="client-info">
+              <div class="client-avatar">
+                ${utils.getInitials(cliente.nombre + ' ' + cliente.apellido_paterno)}
+              </div>
+              <div>
+                <div class="client-name">
+                  ${cliente.nombre} ${cliente.apellido_paterno} ${cliente.apellido_materno || ''}
+                  <span class="client-id">ID: #${cliente.numero_cliente}</span>
+                  <span class="badge ${utils.getStatusBadge(cliente.estado)}">${cliente.estado}</span>
+                </div>
+                <div class="client-contact">
+                  ${cliente.email ? `<span>✉️ ${cliente.email}</span>` : ''}
+                  <span>📞 ${cliente.telefono_principal}</span>
+                </div>
+                ${cliente.calle ? `
+                <div style="margin-top: 4px; font-size: 14px; color: var(--gray-500);">
+                  📍 ${cliente.calle} ${cliente.numero_exterior || ''}, ${cliente.colonia || ''}, ${cliente.ciudad || ''}
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            <div class="client-actions">
+              <a href="../pagos/nuevo.html?cliente_id=${clienteId}" class="btn btn-primary">💰 Registrar Pago</a>
+              ${api.isAdmin() ? `<a href="editar.html?id=${clienteId}" class="btn btn-outline">✏️ Editar</a>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="stat-card">
+            <div>
+              <h3>Mensualidad</h3>
+              <div class="value">${utils.formatMoney(servicio?.precio_mensual || 0)}<span style="font-size: 14px; font-weight: 400; color: var(--gray-400);">/mes</span></div>
+              <div class="subvalue">${servicio?.tarifa_nombre || 'Sin plan'}: ${servicio?.velocidad_mbps || 0} MBPS</div>
+            </div>
+            <div class="stat-icon blue">💵</div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <h3>Saldo Actual</h3>
+              <div class="value ${resumen.balance > 0 ? 'text-error' : 'text-success'}">${utils.formatMoney(Math.abs(resumen.balance || 0))}</div>
+              <div class="subvalue" style="color: ${resumen.balance > 0 ? 'var(--error)' : 'var(--success)'};">
+                ${resumen.balance > 0 ? 'Adeudo pendiente' : 'Cuenta al día'}
+              </div>
+            </div>
+            <div class="stat-icon ${resumen.balance > 0 ? 'red' : 'green'}">${resumen.balance > 0 ? '⚠️' : '✓'}</div>
+          </div>
+          <div class="stat-card">
+            <div>
+              <h3>Próximo Vencimiento</h3>
+              <div class="value" id="proximoVencimiento">-</div>
+              <div class="subvalue">Día de corte: ${servicio?.dia_corte || 10}</div>
+            </div>
+            <div class="stat-icon yellow">📅</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px;">
+          <div>
+            <div class="tabs">
+              <div class="tab ${activeTab === 'equipos' ? 'active' : ''}" onclick="changeTab('equipos')">Equipos</div>
+              <div class="tab ${activeTab === 'cargos' ? 'active' : ''}" onclick="changeTab('cargos')">Estado de Cuenta</div>
+              <div class="tab ${activeTab === 'pagos' ? 'active' : ''}" onclick="changeTab('pagos')">Historial Pagos</div>
+            </div>
+            <div class="card" id="tabContent">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <h3 class="section-title">🪪 Identificación (INE)</h3>
+              <div style="margin-bottom: 16px;">
+                <p style="font-size: 12px; color: var(--gray-500); margin-bottom: 8px;">LADO FRONTAL</p>
+                ${cliente.ine_frente_url ? `
+                  <img src="${cliente.ine_frente_url}" class="ine-preview" alt="INE Frente">
+                ` : `
+                  <div class="ine-upload" onclick="uploadINE('frente')">
+                    <div>📤</div>
+                    <div style="font-size: 14px; color: var(--gray-500);">Subir INE Frontal</div>
+                  </div>
+                `}
+              </div>
+              <div>
+                <p style="font-size: 12px; color: var(--gray-500); margin-bottom: 8px;">LADO REVERSO</p>
+                ${cliente.ine_reverso_url ? `
+                  <img src="${cliente.ine_reverso_url}" class="ine-preview" alt="INE Reverso">
+                ` : `
+                  <div class="ine-upload" onclick="uploadINE('reverso')">
+                    <div>📤</div>
+                    <div style="font-size: 14px; color: var(--gray-500);">Subir INE Reverso</div>
+                  </div>
+                `}
+              </div>
+            </div>
+
+            ${servicio ? `
+            <div class="card">
+              <h3 class="section-title">📡 Servicio</h3>
+              <div style="font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+                  <span class="text-gray">Plan</span>
+                  <span class="font-semibold">${servicio.tarifa_nombre}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+                  <span class="text-gray">Velocidad</span>
+                  <span class="font-semibold">${servicio.velocidad_mbps} Mbps</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+                  <span class="text-gray">IP</span>
+                  <span class="font-mono">${servicio.ip_asignada || '-'}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                  <span class="text-gray">Estado</span>
+                  <span class="badge ${utils.getStatusBadge(servicio.estado)}">${servicio.estado}</span>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function changeTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'equipos' && i === 0) || (tab === 'cargos' && i === 1) || (tab === 'pagos' && i === 2));
+      });
+      loadTabContent();
+    }
+
+    async function loadTabContent() {
+      const container = document.getElementById('tabContent');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        if (activeTab === 'equipos') {
+          const servicio = cliente.servicios?.[0];
+          if (servicio) {
+            const data = await api.get(`/equipos?servicio_id=${servicio.id}`);
+            if (data.data.length === 0) {
+              container.innerHTML = '<div class="empty-state">No hay equipos registrados</div>';
+            } else {
+              container.innerHTML = `<table class="table"><thead><tr><th>Dispositivo</th><th>MAC Address</th><th>No. Serie</th><th>Estado</th></tr></thead><tbody>
+                ${data.data.map(e => `<tr><td><div style="font-weight:500">${e.marca} ${e.modelo}</div><div style="font-size:12px;color:var(--gray-400)">${e.tipo}</div></td><td class="font-mono">${e.mac_address || '-'}</td><td>${e.numero_serie || '-'}</td><td style="color:var(--success)">● Activo</td></tr>`).join('')}
+              </tbody></table>`;
+            }
+          } else {
+            container.innerHTML = '<div class="empty-state">No hay servicio activo</div>';
+          }
+        }
+        else if (activeTab === 'cargos') {
+          const data = await api.get(`/cargos?cliente_id=${clienteId}&limit=20`);
+          const pendiente = data.data.find(c => c.estado === 'Pendiente');
+          if (pendiente) document.getElementById('proximoVencimiento').textContent = utils.formatDate(pendiente.fecha_vencimiento);
+          if (data.data.length === 0) {
+            container.innerHTML = '<div class="empty-state">No hay cargos</div>';
+          } else {
+            container.innerHTML = data.data.map(c => `
+              <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray-100)">
+                <div><div style="font-weight:500">${c.concepto}</div><div style="font-size:12px;color:var(--gray-400)">${utils.formatDate(c.fecha_emision)} • ${c.periodo_mes}/${c.periodo_anio}</div></div>
+                <div style="text-align:right"><div class="${c.saldo > 0 ? 'text-error' : 'text-success'} font-semibold">${utils.formatMoney(c.monto)}</div><div style="font-size:12px">${c.estado}</div></div>
+              </div>`).join('');
+          }
+        }
+        else if (activeTab === 'pagos') {
+          if (!api.isAdmin()) { container.innerHTML = '<div class="empty-state">Sin permiso</div>'; return; }
+          const data = await api.get(`/pagos?cliente_id=${clienteId}&limit=20`);
+          if (data.data.length === 0) {
+            container.innerHTML = '<div class="empty-state">No hay pagos</div>';
+          } else {
+            container.innerHTML = data.data.map(p => `
+              <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--gray-100)">
+                <div><div style="font-weight:500">${p.tipo_pago}</div><div style="font-size:12px;color:var(--gray-400)">${utils.formatDate(p.fecha_pago)} • ${p.numero_recibo}</div></div>
+                <div class="text-success font-semibold">-${utils.formatMoney(p.monto_total)}</div>
+              </div>`).join('');
+          }
+        }
+      } catch (e) { container.innerHTML = '<div class="empty-state">Error</div>'; }
+    }
+
+    function uploadINE(tipo) {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*';
+      input.onchange = async (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const formData = new FormData();
+        formData.append('ine', file); formData.append('tipo', tipo);
+        try { await api.uploadFile(`/clientes/${clienteId}/ine`, formData); toast.success('INE subida'); loadCliente(); }
+        catch (err) { toast.error('Error al subir'); }
+      };
+      input.click();
+    }
+
+    loadCliente();
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cargos - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Cargos</h1>
+      <p class="page-subtitle">Estado de cuenta y cargos generados</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+      <input type="checkbox" id="soloPendientes" checked>
+      <span>Solo pendientes</span>
+    </label>
+  </div>
+
+  <div class="card" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Periodo</th>
+            <th>Vencimiento</th>
+            <th style="text-align: right;">Monto</th>
+            <th style="text-align: right;">Pagado</th>
+            <th style="text-align: right;">Saldo</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="cargosBody">
+          <tr><td colspan="7" class="loading"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('cargos');
+
+    async function loadCargos() {
+      const soloPendientes = document.getElementById('soloPendientes').checked;
+      try {
+        const params = soloPendientes ? '?solo_pendientes=true&limit=100' : '?limit=100';
+        const data = await api.get('/cargos' + params);
+        
+        if (data.data.length === 0) {
+          document.getElementById('cargosBody').innerHTML = '<tr><td colspan="7" class="empty-state">No hay cargos</td></tr>';
+          return;
+        }
+
+        document.getElementById('cargosBody').innerHTML = data.data.map(c => `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>📄</span>
+                <div>
+                  <div style="font-weight: 500;">${c.concepto}</div>
+                  <div style="font-size: 12px; color: var(--gray-400);">${c.tipo_cargo}</div>
+                </div>
+              </div>
+            </td>
+            <td>${c.periodo_mes}/${c.periodo_anio}</td>
+            <td>${utils.formatDate(c.fecha_vencimiento)}</td>
+            <td style="text-align: right;" class="font-semibold">${utils.formatMoney(c.monto)}</td>
+            <td style="text-align: right;" class="text-success">${utils.formatMoney(c.monto_pagado)}</td>
+            <td style="text-align: right;" class="${c.saldo > 0 ? 'text-error font-semibold' : 'text-success'}">${utils.formatMoney(c.saldo)}</td>
+            <td><span class="badge ${utils.getStatusBadge(c.estado)}">${c.estado}</span></td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        toast.error('Error al cargar');
+      }
+    }
+
+    document.getElementById('soloPendientes').addEventListener('change', loadCargos);
+    loadCargos();
+  </script>
+</body>
+</html>

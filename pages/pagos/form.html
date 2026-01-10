@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrar Pago - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div class="main-content">
+      <div class="page-content">
+        <p class="text-gray mb-4" style="font-size: 0.875rem;">
+          <a href="/pages/pagos/index.html" style="color: var(--secondary);">Pagos</a> 
+          <span style="margin: 0 0.5rem;">›</span> 
+          Registrar Pago
+        </p>
+        
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Registrar Pago</h1>
+            <p class="page-subtitle">Registra un pago de cliente</p>
+          </div>
+        </div>
+        
+        <div class="grid-3" style="align-items: start;">
+          <div class="col-span-2">
+            <!-- Cliente -->
+            <div class="card mb-4">
+              <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Cliente</h3>
+              
+              <div id="cliente-selected" class="hidden" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: var(--gray-100); border-radius: 0.5rem;">
+                <div>
+                  <p class="font-bold" id="cliente-nombre"></p>
+                  <p class="text-gray" style="font-size: 0.875rem;" id="cliente-numero"></p>
+                </div>
+                <div style="text-align: right;">
+                  <p class="text-gray" style="font-size: 0.75rem;">Adeudo actual</p>
+                  <p class="font-bold" style="font-size: 1.25rem;" id="cliente-adeudo"></p>
+                </div>
+              </div>
+              
+              <div id="cliente-search">
+                <div style="position: relative;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" id="search-cliente" class="input" placeholder="Buscar cliente..." style="padding-left: 40px;">
+                </div>
+                <div id="search-results" style="margin-top: 0.5rem;"></div>
+              </div>
+            </div>
+            
+            <!-- Datos del pago -->
+            <form id="pago-form" class="card">
+              <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Datos del Pago</h3>
+              
+              <div class="grid-2">
+                <div class="form-group">
+                  <label class="label">Monto a Pagar *</label>
+                  <div style="position: relative;">
+                    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400);">$</span>
+                    <input type="number" id="monto_total" class="input" style="padding-left: 28px;" step="0.01" min="0.01" required>
+                  </div>
+                  <button type="button" id="btn-pagar-todo" class="hidden" style="background: none; border: none; color: var(--secondary); font-size: 0.75rem; cursor: pointer; margin-top: 0.25rem;">
+                    Pagar todo el adeudo
+                  </button>
+                </div>
+                
+                <div class="form-group">
+                  <label class="label">Forma de Pago *</label>
+                  <select id="tipo_pago_id" class="input" required></select>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="label">Referencia (opcional)</label>
+                <input type="text" id="referencia" class="input" placeholder="No. de transferencia, folio, etc.">
+              </div>
+              
+              <div class="form-group">
+                <label class="label">Notas (opcional)</label>
+                <textarea id="notas" class="input" rows="2" placeholder="Observaciones del pago"></textarea>
+              </div>
+              
+              <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+                <a href="/pages/pagos/index.html" class="btn btn-outline">Cancelar</a>
+                <button type="submit" class="btn btn-success" id="btn-submit" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  </svg>
+                  Registrar Pago
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Preview -->
+          <div>
+            <div class="card mb-4" id="cargos-pendientes" style="display: none;">
+              <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                </svg>
+                Cargos Pendientes
+              </h3>
+              <div id="cargos-list" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
+            
+            <div class="card" id="preview-container" style="display: none; background: rgba(22,163,74,0.05); border: 1px solid rgba(22,163,74,0.2);">
+              <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--success); display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Vista Previa
+              </h3>
+              <div id="preview-content"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuth();
+    renderLayout('pagos');
+    
+    let selectedCliente = null;
+    let cargosPendientes = [];
+    let searchTimeout;
+    
+    const clienteIdParam = getUrlParam('cliente_id');
+    
+    // Cargar tipos de pago
+    async function loadTiposPago() {
+      try {
+        const data = await API.get('/catalogos/tipos_pago');
+        const select = document.getElementById('tipo_pago_id');
+        select.innerHTML = '<option value="">Seleccionar...</option>';
+        data.data.forEach(t => {
+          select.innerHTML += `<option value="${t.id}">${t.nombre}</option>`;
+        });
+      } catch (error) {
+        console.error('Error loading tipos pago:', error);
+      }
+    }
+    
+    // Buscar clientes
+    document.getElementById('search-cliente').addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const search = e.target.value;
+      
+      if (search.length < 2) {
+        document.getElementById('search-results').innerHTML = '';
+        return;
+      }
+      
+      searchTimeout = setTimeout(async () => {
+        try {
+          const data = await API.get(`/clientes?busqueda=${encodeURIComponent(search)}&limit=5`);
+          const results = document.getElementById('search-results');
+          
+          if (!data.data || data.data.length === 0) {
+            results.innerHTML = '<p class="text-gray" style="padding: 0.5rem;">No se encontraron clientes</p>';
+            return;
+          }
+          
+          results.innerHTML = `
+            <div style="border: 1px solid var(--gray-200); border-radius: 0.5rem; overflow: hidden;">
+              ${data.data.map(c => `
+                <button type="button" onclick='selectCliente(${JSON.stringify(c)})' style="width: 100%; text-align: left; padding: 0.75rem 1rem; background: white; border: none; border-bottom: 1px solid var(--gray-100); cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onmouseenter="this.style.background='var(--gray-50)'" onmouseleave="this.style.background='white'">
+                  <div>
+                    <p class="font-bold">${c.nombre} ${c.apellido_paterno}</p>
+                    <p class="text-gray" style="font-size: 0.75rem;">${c.numero_cliente}</p>
+                  </div>
+                  <span class="${c.adeudo > 0 ? 'text-error' : 'text-success'} font-bold">${formatMoney(c.adeudo)}</span>
+                </button>
+              `).join('')}
+            </div>
+          `;
+        } catch (error) {
+          console.error('Error searching:', error);
+        }
+      }, 300);
+    });
+    
+    // Seleccionar cliente
+    async function selectCliente(cliente) {
+      selectedCliente = cliente;
+      
+      document.getElementById('cliente-search').classList.add('hidden');
+      document.getElementById('cliente-selected').classList.remove('hidden');
+      document.getElementById('cliente-selected').style.display = 'flex';
+      
+      document.getElementById('cliente-nombre').textContent = `${cliente.nombre} ${cliente.apellido_paterno}`;
+      document.getElementById('cliente-numero').textContent = cliente.numero_cliente;
+      document.getElementById('cliente-adeudo').textContent = formatMoney(cliente.adeudo);
+      document.getElementById('cliente-adeudo').className = cliente.adeudo > 0 ? 'font-bold text-error' : 'font-bold text-success';
+      
+      document.getElementById('btn-submit').disabled = false;
+      
+      // Cargar cargos pendientes
+      await loadCargosPendientes();
+      
+      // Mostrar botón pagar todo
+      if (cliente.adeudo > 0) {
+        const btn = document.getElementById('btn-pagar-todo');
+        btn.classList.remove('hidden');
+        btn.textContent = `Pagar todo el adeudo (${formatMoney(cliente.adeudo)})`;
+        btn.onclick = () => {
+          document.getElementById('monto_total').value = cliente.adeudo.toFixed(2);
+          loadPreview();
+        };
+      }
+    }
+    
+    async function loadCargosPendientes() {
+      try {
+        const data = await API.get(`/cargos?cliente_id=${selectedCliente.id}&solo_pendientes=true`);
+        cargosPendientes = data.data || [];
+        
+        if (cargosPendientes.length > 0) {
+          document.getElementById('cargos-pendientes').style.display = 'block';
+          document.getElementById('cargos-list').innerHTML = cargosPendientes.map(c => `
+            <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-100); font-size: 0.875rem;">
+              <div>
+                <p class="font-bold">${c.concepto}</p>
+                <p class="text-gray" style="font-size: 0.75rem;">${c.periodo_mes}/${c.periodo_anio}</p>
+              </div>
+              <span class="font-bold text-error">${formatMoney(c.saldo)}</span>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading cargos:', error);
+      }
+    }
+    
+    // Preview
+    let previewTimeout;
+    document.getElementById('monto_total').addEventListener('input', () => {
+      clearTimeout(previewTimeout);
+      previewTimeout = setTimeout(loadPreview, 500);
+    });
+    
+    async function loadPreview() {
+      const monto = parseFloat(document.getElementById('monto_total').value);
+      if (!selectedCliente || !monto || monto <= 0) {
+        document.getElementById('preview-container').style.display = 'none';
+        return;
+      }
+      
+      try {
+        const data = await API.post('/pagos/preview', {
+          cliente_id: selectedCliente.id,
+          monto_total: monto
+        });
+        
+        const preview = data.data;
+        document.getElementById('preview-container').style.display = 'block';
+        
+        let html = '';
+        
+        if (preview.cargos_a_cubrir?.length > 0) {
+          html += '<p style="font-size: 0.75rem; text-transform: uppercase; color: var(--gray-500); margin-bottom: 0.5rem;">Se cubrirán:</p>';
+          preview.cargos_a_cubrir.forEach(c => {
+            html += `
+              <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.875rem;">
+                <span>${c.concepto}</span>
+                <span class="text-success">${formatMoney(c.monto_a_aplicar)}</span>
+              </div>
+            `;
+          });
+        }
+        
+        if (preview.saldo_favor_resultante > 0) {
+          html += `
+            <div style="border-top: 1px solid rgba(22,163,74,0.3); margin-top: 0.75rem; padding-top: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.875rem; font-weight: 500;">Saldo a favor</span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: var(--success);">${formatMoney(preview.saldo_favor_resultante)}</span>
+              </div>
+            </div>
+          `;
+        }
+        
+        document.getElementById('preview-content').innerHTML = html;
+      } catch (error) {
+        console.error('Error preview:', error);
+      }
+    }
+    
+    // Submit
+    document.getElementById('pago-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!selectedCliente) {
+        showToast('Selecciona un cliente', 'error');
+        return;
+      }
+      
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.textContent = 'Procesando...';
+      
+      try {
+        await API.post('/pagos', {
+          cliente_id: selectedCliente.id,
+          monto_total: parseFloat(document.getElementById('monto_total').value),
+          tipo_pago_id: document.getElementById('tipo_pago_id').value,
+          referencia: document.getElementById('referencia').value,
+          notas: document.getElementById('notas').value
+        });
+        
+        showToast('Pago registrado correctamente');
+        window.location.href = `/pages/clientes/detalle.html?id=${selectedCliente.id}`;
+      } catch (error) {
+        showToast(error.message || 'Error al registrar pago', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Registrar Pago';
+      }
+    });
+    
+    // Cargar cliente si viene en URL
+    async function loadClienteFromUrl() {
+      if (clienteIdParam) {
+        try {
+          const data = await API.get(`/clientes/${clienteIdParam}`);
+          selectCliente(data.data);
+        } catch (error) {
+          console.error('Error loading cliente:', error);
+        }
+      }
+    }
+    
+    // Inicializar
+    loadTiposPago();
+    loadClienteFromUrl();
+  </script>
+</body>
+</html>

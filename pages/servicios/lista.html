@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servicios - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Servicios</h1>
+      <p class="page-subtitle">Gestiona los servicios contratados</p>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Plan / Tarifa</th>
+            <th>Precio</th>
+            <th>IP</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="serviciosBody">
+          <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('servicios');
+
+    async function loadServicios() {
+      try {
+        const data = await api.get('/servicios?limit=50');
+        
+        if (data.data.length === 0) {
+          document.getElementById('serviciosBody').innerHTML = '<tr><td colspan="5" class="empty-state">No hay servicios</td></tr>';
+          return;
+        }
+
+        document.getElementById('serviciosBody').innerHTML = data.data.map(s => `
+          <tr class="clickable" onclick="window.location.href='../clientes/detalle.html?id=${s.cliente_id}'">
+            <td>${s.cliente_nombre || '#' + s.cliente_id}</td>
+            <td>
+              <div style="font-weight: 500;">📡 ${s.tarifa_nombre}</div>
+              <div style="font-size: 12px; color: var(--gray-400);">${s.velocidad_mbps} Mbps</div>
+            </td>
+            <td class="font-semibold">${utils.formatMoney(s.precio_mensual)}</td>
+            <td class="font-mono">${s.ip_asignada || '-'}</td>
+            <td><span class="badge ${utils.getStatusBadge(s.estado)}">${s.estado}</span></td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        toast.error('Error al cargar');
+      }
+    }
+
+    loadServicios();
+  </script>
+</body>
+</html>

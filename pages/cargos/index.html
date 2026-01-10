@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cargos - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div class="main-content">
+      <div class="page-content">
+        <div class="page-header">
+          <div><h1 class="page-title">Cargos</h1><p class="page-subtitle">Estado de cuenta</p></div>
+        </div>
+        <div class="card mb-4">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+            <input type="checkbox" id="solo-pendientes" checked style="width:16px;height:16px;">
+            <span style="font-size:0.875rem;">Solo pendientes</span>
+          </label>
+        </div>
+        <div class="card" style="padding:0;"><div class="table-container" id="table-container"><div class="loading-container"><div class="spinner"></div></div></div></div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuth();
+    renderLayout('cargos');
+    document.getElementById('solo-pendientes').addEventListener('change', load);
+    async function load() {
+      const container = document.getElementById('table-container');
+      const soloPendientes = document.getElementById('solo-pendientes').checked;
+      showLoading(container);
+      try {
+        let url = '/cargos?limit=100';
+        if (soloPendientes) url += '&solo_pendientes=true';
+        const data = await API.get(url);
+        if (!data.data?.length) { container.innerHTML = '<p class="text-center text-gray" style="padding:3rem;">No hay cargos</p>'; return; }
+        container.innerHTML = `<table class="table"><thead><tr><th>Concepto</th><th>Periodo</th><th>Vencimiento</th><th style="text-align:right;">Monto</th><th style="text-align:right;">Saldo</th><th>Estado</th></tr></thead><tbody>${data.data.map(c => `<tr><td><p class="font-bold">${c.concepto}</p><p class="text-gray" style="font-size:0.75rem;">${c.tipo_cargo||''}</p></td><td>${c.periodo_mes}/${c.periodo_anio}</td><td>${formatDate(c.fecha_vencimiento)}</td><td style="text-align:right;" class="font-bold">${formatMoney(c.monto)}</td><td style="text-align:right;" class="${c.saldo>0?'text-error':'text-success'} font-bold">${formatMoney(c.saldo)}</td><td><span class="badge ${c.estado==='Pagado'?'badge-success':c.estado==='Parcial'?'badge-warning':'badge-error'}">${c.estado}</span></td></tr>`).join('')}</tbody></table>`;
+      } catch(e) { container.innerHTML = '<p class="text-error text-center">Error</p>'; }
+    }
+    load();
+  </script>
+</body>
+</html>

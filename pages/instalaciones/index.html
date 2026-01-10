@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instalaciones - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div class="main-content">
+      <div class="page-content">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Instalaciones</h1>
+            <p class="page-subtitle">Instalaciones programadas</p>
+          </div>
+        </div>
+        <div class="grid-3" id="content">
+          <div class="loading-container" style="grid-column: 1/-1;"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuth();
+    renderLayout('instalaciones');
+    async function load() {
+      const container = document.getElementById('content');
+      try {
+        const data = await API.get('/instalaciones?limit=50');
+        if (!data.data?.length) { container.innerHTML = '<p class="text-center text-gray" style="grid-column:1/-1;padding:3rem;">No hay instalaciones</p>'; return; }
+        container.innerHTML = data.data.map(i => `
+          <div class="card">
+            <span class="badge mb-3 ${i.estado==='Completada'?'badge-success':i.estado==='Programada'?'badge-warning':i.estado==='Cancelada'?'badge-error':'badge-info'}">${i.estado}</span>
+            <p class="font-bold">${i.cliente_nombre || 'Cliente'}</p>
+            <p class="text-gray" style="font-size:0.875rem;">${formatDate(i.fecha_programada)}</p>
+            ${i.direccion ? `<p class="text-gray" style="font-size:0.75rem;margin-top:0.5rem;">${i.direccion}</p>` : ''}
+          </div>
+        `).join('');
+      } catch(e) { container.innerHTML = '<p class="text-error text-center" style="grid-column:1/-1;">Error</p>'; }
+    }
+    load();
+  </script>
+</body>
+</html>

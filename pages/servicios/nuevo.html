@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo Servicio - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="breadcrumb">
+    <a href="lista.html">Servicios</a>
+    <span>›</span>
+    <span>Nuevo Servicio</span>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nuevo Servicio</h1>
+      <p class="page-subtitle">Contrata un nuevo servicio</p>
+    </div>
+  </div>
+
+  <form id="servicioForm" class="card">
+    <!-- Cliente -->
+    <h3 class="section-title">👤 Cliente</h3>
+    <div class="form-group">
+      <input type="text" class="form-input" id="searchCliente" placeholder="Buscar cliente...">
+      <input type="hidden" name="cliente_id" id="cliente_id" required>
+      <div id="clienteResults" style="margin-top: 8px;"></div>
+      <div id="clienteSelected" class="hidden" style="padding: 12px; background: var(--gray-100); border-radius: 8px; margin-top: 8px;"></div>
+    </div>
+
+    <!-- Plan -->
+    <h3 class="section-title" style="margin-top: 24px;">📡 Plan de Internet</h3>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label class="form-label">Tarifa *</label>
+        <select class="form-select" name="tarifa_id" id="tarifa_id" required>
+          <option value="">Seleccionar...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Precio Mensual</label>
+        <input type="text" class="form-input" id="precioPreview" readonly style="background: var(--gray-100);">
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label class="form-label">Día de Corte *</label>
+        <select class="form-select" name="dia_corte" required>
+          ${[...Array(28)].map((_, i) => `<option value="${i+1}" ${i+1===10?'selected':''}>${i+1}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">IP Asignada</label>
+        <input type="text" class="form-input" name="ip_asignada" placeholder="192.168.1.x">
+      </div>
+    </div>
+
+    <!-- Fechas -->
+    <h3 class="section-title" style="margin-top: 24px;">📅 Fechas</h3>
+    <div class="grid grid-2">
+      <div class="form-group">
+        <label class="form-label">Fecha de Inicio *</label>
+        <input type="date" class="form-input" name="fecha_inicio" id="fecha_inicio" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de Instalación</label>
+        <input type="date" class="form-input" name="fecha_instalacion" id="fecha_instalacion">
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+      <a href="lista.html" class="btn btn-outline">Cancelar</a>
+      <button type="submit" class="btn btn-primary" id="submitBtn">💾 Crear Servicio</button>
+    </div>
+  </form>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('servicios');
+
+    let tarifas = [];
+
+    async function loadTarifas() {
+      try {
+        const data = await api.get('/catalogos/tarifas');
+        tarifas = data.data;
+        document.getElementById('tarifa_id').innerHTML = '<option value="">Seleccionar...</option>' +
+          tarifas.map(t => `<option value="${t.id}">${t.nombre} - ${t.velocidad_mbps} Mbps</option>`).join('');
+      } catch (e) {}
+    }
+
+    document.getElementById('tarifa_id').addEventListener('change', (e) => {
+      const tarifa = tarifas.find(t => t.id == e.target.value);
+      document.getElementById('precioPreview').value = tarifa ? utils.formatMoney(tarifa.precio_mensual) : '';
+    });
+
+    // Buscar cliente
+    let searchTimeout;
+    document.getElementById('searchCliente').addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const query = e.target.value.trim();
+      if (query.length < 2) {
+        document.getElementById('clienteResults').innerHTML = '';
+        return;
+      }
+      searchTimeout = setTimeout(async () => {
+        try {
+          const data = await api.get(`/clientes?busqueda=${encodeURIComponent(query)}&limit=5`);
+          document.getElementById('clienteResults').innerHTML = data.data.map(c => `
+            <div style="padding: 8px; border: 1px solid var(--gray-200); border-radius: 6px; margin-bottom: 4px; cursor: pointer;" 
+                 onclick="selectCliente(${c.id}, '${c.nombre} ${c.apellido_paterno}', '${c.numero_cliente}')">
+              <strong>${c.nombre} ${c.apellido_paterno}</strong>
+              <span style="color: var(--gray-400); font-size: 12px; margin-left: 8px;">${c.numero_cliente}</span>
+            </div>
+          `).join('');
+        } catch (e) {}
+      }, 300);
+    });
+
+    function selectCliente(id, nombre, numero) {
+      document.getElementById('cliente_id').value = id;
+      document.getElementById('searchCliente').classList.add('hidden');
+      document.getElementById('clienteResults').innerHTML = '';
+      document.getElementById('clienteSelected').innerHTML = `<strong>${nombre}</strong> <span style="color: var(--gray-400);">${numero}</span>`;
+      document.getElementById('clienteSelected').classList.remove('hidden');
+    }
+
+    // Fecha por defecto
+    document.getElementById('fecha_inicio').value = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_instalacion').value = new Date().toISOString().split('T')[0];
+
+    // Cliente desde URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const clienteIdParam = urlParams.get('cliente_id');
+    if (clienteIdParam) {
+      (async () => {
+        try {
+          const data = await api.get(`/clientes/${clienteIdParam}`);
+          selectCliente(data.data.id, `${data.data.nombre} ${data.data.apellido_paterno}`, data.data.numero_cliente);
+        } catch (e) {}
+      })();
+    }
+
+    document.getElementById('servicioForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!document.getElementById('cliente_id').value) {
+        toast.error('Selecciona un cliente');
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      const formData = new FormData(e.target);
+      const data = {};
+      formData.forEach((v, k) => { if (v) data[k] = v; });
+
+      try {
+        await api.post('/servicios', data);
+        toast.success('Servicio creado');
+        window.location.href = `../clientes/detalle.html?id=${data.cliente_id}`;
+      } catch (error) {
+        toast.error(error.message || 'Error al crear');
+        btn.disabled = false;
+        btn.textContent = '💾 Crear Servicio';
+      }
+    });
+
+    loadTarifas();
+  </script>
+</body>
+</html>

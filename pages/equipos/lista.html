@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipos - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Equipos</h1>
+      <p class="page-subtitle">Inventario de equipos instalados</p>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Equipo</th>
+            <th>MAC Address</th>
+            <th>No. Serie</th>
+            <th>IP</th>
+            <th>Servicio</th>
+          </tr>
+        </thead>
+        <tbody id="equiposBody">
+          <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('equipos');
+
+    async function loadEquipos() {
+      try {
+        const data = await api.get('/equipos?limit=100');
+        
+        if (data.data.length === 0) {
+          document.getElementById('equiposBody').innerHTML = '<tr><td colspan="5" class="empty-state">No hay equipos</td></tr>';
+          return;
+        }
+
+        document.getElementById('equiposBody').innerHTML = data.data.map(e => `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; background: var(--secondary)15; border-radius: 8px; display: flex; align-items: center; justify-content: center;">📦</div>
+                <div>
+                  <div style="font-weight: 500;">${e.marca} ${e.modelo}</div>
+                  <div style="font-size: 12px; color: var(--gray-400);">${e.tipo}</div>
+                </div>
+              </div>
+            </td>
+            <td class="font-mono" style="font-size: 13px;">${e.mac_address || '-'}</td>
+            <td>${e.numero_serie || '-'}</td>
+            <td class="font-mono">${e.ip || '-'}</td>
+            <td>#${e.servicio_id}</td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        toast.error('Error al cargar');
+      }
+    }
+
+    loadEquipos();
+  </script>
+</body>
+</html>

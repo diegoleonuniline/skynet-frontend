@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instalaciones - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Instalaciones</h1>
+      <p class="page-subtitle">Gestiona las instalaciones programadas</p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <select class="form-select" id="estadoFilter" style="width: 200px;">
+      <option value="">Todos los estados</option>
+    </select>
+  </div>
+
+  <div id="instalacionesGrid" class="grid grid-3">
+    <div class="loading" style="grid-column: 1/-1;"><div class="spinner"></div></div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('instalaciones');
+
+    async function loadEstados() {
+      try {
+        const data = await api.get('/catalogos/estados_instalacion');
+        document.getElementById('estadoFilter').innerHTML = '<option value="">Todos</option>' +
+          data.data.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+      } catch (e) {}
+    }
+
+    async function loadInstalaciones() {
+      const estado = document.getElementById('estadoFilter').value;
+      try {
+        const params = estado ? `?estado_id=${estado}&limit=50` : '?limit=50';
+        const data = await api.get('/instalaciones' + params);
+        
+        if (data.data.length === 0) {
+          document.getElementById('instalacionesGrid').innerHTML = '<div class="card empty-state" style="grid-column:1/-1">No hay instalaciones</div>';
+          return;
+        }
+
+        document.getElementById('instalacionesGrid').innerHTML = data.data.map(i => `
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <span class="badge ${utils.getStatusBadge(i.estado)}">${i.estado}</span>
+            </div>
+            <div style="font-size: 14px;">
+              <p style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span>👤</span> <strong>${i.cliente_nombre || 'Cliente'}</strong>
+              </p>
+              <p style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span>📅</span> ${utils.formatDate(i.fecha_programada)}
+              </p>
+              ${i.direccion ? `<p style="display: flex; align-items: center; gap: 8px; color: var(--gray-500);"><span>📍</span> ${i.direccion}</p>` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        toast.error('Error al cargar');
+      }
+    }
+
+    document.getElementById('estadoFilter').addEventListener('change', loadInstalaciones);
+
+    loadEstados();
+    loadInstalaciones();
+  </script>
+</body>
+</html>

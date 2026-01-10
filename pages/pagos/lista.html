@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagos - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Pagos</h1>
+      <p class="page-subtitle">Registro de pagos recibidos</p>
+    </div>
+    <a href="nuevo.html" class="btn btn-success">💰 Registrar Pago</a>
+  </div>
+
+  <div class="card" style="padding: 0;">
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Recibo</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th style="text-align: right;">Monto</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="pagosBody">
+          <tr><td colspan="6" class="loading"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('pagos');
+
+    async function loadPagos() {
+      try {
+        const data = await api.get('/pagos?limit=50');
+        const pagos = data.data;
+
+        if (pagos.length === 0) {
+          document.getElementById('pagosBody').innerHTML = '<tr><td colspan="6" class="empty-state">No hay pagos registrados</td></tr>';
+          return;
+        }
+
+        document.getElementById('pagosBody').innerHTML = pagos.map(p => `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--success);">💳</span>
+                <span class="font-mono">${p.numero_recibo}</span>
+              </div>
+            </td>
+            <td>${p.cliente_nombre || '#' + p.cliente_id}</td>
+            <td>${utils.formatDateTime(p.fecha_pago)}</td>
+            <td>${p.tipo_pago}</td>
+            <td style="text-align: right;" class="font-semibold text-success">${utils.formatMoney(p.monto_total)}</td>
+            <td><span class="badge ${utils.getStatusBadge(p.estado)}">${p.estado}</span></td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        toast.error('Error al cargar pagos');
+      }
+    }
+
+    loadPagos();
+  </script>
+</body>
+</html>

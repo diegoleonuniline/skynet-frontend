@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cliente - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="layout">
+    <div class="main-content">
+      <div class="page-content">
+        <p class="text-gray mb-4" style="font-size: 0.875rem;">
+          <a href="/pages/clientes/index.html" style="color: var(--secondary);">Clientes</a> 
+          <span style="margin: 0 0.5rem;">›</span> 
+          <span id="breadcrumb-title">Nuevo Cliente</span>
+        </p>
+        
+        <div class="page-header">
+          <div>
+            <h1 class="page-title" id="page-title">Nuevo Cliente</h1>
+            <p class="page-subtitle">Registra un nuevo cliente en el sistema</p>
+          </div>
+          <a href="/pages/clientes/index.html" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Volver
+          </a>
+        </div>
+        
+        <form id="cliente-form">
+          <!-- Datos Personales -->
+          <div class="card mb-4">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Datos Personales</h3>
+            <div class="grid-3">
+              <div class="form-group">
+                <label class="label">Nombre(s) *</label>
+                <input type="text" id="nombre" class="input" required>
+              </div>
+              <div class="form-group">
+                <label class="label">Apellido Paterno *</label>
+                <input type="text" id="apellido_paterno" class="input" required>
+              </div>
+              <div class="form-group">
+                <label class="label">Apellido Materno</label>
+                <input type="text" id="apellido_materno" class="input">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Contacto -->
+          <div class="card mb-4">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Información de Contacto</h3>
+            <div class="grid-3">
+              <div class="form-group">
+                <label class="label">Teléfono Principal *</label>
+                <input type="tel" id="telefono_principal" class="input" required maxlength="10">
+              </div>
+              <div class="form-group">
+                <label class="label">Teléfono Secundario</label>
+                <input type="tel" id="telefono_secundario" class="input" maxlength="10">
+              </div>
+              <div class="form-group">
+                <label class="label">Email</label>
+                <input type="email" id="email" class="input">
+              </div>
+            </div>
+          </div>
+          
+          <!-- Dirección -->
+          <div class="card mb-4">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Dirección</h3>
+            <div class="grid-4">
+              <div class="form-group col-span-2">
+                <label class="label">Calle</label>
+                <input type="text" id="calle" class="input">
+              </div>
+              <div class="form-group">
+                <label class="label">No. Exterior</label>
+                <input type="text" id="numero_exterior" class="input">
+              </div>
+              <div class="form-group">
+                <label class="label">No. Interior</label>
+                <input type="text" id="numero_interior" class="input">
+              </div>
+            </div>
+            
+            <div class="grid-3 mt-4">
+              <div class="form-group">
+                <label class="label">Ciudad</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <select id="ciudad_id" class="input" style="flex: 1;"></select>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="openModal('ciudad')">+</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="label">Colonia</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <select id="colonia_id" class="input" style="flex: 1;"></select>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="openModal('colonia')">+</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="label">Código Postal</label>
+                <input type="text" id="codigo_postal" class="input" maxlength="5">
+              </div>
+            </div>
+            
+            <div class="form-group mt-4">
+              <label class="label">Referencias</label>
+              <textarea id="referencias" class="input" rows="2" placeholder="Referencias para ubicar el domicilio"></textarea>
+            </div>
+          </div>
+          
+          <!-- Notas -->
+          <div class="card mb-4">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Notas Adicionales</h3>
+            <div class="form-group">
+              <textarea id="notas" class="input" rows="3" placeholder="Observaciones o notas importantes"></textarea>
+            </div>
+          </div>
+          
+          <!-- Actions -->
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <a href="/pages/clientes/index.html" class="btn btn-outline">Cancelar</a>
+            <button type="submit" class="btn btn-primary" id="btn-submit">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Guardar Cliente
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal para agregar -->
+  <div class="modal-overlay hidden" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Agregar</h2>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="modal-form">
+          <div class="form-group">
+            <label class="label">Nombre *</label>
+            <input type="text" id="modal-nombre" class="input" required>
+          </div>
+          <div class="form-group hidden" id="modal-ciudad-group">
+            <label class="label">Ciudad *</label>
+            <select id="modal-ciudad" class="input"></select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveModal()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="/js/api.js"></script>
+  <script src="/js/layout.js"></script>
+  <script>
+    requireAuth();
+    renderLayout('clientes');
+    
+    const clienteId = getUrlParam('id');
+    const isEdit = !!clienteId;
+    let modalType = '';
+    
+    if (isEdit) {
+      document.getElementById('page-title').textContent = 'Editar Cliente';
+      document.getElementById('breadcrumb-title').textContent = 'Editar Cliente';
+    }
+    
+    // Cargar catálogos
+    async function loadCatalogos() {
+      try {
+        const ciudades = await API.get('/catalogos/ciudades');
+        const selectCiudad = document.getElementById('ciudad_id');
+        const modalCiudad = document.getElementById('modal-ciudad');
+        
+        selectCiudad.innerHTML = '<option value="">Seleccionar...</option>';
+        modalCiudad.innerHTML = '<option value="">Seleccionar...</option>';
+        
+        ciudades.data.forEach(c => {
+          selectCiudad.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+          modalCiudad.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+        });
+      } catch (error) {
+        console.error('Error loading catalogos:', error);
+      }
+    }
+    
+    // Cargar colonias cuando cambia ciudad
+    document.getElementById('ciudad_id').addEventListener('change', async (e) => {
+      const ciudadId = e.target.value;
+      const selectColonia = document.getElementById('colonia_id');
+      
+      selectColonia.innerHTML = '<option value="">Seleccionar...</option>';
+      
+      if (ciudadId) {
+        try {
+          const colonias = await API.get(`/catalogos/colonias?ciudad_id=${ciudadId}`);
+          colonias.data.forEach(c => {
+            selectColonia.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+          });
+        } catch (error) {
+          console.error('Error loading colonias:', error);
+        }
+      }
+    });
+    
+    // Cargar cliente si es edición
+    async function loadCliente() {
+      if (!isEdit) return;
+      
+      try {
+        const data = await API.get(`/clientes/${clienteId}`);
+        const c = data.data;
+        
+        document.getElementById('nombre').value = c.nombre || '';
+        document.getElementById('apellido_paterno').value = c.apellido_paterno || '';
+        document.getElementById('apellido_materno').value = c.apellido_materno || '';
+        document.getElementById('telefono_principal').value = c.telefono_principal || '';
+        document.getElementById('telefono_secundario').value = c.telefono_secundario || '';
+        document.getElementById('email').value = c.email || '';
+        document.getElementById('calle').value = c.calle || '';
+        document.getElementById('numero_exterior').value = c.numero_exterior || '';
+        document.getElementById('numero_interior').value = c.numero_interior || '';
+        document.getElementById('codigo_postal').value = c.codigo_postal || '';
+        document.getElementById('referencias').value = c.referencias || '';
+        document.getElementById('notas').value = c.notas || '';
+        
+        if (c.ciudad_id) {
+          document.getElementById('ciudad_id').value = c.ciudad_id;
+          // Disparar cambio para cargar colonias
+          document.getElementById('ciudad_id').dispatchEvent(new Event('change'));
+          
+          // Esperar a que carguen las colonias
+          setTimeout(() => {
+            if (c.colonia_id) {
+              document.getElementById('colonia_id').value = c.colonia_id;
+            }
+          }, 500);
+        }
+      } catch (error) {
+        showToast('Error al cargar cliente', 'error');
+      }
+    }
+    
+    // Submit form
+    document.getElementById('cliente-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.innerHTML = 'Guardando...';
+      
+      const data = {
+        nombre: document.getElementById('nombre').value,
+        apellido_paterno: document.getElementById('apellido_paterno').value,
+        apellido_materno: document.getElementById('apellido_materno').value,
+        telefono_principal: document.getElementById('telefono_principal').value,
+        telefono_secundario: document.getElementById('telefono_secundario').value,
+        email: document.getElementById('email').value,
+        calle: document.getElementById('calle').value,
+        numero_exterior: document.getElementById('numero_exterior').value,
+        numero_interior: document.getElementById('numero_interior').value,
+        colonia_id: document.getElementById('colonia_id').value || null,
+        codigo_postal: document.getElementById('codigo_postal').value,
+        referencias: document.getElementById('referencias').value,
+        notas: document.getElementById('notas').value
+      };
+      
+      try {
+        if (isEdit) {
+          await API.put(`/clientes/${clienteId}`, data);
+          showToast('Cliente actualizado');
+        } else {
+          const result = await API.post('/clientes', data);
+          showToast('Cliente creado');
+          window.location.href = `/pages/clientes/detalle.html?id=${result.data.id}`;
+          return;
+        }
+        
+        window.location.href = `/pages/clientes/detalle.html?id=${clienteId}`;
+      } catch (error) {
+        showToast(error.message || 'Error al guardar', 'error');
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          </svg>
+          Guardar Cliente
+        `;
+      }
+    });
+    
+    // Modal functions
+    function openModal(type) {
+      modalType = type;
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal-nombre').value = '';
+      
+      if (type === 'ciudad') {
+        document.getElementById('modal-title').textContent = 'Agregar Ciudad';
+        document.getElementById('modal-ciudad-group').classList.add('hidden');
+      } else {
+        document.getElementById('modal-title').textContent = 'Agregar Colonia';
+        document.getElementById('modal-ciudad-group').classList.remove('hidden');
+      }
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
+    
+    async function saveModal() {
+      const nombre = document.getElementById('modal-nombre').value;
+      if (!nombre) {
+        showToast('Ingresa un nombre', 'error');
+        return;
+      }
+      
+      try {
+        if (modalType === 'ciudad') {
+          await API.post('/catalogos/ciudades', { nombre });
+          showToast('Ciudad agregada');
+          await loadCatalogos();
+        } else {
+          const ciudadId = document.getElementById('modal-ciudad').value;
+          if (!ciudadId) {
+            showToast('Selecciona una ciudad', 'error');
+            return;
+          }
+          await API.post('/catalogos/colonias', { nombre, ciudad_id: ciudadId });
+          showToast('Colonia agregada');
+          document.getElementById('ciudad_id').dispatchEvent(new Event('change'));
+        }
+        closeModal();
+      } catch (error) {
+        showToast(error.message || 'Error al guardar', 'error');
+      }
+    }
+    
+    // Inicializar
+    loadCatalogos().then(() => loadCliente());
+  </script>
+</body>
+</html>

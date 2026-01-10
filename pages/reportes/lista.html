@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reportes</h1>
+      <p class="page-subtitle">Análisis y métricas del negocio</p>
+    </div>
+  </div>
+
+  <div id="reportesContent">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('reportes');
+
+    if (!api.isAdmin()) {
+      document.getElementById('reportesContent').innerHTML = '<div class="card empty-state">No tienes permiso para ver reportes</div>';
+    } else {
+      loadReportes();
+    }
+
+    async function loadReportes() {
+      try {
+        const [dashboard, adeudos] = await Promise.all([
+          api.get('/reportes/dashboard'),
+          api.get('/reportes/clientes-adeudo?limite=10')
+        ]);
+
+        const d = dashboard.data;
+
+        document.getElementById('reportesContent').innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div>
+                <h3>Clientes Activos</h3>
+                <div class="value">${d.clientes?.activos || 0}</div>
+              </div>
+              <div class="stat-icon blue">👥</div>
+            </div>
+            <div class="stat-card">
+              <div>
+                <h3>Ingreso Mensual</h3>
+                <div class="value text-success">${utils.formatMoney(d.servicios?.ingreso_mensual)}</div>
+              </div>
+              <div class="stat-icon green">📈</div>
+            </div>
+            <div class="stat-card">
+              <div>
+                <h3>Cobrado Hoy</h3>
+                <div class="value">${utils.formatMoney(d.pagos_hoy?.monto)}</div>
+              </div>
+              <div class="stat-icon yellow">💵</div>
+            </div>
+            <div class="stat-card">
+              <div>
+                <h3>Adeudo Total</h3>
+                <div class="value text-error">${utils.formatMoney(d.adeudo_total)}</div>
+              </div>
+              <div class="stat-icon red">⚠️</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top: 24px;">
+            <h3 class="section-title">🔴 Clientes con Mayor Adeudo</h3>
+            <div class="table-container">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Teléfono</th>
+                    <th style="text-align: right;">Adeudo</th>
+                    <th>Meses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${adeudos.data.length > 0 ? adeudos.data.map(c => `
+                    <tr class="clickable" onclick="window.location.href='../clientes/detalle.html?id=${c.cliente_id}'">
+                      <td>
+                        <div style="font-weight: 500;">${c.nombre_completo}</div>
+                        <div style="font-size: 12px; color: var(--gray-400);">${c.numero_cliente}</div>
+                      </td>
+                      <td>${c.telefono}</td>
+                      <td style="text-align: right;" class="text-error font-semibold">${utils.formatMoney(c.adeudo_total)}</td>
+                      <td>
+                        <span class="badge ${c.meses_adeudo >= 3 ? 'badge-error' : c.meses_adeudo >= 2 ? 'badge-warning' : 'badge-info'}">
+                          ${c.meses_adeudo} mes(es)
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('') : '<tr><td colspan="4" class="empty-state">No hay adeudos</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid grid-2" style="margin-top: 24px;">
+            <div class="card">
+              <h3 class="section-title">📊 Resumen del Mes</h3>
+              <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--gray-100);">
+                <span class="text-gray">Pagos Recibidos</span>
+                <span class="font-semibold">${d.pagos_mes?.cantidad || 0}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--gray-100);">
+                <span class="text-gray">Monto Recaudado</span>
+                <span class="font-semibold text-success">${utils.formatMoney(d.pagos_mes?.monto)}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--gray-100);">
+                <span class="text-gray">Instalaciones Pendientes</span>
+                <span class="font-semibold">${d.instalaciones_pendientes || 0}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 12px 0;">
+                <span class="text-gray">Ingreso Proyectado</span>
+                <span class="font-semibold">${utils.formatMoney(d.servicios?.ingreso_mensual)}</span>
+              </div>
+            </div>
+            <div class="card">
+              <h3 class="section-title">💰 Últimos Pagos</h3>
+              ${d.ultimos_pagos?.length > 0 ? d.ultimos_pagos.map(p => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100);">
+                  <div>
+                    <div style="font-weight: 500; font-size: 14px;">${p.cliente}</div>
+                    <div style="font-size: 12px; color: var(--gray-400);">${p.numero_recibo}</div>
+                  </div>
+                  <span class="text-success font-semibold">${utils.formatMoney(p.monto_total)}</span>
+                </div>
+              `).join('') : '<p class="text-gray text-center">Sin pagos</p>'}
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        toast.error('Error al cargar reportes');
+      }
+    }
+  </script>
+</body>
+</html>

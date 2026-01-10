@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Cliente - Skynet ISP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/styles.css">
+</head>
+<body>
+  <div class="breadcrumb">
+    <a href="lista.html">Clientes</a>
+    <span>›</span>
+    <span>Editar Cliente</span>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Editar Cliente</h1>
+      <p class="page-subtitle" id="clienteInfo"></p>
+    </div>
+    <a href="lista.html" class="btn btn-outline">← Volver</a>
+  </div>
+
+  <form id="clienteForm">
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 class="section-title">👤 Datos Personales</h3>
+      <div class="grid grid-3">
+        <div class="form-group">
+          <label class="form-label">Nombre(s) *</label>
+          <input type="text" class="form-input" name="nombre" id="nombre" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido Paterno *</label>
+          <input type="text" class="form-input" name="apellido_paterno" id="apellido_paterno" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido Materno</label>
+          <input type="text" class="form-input" name="apellido_materno" id="apellido_materno">
+        </div>
+      </div>
+      <div class="grid grid-2" style="margin-top: 16px;">
+        <div class="form-group">
+          <label class="form-label">Estado del Cliente *</label>
+          <select class="form-select" name="estado_id" id="estado_id" required></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 class="section-title">📞 Información de Contacto</h3>
+      <div class="grid grid-3">
+        <div class="form-group">
+          <label class="form-label">Teléfono Principal *</label>
+          <input type="tel" class="form-input" name="telefono_principal" id="telefono_principal" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Teléfono Secundario</label>
+          <input type="tel" class="form-input" name="telefono_secundario" id="telefono_secundario">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" name="email" id="email">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 class="section-title">📍 Dirección</h3>
+      <div class="grid grid-4">
+        <div class="form-group" style="grid-column: span 2;">
+          <label class="form-label">Calle</label>
+          <input type="text" class="form-input" name="calle" id="calle">
+        </div>
+        <div class="form-group">
+          <label class="form-label">No. Exterior</label>
+          <input type="text" class="form-input" name="numero_exterior" id="numero_exterior">
+        </div>
+        <div class="form-group">
+          <label class="form-label">No. Interior</label>
+          <input type="text" class="form-input" name="numero_interior" id="numero_interior">
+        </div>
+      </div>
+      <div class="grid grid-3" style="margin-top: 16px;">
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <select class="form-select" id="ciudad_id" name="ciudad_id"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Colonia</label>
+          <select class="form-select" id="colonia_id" name="colonia_id"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Código Postal</label>
+          <input type="text" class="form-input" name="codigo_postal" id="codigo_postal">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top: 16px;">
+        <label class="form-label">Referencias</label>
+        <textarea class="form-input" name="referencias" id="referencias" rows="2"></textarea>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <h3 class="section-title">📝 Notas</h3>
+      <div class="form-group">
+        <textarea class="form-input" name="notas" id="notas" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+      <a href="lista.html" class="btn btn-outline">Cancelar</a>
+      <button type="submit" class="btn btn-primary" id="submitBtn">💾 Guardar Cambios</button>
+    </div>
+  </form>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/layout.js"></script>
+  <script>
+    initLayout('clientes');
+
+    if (!api.isAdmin()) {
+      toast.error('Sin permiso');
+      window.location.href = 'lista.html';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const clienteId = urlParams.get('id');
+
+    if (!clienteId) {
+      window.location.href = 'lista.html';
+    }
+
+    let cliente = null;
+
+    async function loadCatalogos() {
+      try {
+        const [estados, ciudades] = await Promise.all([
+          api.get('/catalogos/estados_cliente'),
+          api.get('/catalogos/ciudades')
+        ]);
+        
+        document.getElementById('estado_id').innerHTML = estados.data.map(e => 
+          `<option value="${e.id}">${e.nombre}</option>`
+        ).join('');
+        
+        document.getElementById('ciudad_id').innerHTML = '<option value="">Seleccionar...</option>' +
+          ciudades.data.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      } catch (e) {}
+    }
+
+    document.getElementById('ciudad_id').addEventListener('change', async (e) => {
+      const ciudadId = e.target.value;
+      const select = document.getElementById('colonia_id');
+      
+      if (!ciudadId) {
+        select.innerHTML = '<option value="">Seleccionar ciudad</option>';
+        return;
+      }
+
+      try {
+        const data = await api.get(`/catalogos/colonias?ciudad_id=${ciudadId}`);
+        select.innerHTML = '<option value="">Seleccionar...</option>' +
+          data.data.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+        
+        if (cliente?.colonia_id) {
+          select.value = cliente.colonia_id;
+        }
+      } catch (e) {}
+    });
+
+    async function loadCliente() {
+      try {
+        const data = await api.get(`/clientes/${clienteId}`);
+        cliente = data.data;
+        
+        document.getElementById('clienteInfo').textContent = `${cliente.numero_cliente} - ${cliente.nombre} ${cliente.apellido_paterno}`;
+        
+        document.getElementById('nombre').value = cliente.nombre || '';
+        document.getElementById('apellido_paterno').value = cliente.apellido_paterno || '';
+        document.getElementById('apellido_materno').value = cliente.apellido_materno || '';
+        document.getElementById('telefono_principal').value = cliente.telefono_principal || '';
+        document.getElementById('telefono_secundario').value = cliente.telefono_secundario || '';
+        document.getElementById('email').value = cliente.email || '';
+        document.getElementById('calle').value = cliente.calle || '';
+        document.getElementById('numero_exterior').value = cliente.numero_exterior || '';
+        document.getElementById('numero_interior').value = cliente.numero_interior || '';
+        document.getElementById('codigo_postal').value = cliente.codigo_postal || '';
+        document.getElementById('referencias').value = cliente.referencias || '';
+        document.getElementById('notas').value = cliente.notas || '';
+        document.getElementById('estado_id').value = cliente.estado_id || '';
+        
+        if (cliente.ciudad_id) {
+          document.getElementById('ciudad_id').value = cliente.ciudad_id;
+          document.getElementById('ciudad_id').dispatchEvent(new Event('change'));
+        }
+      } catch (e) {
+        toast.error('Error al cargar');
+        window.location.href = 'lista.html';
+      }
+    }
+
+    document.getElementById('clienteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      const formData = new FormData(e.target);
+      const data = {};
+      formData.forEach((v, k) => { if (v && k !== 'ciudad_id') data[k] = v; });
+
+      try {
+        await api.put(`/clientes/${clienteId}`, data);
+        toast.success('Cliente actualizado');
+        window.location.href = `detalle.html?id=${clienteId}`;
+      } catch (error) {
+        toast.error(error.message || 'Error al guardar');
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar Cambios';
+      }
+    });
+
+    loadCatalogos().then(loadCliente);
+  </script>
+</body>
+</html>
