@@ -443,35 +443,35 @@ const ClienteDetalleView = {
         }
     },
 
-    async guardarCliente() {
-        const form = $('#form-cliente');
-        const formData = new FormData(form);
-        const data = {};
+  async guardarCliente() {
+    const form = $('#form-cliente');
+    const formData = new FormData(form);
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        data[key] = value || null;
+    }
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
+
+    try {
+        const res = await API.post('/clientes', data);  // <-- CAMBIA AQUÍ
         
-        for (let [key, value] of formData.entries()) {
-            data[key] = value || null;
+        if (res.success) {
+            Components.toast.success('Cliente creado correctamente');
+            window.location.hash = `#/cliente/${res.data.id}`;
+        } else {
+            Components.toast.error(res.message || 'Error al guardar');
         }
-
-        const btn = form.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
-
-        try {
-            const res = await API.request('/clientes', 'POST', data);
-            
-            if (res.success) {
-                Components.toast.success('Cliente creado correctamente');
-                window.location.hash = `#/cliente/${res.data.id}`;
-            } else {
-                Components.toast.error(res.message || 'Error al guardar');
-            }
-        } catch (error) {
-            Components.toast.error(error.message || 'Error al guardar cliente');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = `${ICONS.save}<span>Guardar Cliente</span>`;
-        }
-    },
+    } catch (error) {
+        Components.toast.error(error.message || 'Error al guardar cliente');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${ICONS.save}<span>Guardar Cliente</span>`;
+    }
+},
 
     async cargarServicios() {
         // TODO: Cargar servicios del cliente
