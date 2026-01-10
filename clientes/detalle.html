@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet - Perfil del Cliente</title>
+  <title>Skynet - Detalle Cliente</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -19,610 +19,596 @@
       <div class="sidebar__logo"><span class="material-symbols-outlined">hub</span></div>
       <div class="sidebar__brand">
         <span class="sidebar__title">Skynet</span>
-        <span class="sidebar__subtitle">Gestión de ISP</span>
+        <span class="sidebar__subtitle">Gestión ISP</span>
       </div>
     </div>
     <nav class="sidebar__nav">
-      <a href="/skynet-frontend/dashboard/" class="sidebar__link">
-        <span class="material-symbols-outlined">dashboard</span><span>Panel Principal</span>
-      </a>
-      <a href="/skynet-frontend/clientes/" class="sidebar__link active">
-        <span class="material-symbols-outlined">group</span><span>Clientes</span>
-      </a>
-      <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">inventory_2</span><span>Inventario</span>
-      </a>
-      <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">payments</span><span>Facturación</span>
-      </a>
-      <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">support_agent</span><span>Soporte</span>
-      </a>
+      <a href="/skynet-frontend/dashboard/" class="sidebar__link"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></a>
+      <a href="/skynet-frontend/clientes/" class="sidebar__link active"><span class="material-symbols-outlined">group</span><span>Clientes</span></a>
+      <a href="#" class="sidebar__link"><span class="material-symbols-outlined">inventory_2</span><span>Inventario</span></a>
+      <a href="#" class="sidebar__link"><span class="material-symbols-outlined">payments</span><span>Facturación</span></a>
+      <a href="#" class="sidebar__link"><span class="material-symbols-outlined">support_agent</span><span>Soporte</span></a>
       <div class="sidebar__divider"></div>
-      <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">settings</span><span>Configuración</span>
-      </a>
-      <a href="#" class="sidebar__link" onclick="cerrarSesion(); return false;">
-        <span class="material-symbols-outlined">logout</span><span>Cerrar Sesión</span>
-      </a>
+      <a href="#" class="sidebar__link"><span class="material-symbols-outlined">settings</span><span>Configuración</span></a>
+      <a href="#" class="sidebar__link" onclick="cerrarSesion(); return false;"><span class="material-symbols-outlined">logout</span><span>Salir</span></a>
     </nav>
   </aside>
 
   <main class="app__main">
     <header class="header">
+      <button class="header__menu" onclick="toggleSidebar()"><span class="material-symbols-outlined">menu</span></button>
       <div class="header__search">
-        <span class="material-symbols-outlined header__search-icon">search</span>
-        <input type="text" class="header__search-input" placeholder="Buscar clientes...">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" placeholder="Buscar...">
       </div>
       <div class="header__actions">
         <button class="header__btn" onclick="toggleTheme()"><span class="material-symbols-outlined">dark_mode</span></button>
-        <button class="header__btn">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="header__btn-badge"></span>
-        </button>
-        <div class="header__divider"></div>
         <div class="header__user">
-          <div class="header__user-info">
-            <p class="header__user-name" id="usuarioNombre">Admin</p>
-            <p class="header__user-role" id="usuarioRol">Administrador</p>
-          </div>
           <div class="header__user-avatar" id="usuarioAvatar">A</div>
         </div>
       </div>
     </header>
 
-    <div class="app__content">
+    <div class="content">
+      <!-- Breadcrumb -->
       <nav class="breadcrumb">
-        <a href="/skynet-frontend/clientes/">Clientes Skynet</a>
-        <span class="material-symbols-outlined breadcrumb__separator">chevron_right</span>
-        <span class="breadcrumb__current">Detalle del Cliente</span>
+        <a href="/skynet-frontend/clientes/">Clientes</a>
+        <span class="material-symbols-outlined">chevron_right</span>
+        <span>Detalle</span>
       </nav>
 
-      <!-- Perfil - Modo Vista -->
-      <div class="profile-card" id="perfilVista">
-        <div class="profile-card__main">
-          <div class="profile-card__avatar" id="clienteAvatar">--</div>
-          <div class="profile-card__info">
-            <div class="profile-card__name">
+      <!-- Profile Header -->
+      <div class="profile" id="perfilVista">
+        <div class="profile__info">
+          <div class="profile__avatar" id="clienteAvatar">--</div>
+          <div class="profile__data">
+            <div class="profile__name">
               <h1 id="clienteNombre">Cargando...</h1>
-              <span class="profile-card__badge" id="clienteEstado">--</span>
+              <span class="badge" id="clienteEstado">--</span>
             </div>
-            <div class="profile-card__meta">
-              <span id="clienteEmail"><span class="material-symbols-outlined">mail</span> --</span>
-              <span id="clienteDireccion"><span class="material-symbols-outlined">location_on</span> --</span>
-            </div>
+            <p class="profile__meta" id="clienteMeta">
+              <span><span class="material-symbols-outlined">phone</span> <span id="clienteTelefono">--</span></span>
+              <span><span class="material-symbols-outlined">mail</span> <span id="clienteEmail">--</span></span>
+            </p>
+            <p class="profile__meta">
+              <span><span class="material-symbols-outlined">location_on</span> <span id="clienteDireccion">--</span></span>
+            </p>
           </div>
         </div>
-        <div class="profile-card__actions">
-          <button class="btn btn-success" onclick="abrirModalInstalacion()" id="btnInstalacion">
-            <span class="material-symbols-outlined">construction</span>Registrar Instalación
-          </button>
-          <button class="btn btn-primary" onclick="abrirModalPago()">
-            <span class="material-symbols-outlined">payments</span>Registrar Pago
-          </button>
-          <button class="btn btn-secondary" onclick="activarModoEdicion()">
-            <span class="material-symbols-outlined">edit</span>Editar Perfil
-          </button>
+        <div class="profile__actions">
+          <button class="btn btn--success" onclick="abrirModalPago()"><span class="material-symbols-outlined">payments</span>Registrar Pago</button>
+          <button class="btn btn--primary" onclick="abrirModalInstalacion()" id="btnInstalacion"><span class="material-symbols-outlined">construction</span>Instalación</button>
+          <button class="btn btn--secondary" onclick="activarModoEdicion()"><span class="material-symbols-outlined">edit</span>Editar</button>
         </div>
       </div>
 
-      <!-- Perfil - Modo Edición -->
-      <div class="profile-card profile-card--edit hidden" id="perfilEdicion">
-        <form id="formEdicion" style="width: 100%;">
-          <div class="edit-header">
-            <h2><span class="material-symbols-outlined">edit</span> Editando Cliente</h2>
-            <div class="edit-header__actions">
-              <button type="button" class="btn btn-secondary" onclick="cancelarEdicion()">
-                <span class="material-symbols-outlined">close</span>Cancelar
-              </button>
-              <button type="submit" class="btn btn-success" id="btnGuardarEdicion">
-                <span class="material-symbols-outlined">save</span>Guardar Cambios
-              </button>
-            </div>
+      <!-- Stats Cards -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--blue"><span class="material-symbols-outlined">price_check</span></div>
+          <div class="stat-card__content">
+            <span class="stat-card__label">Tarifa Mensual</span>
+            <span class="stat-card__value" id="tarifaMensual">$0.00</span>
+            <span class="stat-card__sub" id="planNombre">--</span>
           </div>
-          <div class="edit-grid">
-            <div class="edit-section">
-              <h4><span class="material-symbols-outlined">person</span> Datos Personales</h4>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-input" id="editNombre" required></div>
-                <div class="form-group"><label class="form-label">Apellido</label><input type="text" class="form-input" id="editApellido"></div>
-              </div>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Teléfono *</label><input type="tel" class="form-input" id="editTelefono" required></div>
-                <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="editEmail"></div>
-              </div>
-            </div>
-            <div class="edit-section">
-              <h4><span class="material-symbols-outlined">location_on</span> Dirección</h4>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Ciudad *</label><select class="form-select" id="editCiudad" required></select></div>
-                <div class="form-group"><label class="form-label">Colonia *</label><select class="form-select" id="editColonia" required></select></div>
-              </div>
-              <div class="form-group"><label class="form-label">Calle y Número *</label><input type="text" class="form-input" id="editDireccion" required></div>
-              <div class="form-group"><label class="form-label">Referencia</label><input type="text" class="form-input" id="editReferencia"></div>
-            </div>
-            <div class="edit-section">
-              <h4><span class="material-symbols-outlined">router</span> Servicio</h4>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Plan *</label><select class="form-select" id="editPlan" required></select></div>
-                <div class="form-group"><label class="form-label">Tarifa Mensual</label><input type="number" class="form-input" id="editTarifa" step="0.01"></div>
-              </div>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Día de Corte</label><input type="number" class="form-input" id="editDiaCorte" min="1" max="28" value="10"></div>
-                <div class="form-group">
-                  <label class="form-label">Estado</label>
-                  <select class="form-select" id="editEstado">
-                    <option value="activo">Activo</option>
-                    <option value="suspendido">Suspendido</option>
-                    <option value="cancelado">Cancelado</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <!-- Stats -->
-      <div class="detail-stats">
-        <div class="detail-stat">
-          <div class="detail-stat__header">
-            <span class="detail-stat__label">Tarifa Mensual</span>
-            <div class="detail-stat__icon detail-stat__icon--blue"><span class="material-symbols-outlined">price_check</span></div>
-          </div>
-          <p class="detail-stat__value" id="tarifaMensual">$0.00 <small>/mes</small></p>
-          <p class="detail-stat__sub" id="planNombre">Plan: --</p>
         </div>
-        <div class="detail-stat">
-          <div class="detail-stat__header">
-            <span class="detail-stat__label">Adeudo Total</span>
-            <div class="detail-stat__icon detail-stat__icon--red"><span class="material-symbols-outlined">warning</span></div>
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--red"><span class="material-symbols-outlined">warning</span></div>
+          <div class="stat-card__content">
+            <span class="stat-card__label">Adeudo Total</span>
+            <span class="stat-card__value" id="adeudoTotal">$0.00</span>
+            <span class="stat-card__sub" id="estadoCuenta">--</span>
           </div>
-          <p class="detail-stat__value" id="adeudoTotal">$0.00</p>
-          <p class="detail-stat__sub" id="estadoCuenta">Cuenta al corriente</p>
         </div>
-        <div class="detail-stat">
-          <div class="detail-stat__header">
-            <span class="detail-stat__label">Saldo a Favor</span>
-            <div class="detail-stat__icon detail-stat__icon--green"><span class="material-symbols-outlined">savings</span></div>
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--green"><span class="material-symbols-outlined">savings</span></div>
+          <div class="stat-card__content">
+            <span class="stat-card__label">Saldo a Favor</span>
+            <span class="stat-card__value" id="saldoFavor">$0.00</span>
+            <span class="stat-card__sub">Disponible</span>
           </div>
-          <p class="detail-stat__value" id="saldoFavor">$0.00</p>
-          <p class="detail-stat__sub">Disponible</p>
         </div>
-        <div class="detail-stat">
-          <div class="detail-stat__header">
-            <span class="detail-stat__label">Próximo Corte</span>
-            <div class="detail-stat__icon detail-stat__icon--amber"><span class="material-symbols-outlined">calendar_month</span></div>
+        <div class="stat-card">
+          <div class="stat-card__icon stat-card__icon--amber"><span class="material-symbols-outlined">calendar_month</span></div>
+          <div class="stat-card__content">
+            <span class="stat-card__label">Próximo Corte</span>
+            <span class="stat-card__value" id="proximoCorte">--</span>
+            <span class="stat-card__sub" id="diasRestantes">--</span>
           </div>
-          <p class="detail-stat__value" id="proximoCorte">--</p>
-          <p class="detail-stat__sub" id="diasRestantes">--</p>
         </div>
       </div>
 
       <!-- Tabs -->
-      <div class="detail-tabs">
-        <button class="detail-tabs__btn active" data-tab="cuenta">Estado de Cuenta</button>
-        <button class="detail-tabs__btn" data-tab="equipos">Equipos</button>
-        <button class="detail-tabs__btn" data-tab="documentos">Documentos</button>
+      <div class="tabs">
+        <button class="tabs__btn active" data-tab="mensualidades"><span class="material-symbols-outlined">calendar_today</span>Mensualidades</button>
+        <button class="tabs__btn" data-tab="cargos"><span class="material-symbols-outlined">receipt_long</span>Cargos</button>
+        <button class="tabs__btn" data-tab="equipos"><span class="material-symbols-outlined">router</span>Equipos</button>
+        <button class="tabs__btn" data-tab="pagos"><span class="material-symbols-outlined">history</span>Historial Pagos</button>
       </div>
 
-      <!-- Content Grid -->
-      <div class="detail-grid">
-        <div class="detail-grid__main">
-          <!-- Panel Estado de Cuenta -->
-          <div class="card detail-panel active" id="panel-cuenta">
-            <div class="card__header">
-              <div class="card__title"><span class="material-symbols-outlined">receipt_long</span>Cargos Pendientes</div>
-              <button class="btn btn-sm btn-primary" onclick="abrirModalPago()">
-                <span class="material-symbols-outlined">add</span>Registrar Pago
-              </button>
-            </div>
-            <div class="table-container">
-              <table class="table">
-                <thead><tr><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Pagado</th><th>Pendiente</th><th>Estado</th></tr></thead>
-                <tbody id="tablaCargos"><tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr></tbody>
-              </table>
-            </div>
-            
-            <div class="card__header" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-              <div class="card__title"><span class="material-symbols-outlined">history</span>Historial de Pagos</div>
-            </div>
-            <div class="card__body" id="listaPagos"><p class="text-center text-muted">Cargando...</p></div>
+      <!-- Tab: Mensualidades -->
+      <div class="tab-panel active" id="panel-mensualidades">
+        <div class="panel">
+          <div class="panel__header">
+            <h3><span class="material-symbols-outlined">calendar_today</span>Mensualidades</h3>
+            <button class="btn btn--sm btn--primary" onclick="abrirModalCargo()"><span class="material-symbols-outlined">add</span>Nuevo Cargo</button>
           </div>
-
-          <!-- Panel Equipos -->
-          <div class="card detail-panel" id="panel-equipos">
-            <div class="card__header">
-              <div class="card__title"><span class="material-symbols-outlined">router</span>Equipos Instalados</div>
-              <button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()">
-                <span class="material-symbols-outlined">add</span>Agregar Equipo
-              </button>
-            </div>
-            <div class="table-container">
-              <table class="table">
-                <thead><tr><th>Tipo</th><th>Marca / Modelo</th><th>MAC Address</th><th>No. Serie</th><th>Estado</th><th>Acciones</th></tr></thead>
-                <tbody id="tablaEquipos"><tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Panel Documentos -->
-          <div class="card detail-panel" id="panel-documentos">
-            <div class="card__header">
-              <div class="card__title"><span class="material-symbols-outlined">folder</span>Documentos</div>
-            </div>
-            <div class="card__body">
-              <div class="empty-state">
-                <span class="material-symbols-outlined">folder_open</span>
-                <p>Sin documentos adicionales</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="detail-grid__side">
-          <div class="card">
-            <div class="card__header">
-              <div class="card__title"><span class="material-symbols-outlined">badge</span>Identificación (INE)</div>
-            </div>
-            <div class="card__body">
-              <div class="ine-grid">
-                <div class="ine-item">
-                  <label>Frente</label>
-                  <div class="ine-box" id="ineFrente">
-                    <span class="material-symbols-outlined">cloud_upload</span>
-                    <span>Clic para subir</span>
-                  </div>
-                </div>
-                <div class="ine-item">
-                  <label>Reverso</label>
-                  <div class="ine-box" id="ineReverso">
-                    <span class="material-symbols-outlined">add_photo_alternate</span>
-                    <span>Subir Reverso</span>
-                    <small>PNG, JPG hasta 10MB</small>
-                  </div>
-                </div>
-              </div>
-              <button class="btn btn-secondary" style="width: 100%; margin-top: 16px;">
-                <span class="material-symbols-outlined">download</span>Descargar Documentos
-              </button>
-            </div>
-          </div>
-
-          <div class="card support-card">
-            <div class="card__header" style="border: none;">
-              <div class="card__title" style="color: white;"><span class="material-symbols-outlined">help</span>Soporte Skynet</div>
-            </div>
-            <div class="card__body">
-              <div class="support-info">
-                <p><strong>Teléfono:</strong> <span id="clienteTelefono">--</span></p>
-                <p><strong>Tel. 2:</strong> <span id="clienteTelefono2">--</span></p>
-              </div>
-              <button class="btn btn-secondary" style="width: 100%; background: rgba(255,255,255,0.1); border: none;" id="btnWhatsApp">
-                <span class="material-symbols-outlined">chat</span>Enviar WhatsApp
-              </button>
-            </div>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Periodo</th>
+                  <th>Concepto</th>
+                  <th>Vencimiento</th>
+                  <th>Monto</th>
+                  <th>Pagado</th>
+                  <th>Pendiente</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tablaMensualidades">
+                <tr><td colspan="7" class="empty">Cargando...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
+      <!-- Tab: Cargos -->
+      <div class="tab-panel" id="panel-cargos">
+        <div class="panel">
+          <div class="panel__header">
+            <h3><span class="material-symbols-outlined">receipt_long</span>Todos los Cargos</h3>
+            <div class="panel__summary">
+              <span>Total: <strong id="cargosTotalMonto">$0.00</strong></span>
+              <span>Pagado: <strong id="cargosTotalPagado" class="text-success">$0.00</strong></span>
+              <span>Pendiente: <strong id="cargosTotalPendiente" class="text-danger">$0.00</strong></span>
+            </div>
+          </div>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Concepto</th>
+                  <th>Vencimiento</th>
+                  <th>Monto</th>
+                  <th>Pagado</th>
+                  <th>Pendiente</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tablaCargos">
+                <tr><td colspan="7" class="empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Equipos -->
+      <div class="tab-panel" id="panel-equipos">
+        <div class="panel">
+          <div class="panel__header">
+            <h3><span class="material-symbols-outlined">router</span>Equipos Instalados</h3>
+            <button class="btn btn--sm btn--primary" onclick="abrirModalEquipo()"><span class="material-symbols-outlined">add</span>Agregar</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Marca / Modelo</th>
+                  <th>MAC</th>
+                  <th>Serie</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tablaEquipos">
+                <tr><td colspan="6" class="empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Historial Pagos -->
+      <div class="tab-panel" id="panel-pagos">
+        <div class="panel">
+          <div class="panel__header">
+            <h3><span class="material-symbols-outlined">history</span>Historial de Pagos</h3>
+          </div>
+          <div class="pagos-lista" id="listaPagos">
+            <p class="empty">Cargando...</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 </div>
 
-<!-- Modal Registrar Pago -->
+<!-- Modal: Registrar Pago -->
 <div class="modal-overlay" id="modalPago">
-  <div class="modal" style="max-width: 600px;">
+  <div class="modal">
     <div class="modal__header">
-      <h3 class="modal__title"><span class="material-symbols-outlined">payments</span> Registrar Pago</h3>
-      <button class="modal__close" onclick="cerrarModalPago()"><span class="material-symbols-outlined">close</span></button>
+      <h3><span class="material-symbols-outlined">payments</span>Registrar Pago</h3>
+      <button class="modal__close" onclick="cerrarModal('modalPago')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <!-- Resumen de adeudo -->
       <div class="pago-resumen">
         <div class="pago-resumen__item">
-          <span>Adeudo Total:</span>
-          <strong id="pagoAdeudoTotal">$0.00</strong>
+          <span>Adeudo:</span>
+          <strong id="pagoAdeudo">$0.00</strong>
         </div>
         <div class="pago-resumen__item">
           <span>Saldo a Favor:</span>
-          <strong id="pagoSaldoFavor" style="color: var(--success);">$0.00</strong>
+          <strong id="pagoSaldoFavor" class="text-success">$0.00</strong>
         </div>
       </div>
-      
       <form id="formPago">
         <div class="form-row">
-          <div class="form-group" style="flex: 2;">
-            <label class="form-label">Monto a Pagar *</label>
-            <input type="number" class="form-input" id="pagoMonto" step="0.01" min="0.01" required placeholder="0.00" style="font-size: 24px; font-weight: 700; text-align: center;">
+          <div class="form-group form-group--large">
+            <label>Monto a Pagar *</label>
+            <input type="number" id="pagoMonto" class="input input--big" step="0.01" min="0.01" required placeholder="0.00">
           </div>
-          <div class="form-group" style="flex: 1;">
-            <label class="form-label">Método *</label>
-            <div style="display: flex; gap: 8px;">
-              <select class="form-select" id="pagoMetodo" required style="flex: 1;">
-                <option value="">Seleccionar...</option>
-              </select>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalMetodoPago()" title="Agregar método">
-                <span class="material-symbols-outlined">add</span>
-              </button>
-            </div>
+          <div class="form-group">
+            <label>Método *</label>
+            <select id="pagoMetodo" class="select" required></select>
           </div>
         </div>
-        
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Referencia / Folio</label>
-            <input type="text" class="form-input" id="pagoReferencia" placeholder="Número de operación">
+            <label>Referencia</label>
+            <input type="text" id="pagoReferencia" class="input" placeholder="Folio/No. operación">
           </div>
           <div class="form-group">
-            <label class="form-label">Banco</label>
-            <input type="text" class="form-input" id="pagoBanco" placeholder="Nombre del banco">
+            <label>Banco</label>
+            <input type="text" id="pagoBanco" class="input" placeholder="Nombre del banco">
           </div>
         </div>
-        
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">¿Quién Paga?</label>
-            <input type="text" class="form-input" id="pagoQuienPaga" placeholder="Nombre de quien realiza el pago">
+            <label>¿Quién Paga?</label>
+            <input type="text" id="pagoQuienPaga" class="input" placeholder="Nombre">
           </div>
           <div class="form-group">
-            <label class="form-label">Teléfono</label>
-            <input type="tel" class="form-input" id="pagoTelQuienPaga" placeholder="Teléfono de contacto">
+            <label>Teléfono</label>
+            <input type="tel" id="pagoTelefono" class="input" placeholder="Teléfono">
           </div>
         </div>
-        
         <div class="form-group">
-          <label class="form-label">Comprobante de Pago</label>
-          <div class="comprobante-upload" id="comprobanteUpload" onclick="seleccionarComprobante()">
-            <span class="material-symbols-outlined">cloud_upload</span>
-            <span>Clic para subir comprobante</span>
-            <small>PNG, JPG, PDF hasta 5MB</small>
-          </div>
-          <input type="file" id="comprobanteInput" accept="image/*,.pdf" style="display: none;">
+          <label>Observaciones</label>
+          <textarea id="pagoObservaciones" class="input" rows="2" placeholder="Notas..."></textarea>
         </div>
-        
         <div class="form-group">
-          <label class="form-label">Observaciones</label>
-          <textarea class="form-input" id="pagoObservaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+          <label class="checkbox-label">
+            <input type="checkbox" id="pagoUsarSaldo">
+            <span>Usar saldo a favor disponible</span>
+          </label>
         </div>
       </form>
     </div>
     <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalPago()">Cancelar</button>
-      <button type="button" class="btn btn-success" id="btnGuardarPago" onclick="guardarPago()">
-        <span class="material-symbols-outlined">check</span>Registrar Pago
-      </button>
+      <button class="btn btn--secondary" onclick="cerrarModal('modalPago')">Cancelar</button>
+      <button class="btn btn--success" id="btnGuardarPago" onclick="guardarPago()"><span class="material-symbols-outlined">check</span>Registrar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Agregar Método de Pago -->
-<div class="modal-overlay" id="modalMetodoPago">
-  <div class="modal" style="max-width: 400px;">
+<!-- Modal: Ver/Editar Pago -->
+<div class="modal-overlay" id="modalVerPago">
+  <div class="modal">
     <div class="modal__header">
-      <h3 class="modal__title">Agregar Método de Pago</h3>
-      <button class="modal__close" onclick="cerrarModalMetodoPago()"><span class="material-symbols-outlined">close</span></button>
+      <h3><span class="material-symbols-outlined">receipt</span>Detalle del Pago</h3>
+      <button class="modal__close" onclick="cerrarModal('modalVerPago')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div class="form-group">
-        <label class="form-label">Nombre del Método *</label>
-        <input type="text" class="form-input" id="nuevoMetodoNombre" placeholder="Ej. Efectivo, Transferencia, OXXO">
+      <input type="hidden" id="verPagoId">
+      <div class="pago-detalle">
+        <div class="pago-detalle__monto">
+          <span>Monto</span>
+          <strong id="verPagoMonto">$0.00</strong>
+        </div>
+        <div class="pago-detalle__info">
+          <p><strong>Fecha:</strong> <span id="verPagoFecha">--</span></p>
+          <p><strong>Método:</strong> <span id="verPagoMetodo">--</span></p>
+          <p><strong>Estado:</strong> <span id="verPagoEstado">--</span></p>
+          <p><strong>Aplicado a:</strong> <span id="verPagoAplicado">--</span></p>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">¿Requiere Referencia?</label>
-        <select class="form-select" id="nuevoMetodoReferencia">
-          <option value="0">No</option>
-          <option value="1">Sí</option>
-        </select>
+      <form id="formEditarPago">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Referencia</label>
+            <input type="text" id="editPagoReferencia" class="input">
+          </div>
+          <div class="form-group">
+            <label>Banco</label>
+            <input type="text" id="editPagoBanco" class="input">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>¿Quién Pagó?</label>
+            <input type="text" id="editPagoQuienPaga" class="input">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="editPagoTelefono" class="input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observaciones</label>
+          <textarea id="editPagoObservaciones" class="input" rows="2"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--danger" onclick="cancelarPago()" id="btnCancelarPago"><span class="material-symbols-outlined">block</span>Cancelar Pago</button>
+      <button class="btn btn--secondary" onclick="cerrarModal('modalVerPago')">Cerrar</button>
+      <button class="btn btn--primary" onclick="actualizarPago()" id="btnActualizarPago"><span class="material-symbols-outlined">save</span>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Cancelar Pago -->
+<div class="modal-overlay" id="modalCancelarPago">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h3><span class="material-symbols-outlined">warning</span>Cancelar Pago</h3>
+      <button class="modal__close" onclick="cerrarModal('modalCancelarPago')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <p class="text-center">¿Estás seguro de cancelar este pago?</p>
+      <p class="text-center text-muted">El monto se agregará al saldo a favor del cliente.</p>
+      <div class="form-group" style="margin-top: 16px;">
+        <label>Motivo de cancelación</label>
+        <textarea id="motivoCancelacion" class="input" rows="2" placeholder="Escribe el motivo..."></textarea>
       </div>
     </div>
     <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalMetodoPago()">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="btnGuardarMetodoPago" onclick="guardarMetodoPago()">Guardar</button>
+      <button class="btn btn--secondary" onclick="cerrarModal('modalCancelarPago')">No, volver</button>
+      <button class="btn btn--danger" onclick="confirmarCancelarPago()"><span class="material-symbols-outlined">check</span>Sí, cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Agregar/Editar Equipo -->
+<!-- Modal: Agregar Equipo -->
 <div class="modal-overlay" id="modalEquipo">
-  <div class="modal" style="max-width: 600px;">
+  <div class="modal">
     <div class="modal__header">
-      <h3 class="modal__title" id="modalEquipoTitulo">Agregar Equipo</h3>
-      <button class="modal__close" onclick="cerrarModalEquipo()"><span class="material-symbols-outlined">close</span></button>
+      <h3 id="modalEquipoTitulo"><span class="material-symbols-outlined">router</span>Agregar Equipo</h3>
+      <button class="modal__close" onclick="cerrarModal('modalEquipo')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
       <form id="formEquipo">
         <input type="hidden" id="equipoId">
-        
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Tipo de Equipo *</label>
-            <div style="display: flex; gap: 8px;">
-              <select class="form-select" id="equipoTipo" required style="flex: 1;"><option value="">Cargando...</option></select>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalTipoEquipo()" title="Agregar tipo"><span class="material-symbols-outlined">add</span></button>
-            </div>
+            <label>Tipo *</label>
+            <select id="equipoTipo" class="select" required></select>
           </div>
           <div class="form-group">
-            <label class="form-label">Marca</label>
-            <input type="text" class="form-input" id="equipoMarca" placeholder="Ej. TP-Link, Huawei">
+            <label>Marca</label>
+            <input type="text" id="equipoMarca" class="input" placeholder="TP-Link, Huawei...">
           </div>
         </div>
-        
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Modelo</label><input type="text" class="form-input" id="equipoModelo" placeholder="Ej. HG8145V5"></div>
-          <div class="form-group"><label class="form-label">No. de Serie</label><input type="text" class="form-input" id="equipoSerial" placeholder="Número de serie"></div>
-        </div>
-        
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">MAC Address</label><input type="text" class="form-input" id="equipoMac" placeholder="XX:XX:XX:XX:XX:XX" style="text-transform: uppercase;"></div>
-          <div class="form-group"><label class="form-label">Dirección IP</label><input type="text" class="form-input" id="equipoIp" placeholder="192.168.1.1"></div>
-        </div>
-        
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Estado *</label>
-            <div style="display: flex; gap: 8px;">
-              <select class="form-select" id="equipoEstado" required style="flex: 1;"><option value="">Cargando...</option></select>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalEstadoEquipo()" title="Agregar estado"><span class="material-symbols-outlined">add</span></button>
-            </div>
+            <label>Modelo</label>
+            <input type="text" id="equipoModelo" class="input" placeholder="HG8145V5">
           </div>
-          <div class="form-group"><label class="form-label">Fecha Instalación</label><input type="date" class="form-input" id="equipoFechaInstalacion"></div>
+          <div class="form-group">
+            <label>No. Serie</label>
+            <input type="text" id="equipoSerie" class="input" placeholder="Serie">
+          </div>
         </div>
-        
-        <div class="form-group"><label class="form-label">Ubicación / Notas</label><input type="text" class="form-input" id="equipoNotas" placeholder="Ej. Instalado en sala, poste #45"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>MAC Address</label>
+            <input type="text" id="equipoMac" class="input" placeholder="XX:XX:XX:XX:XX:XX" style="text-transform: uppercase;">
+          </div>
+          <div class="form-group">
+            <label>IP</label>
+            <input type="text" id="equipoIp" class="input" placeholder="192.168.1.1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Estado *</label>
+            <select id="equipoEstado" class="select" required></select>
+          </div>
+          <div class="form-group">
+            <label>Fecha Instalación</label>
+            <input type="date" id="equipoFecha" class="input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <input type="text" id="equipoNotas" class="input" placeholder="Ubicación, observaciones...">
+        </div>
       </form>
     </div>
     <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalEquipo()">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="btnGuardarEquipo" onclick="guardarEquipo()"><span class="material-symbols-outlined">save</span>Guardar Equipo</button>
+      <button class="btn btn--secondary" onclick="cerrarModal('modalEquipo')">Cancelar</button>
+      <button class="btn btn--primary" onclick="guardarEquipo()"><span class="material-symbols-outlined">save</span>Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Confirmar Eliminación -->
-<div class="modal-overlay" id="modalConfirmarEliminar">
-  <div class="modal" style="max-width: 400px;">
+<!-- Modal: Nuevo Cargo -->
+<div class="modal-overlay" id="modalCargo">
+  <div class="modal modal--sm">
     <div class="modal__header">
-      <h3 class="modal__title">Confirmar Eliminación</h3>
-      <button class="modal__close" onclick="cerrarModalConfirmar()"><span class="material-symbols-outlined">close</span></button>
+      <h3><span class="material-symbols-outlined">add_circle</span>Nuevo Cargo</h3>
+      <button class="modal__close" onclick="cerrarModal('modalCargo')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div style="text-align: center; padding: 20px 0;">
-        <span class="material-symbols-outlined" style="font-size: 48px; color: var(--danger); margin-bottom: 16px;">warning</span>
-        <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">¿Estás seguro de eliminar este equipo?</p>
-        <p style="font-size: 14px; color: var(--text-muted);">Esta acción no se puede deshacer.</p>
-      </div>
+      <form id="formCargo">
+        <div class="form-group">
+          <label>Concepto *</label>
+          <input type="text" id="cargoConcepto" class="input" placeholder="Ej. Reconexión, Cargo extra..." required>
+        </div>
+        <div class="form-group">
+          <label>Monto *</label>
+          <input type="number" id="cargoMonto" class="input" step="0.01" min="0.01" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Fecha Vencimiento</label>
+          <input type="date" id="cargoFecha" class="input">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea id="cargoDescripcion" class="input" rows="2" placeholder="Detalles..."></textarea>
+        </div>
+      </form>
     </div>
     <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalConfirmar()">Cancelar</button>
-      <button type="button" class="btn btn-danger" id="btnConfirmarEliminar" onclick="confirmarEliminarEquipo()"><span class="material-symbols-outlined">delete</span>Eliminar</button>
+      <button class="btn btn--secondary" onclick="cerrarModal('modalCargo')">Cancelar</button>
+      <button class="btn btn--primary" onclick="guardarCargo()"><span class="material-symbols-outlined">save</span>Crear</button>
     </div>
   </div>
 </div>
 
-<!-- Modal Agregar Tipo de Equipo -->
-<div class="modal-overlay" id="modalTipoEquipo">
-  <div class="modal" style="max-width: 400px;">
-    <div class="modal__header">
-      <h3 class="modal__title">Agregar Tipo de Equipo</h3>
-      <button class="modal__close" onclick="cerrarModalTipoEquipo()"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="modal__body">
-      <div class="form-group"><label class="form-label">Nombre del Tipo *</label><input type="text" class="form-input" id="nuevoTipoNombre" placeholder="Ej. Router, ONT, Antena"></div>
-      <div class="form-group"><label class="form-label">Descripción</label><input type="text" class="form-input" id="nuevoTipoDescripcion" placeholder="Descripción opcional"></div>
-    </div>
-    <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalTipoEquipo()">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="btnGuardarTipoEquipo" onclick="guardarTipoEquipo()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Agregar Estado de Equipo -->
-<div class="modal-overlay" id="modalEstadoEquipo">
-  <div class="modal" style="max-width: 400px;">
-    <div class="modal__header">
-      <h3 class="modal__title">Agregar Estado de Equipo</h3>
-      <button class="modal__close" onclick="cerrarModalEstadoEquipo()"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <div class="modal__body">
-      <div class="form-group"><label class="form-label">Nombre del Estado *</label><input type="text" class="form-input" id="nuevoEstadoNombre" placeholder="Ej. Activo, En Reparación"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Color</label><input type="color" class="form-input" id="nuevoEstadoColor" value="#64748b" style="height: 44px; padding: 4px;"></div>
-        <div class="form-group"><label class="form-label">¿Es Operativo?</label><select class="form-select" id="nuevoEstadoOperativo"><option value="1">Sí</option><option value="0">No</option></select></div>
-      </div>
-    </div>
-    <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalEstadoEquipo()">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="btnGuardarEstadoEquipo" onclick="guardarEstadoEquipo()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Registrar Instalación -->
+<!-- Modal: Instalación -->
 <div class="modal-overlay" id="modalInstalacion">
-  <div class="modal" style="max-width: 700px;">
+  <div class="modal modal--lg">
     <div class="modal__header">
-      <h3 class="modal__title"><span class="material-symbols-outlined">construction</span> Registrar Instalación</h3>
-      <button class="modal__close" onclick="cerrarModalInstalacion()"><span class="material-symbols-outlined">close</span></button>
+      <h3><span class="material-symbols-outlined">construction</span>Registrar Instalación</h3>
+      <button class="modal__close" onclick="cerrarModal('modalInstalacion')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
       <form id="formInstalacion">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Fecha de Instalación *</label>
-            <input type="date" class="form-input" id="instFechaInstalacion" required>
+            <label>Fecha Instalación *</label>
+            <input type="date" id="instFecha" class="input" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Día de Corte *</label>
-            <input type="number" class="form-input" id="instDiaCorte" value="10" min="1" max="28" required>
+            <label>Día de Corte *</label>
+            <input type="number" id="instDiaCorte" class="input" value="10" min="1" max="28" required>
           </div>
         </div>
-        
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Plan *</label>
-            <select class="form-select" id="instPlan" required></select>
+            <label>Plan *</label>
+            <select id="instPlan" class="select" required></select>
           </div>
           <div class="form-group">
-            <label class="form-label">Tarifa Mensual *</label>
-            <input type="number" class="form-input" id="instTarifa" step="0.01" required>
+            <label>Tarifa Mensual *</label>
+            <input type="number" id="instTarifa" class="input" step="0.01" required>
           </div>
         </div>
-        
-        <div class="form-group">
-          <label class="form-label">Costo de Instalación</label>
-          <input type="number" class="form-input" id="instCostoInstalacion" step="0.01" value="0" placeholder="0.00">
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Técnico Instalador</label>
-          <input type="text" class="form-input" id="instTecnico" placeholder="Nombre del técnico">
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Notas de Instalación</label>
-          <textarea class="form-input" id="instNotas" rows="2" placeholder="Observaciones..."></textarea>
-        </div>
-        
-        <!-- Equipos a instalar -->
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <label class="form-label" style="margin: 0;">Equipos a Instalar</label>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="agregarEquipoInstalacion()">
-              <span class="material-symbols-outlined">add</span>Agregar
-            </button>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Costo Instalación</label>
+            <input type="number" id="instCosto" class="input" step="0.01" value="0">
           </div>
-          <div id="equiposInstalacion"></div>
+          <div class="form-group">
+            <label>Técnico</label>
+            <input type="text" id="instTecnico" class="input" placeholder="Nombre">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="instNotas" class="input" rows="2"></textarea>
         </div>
       </form>
-      
-      <!-- Preview de cargos -->
-      <div id="previewCargos" style="display: none; margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius-md);">
-        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-secondary);">
-          <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">receipt</span>
-          Cargos que se generarán:
-        </h4>
-        <div id="listaCargosPreview"></div>
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-          <strong>Total a Pagar:</strong>
-          <strong id="totalCargosPreview" style="color: var(--accent-primary);">$0.00</strong>
+      <div id="instPreview" class="preview-cargos" style="display:none;">
+        <h4><span class="material-symbols-outlined">receipt</span>Cargos a generar:</h4>
+        <div id="instCargosLista"></div>
+        <div class="preview-cargos__total">
+          <span>Total:</span>
+          <strong id="instCargosTotal">$0.00</strong>
         </div>
       </div>
     </div>
     <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModalInstalacion()">Cancelar</button>
-      <button type="button" class="btn btn-secondary" onclick="calcularCargosInstalacion()">
-        <span class="material-symbols-outlined">calculate</span>Calcular Cargos
-      </button>
-      <button type="button" class="btn btn-success" id="btnConfirmarInstalacion" onclick="confirmarInstalacion()">
-        <span class="material-symbols-outlined">check</span>Confirmar Instalación
-      </button>
+      <button class="btn btn--secondary" onclick="cerrarModal('modalInstalacion')">Cancelar</button>
+      <button class="btn btn--secondary" onclick="calcularCargosInstalacion()"><span class="material-symbols-outlined">calculate</span>Calcular</button>
+      <button class="btn btn--success" onclick="confirmarInstalacion()"><span class="material-symbols-outlined">check</span>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Cliente -->
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal modal--lg">
+    <div class="modal__header">
+      <h3><span class="material-symbols-outlined">edit</span>Editar Cliente</h3>
+      <button class="modal__close" onclick="cerrarModal('modalEditar')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <form id="formEditar">
+        <div class="form-section">
+          <h4>Datos Personales</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Nombre *</label><input type="text" id="editNombre" class="input" required></div>
+            <div class="form-group"><label>Apellido</label><input type="text" id="editApellido" class="input"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Teléfono *</label><input type="tel" id="editTelefono" class="input" required></div>
+            <div class="form-group"><label>Email</label><input type="email" id="editEmail" class="input"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <h4>Dirección</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Ciudad</label><select id="editCiudad" class="select"></select></div>
+            <div class="form-group"><label>Colonia</label><select id="editColonia" class="select"></select></div>
+          </div>
+          <div class="form-group"><label>Dirección</label><input type="text" id="editDireccion" class="input"></div>
+          <div class="form-group"><label>Referencia</label><input type="text" id="editReferencia" class="input"></div>
+        </div>
+        <div class="form-section">
+          <h4>Servicio</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Plan</label><select id="editPlan" class="select"></select></div>
+            <div class="form-group"><label>Tarifa</label><input type="number" id="editTarifa" class="input" step="0.01"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Día Corte</label><input type="number" id="editDiaCorte" class="input" min="1" max="28"></div>
+            <div class="form-group">
+              <label>Estado</label>
+              <select id="editEstado" class="select">
+                <option value="activo">Activo</option>
+                <option value="suspendido">Suspendido</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--secondary" onclick="cerrarModal('modalEditar')">Cancelar</button>
+      <button class="btn btn--success" onclick="guardarEdicion()"><span class="material-symbols-outlined">save</span>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Confirmar Eliminar -->
+<div class="modal-overlay" id="modalEliminar">
+  <div class="modal modal--sm">
+    <div class="modal__header">
+      <h3><span class="material-symbols-outlined">warning</span>Confirmar</h3>
+      <button class="modal__close" onclick="cerrarModal('modalEliminar')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body text-center">
+      <span class="material-symbols-outlined" style="font-size:48px;color:var(--danger);">delete_forever</span>
+      <p>¿Eliminar este equipo?</p>
+      <p class="text-muted">Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--secondary" onclick="cerrarModal('modalEliminar')">Cancelar</button>
+      <button class="btn btn--danger" onclick="confirmarEliminarEquipo()"><span class="material-symbols-outlined">delete</span>Eliminar</button>
     </div>
   </div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
-
 <script src="../js/auth.js"></script>
 <script src="detalle.js"></script>
 </body>
