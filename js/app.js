@@ -22,18 +22,19 @@ const App = {
             requiresAuth: true,
             layout: 'app'
         },
-     '/cliente/:id': {
-    view: ClienteDetalleView,
-    title: 'Detalle Cliente',
-    requiresAuth: true,
-    layout: 'app'
-},
-'/cliente/:id/editar': {
-    view: ClienteDetalleView,
-    title: 'Editar Cliente',
-    requiresAuth: true,
-    layout: 'app'
-},
+        '/cliente/:id/editar': {
+            view: ClienteDetalleView,
+            title: 'Editar Cliente',
+            requiresAuth: true,
+            layout: 'app'
+        },
+        '/cliente/:id': {
+            view: ClienteDetalleView,
+            title: 'Detalle Cliente',
+            requiresAuth: true,
+            layout: 'app'
+        }
+    },
     
     // ============================================
     // INITIALIZATION
