@@ -984,7 +984,7 @@ guardarEquipo = async function() {
 
 async function calcularCargosInstalacion() {
   const fechaInstalacion = document.getElementById('instFechaInstalacion').value;
-  const diaCorte = parseInt(document.getElementById('instDiaCorte').value);
+  const diaCorte = parseInt(document.getElementById('instDiaCorte').value) || 10;
   const tarifa = parseFloat(document.getElementById('instTarifa').value);
   const costoInstalacion = parseFloat(document.getElementById('instCostoInstalacion').value) || 0;
   
@@ -993,25 +993,48 @@ async function calcularCargosInstalacion() {
     return;
   }
   
-  try {
-    const data = await fetchPost('/api/instalaciones/calcular', {
-      cliente_id: clienteActual.id,
-      fecha_instalacion: fechaInstalacion,
-      dia_corte: diaCorte,
-      tarifa_mensual: tarifa,
-      costo_instalacion: costoInstalacion
+  // Calcular localmente
+  const fechaInst = new Date(fechaInstalacion + 'T12:00:00');
+  const diaInstalacion = fechaInst.getDate();
+  const cargos = [];
+  
+  // Prorrateo si aplica
+  if (diaInstalacion < diaCorte) {
+    const diasProrrateo = diaCorte - diaInstalacion;
+    const montoProrrateo = (tarifa / 30) * diasProrrateo;
+    cargos.push({
+      concepto: 'Prorrateo',
+      descripcion: `${diasProrrateo} días (del ${diaInstalacion} al ${diaCorte})`,
+      monto: montoProrrateo
     });
-    
-    if (data.ok) {
-      cargosCalculados = data.cargos;
-      mostrarPreviewCargos(data.cargos);
-    } else {
-      toastError(data.mensaje || 'Error al calcular');
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    toastError('Error al calcular cargos');
+  } else if (diaInstalacion > diaCorte) {
+    const diasProrrateo = (30 - diaInstalacion) + diaCorte;
+    const montoProrrateo = (tarifa / 30) * diasProrrateo;
+    cargos.push({
+      concepto: 'Prorrateo',
+      descripcion: `${diasProrrateo} días hasta próximo corte`,
+      monto: montoProrrateo
+    });
   }
+  
+  // Costo de instalación
+  if (costoInstalacion > 0) {
+    cargos.push({
+      concepto: 'Instalación',
+      descripcion: 'Costo único de instalación',
+      monto: costoInstalacion
+    });
+  }
+  
+  // Primera mensualidad
+  cargos.push({
+    concepto: 'Mensualidad',
+    descripcion: 'Primera mensualidad completa',
+    monto: tarifa
+  });
+  
+  cargosCalculados = cargos;
+  mostrarPreviewCargos(cargos);
 }
 
 function mostrarPreviewCargos(cargos) {
@@ -1059,8 +1082,7 @@ async function confirmarInstalacion() {
   btnLoading(btn, true);
   
   try {
-    const data = await fetchPost('/api/instalaciones', {
-      cliente_id: clienteActual.id,
+    const data = await fetchPost(`/api/clientes/${clienteActual.id}/instalacion`, {
       fecha_instalacion: fechaInstalacion,
       dia_corte: diaCorte,
       plan_id: planId,

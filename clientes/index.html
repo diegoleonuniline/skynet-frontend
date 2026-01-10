@@ -207,10 +207,59 @@
             </div>
           </div>
         </div>
+        
+        <!-- Sección Instalación (solo para nuevos clientes) -->
+        <div class="card mt-4" style="background: var(--bg-secondary);" id="seccionInstalacion">
+          <div class="card__header" style="border-color: var(--border-color);">
+            <div class="card__title"><span class="material-symbols-outlined">construction</span>Datos de Instalación</div>
+          </div>
+          <div class="card__body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Fecha de Instalación *</label>
+                <input type="date" class="form-input" id="fechaInstalacion" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Día de Corte *</label>
+                <input type="number" class="form-input" id="diaCorte" value="10" min="1" max="28" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Costo de Instalación</label>
+                <input type="number" class="form-input" id="costoInstalacion" value="0" step="0.01" placeholder="0.00">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Técnico Instalador</label>
+                <input type="text" class="form-input" id="tecnicoInstalador" placeholder="Nombre del técnico">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notas de Instalación</label>
+              <textarea class="form-input" id="notasInstalacion" rows="2" placeholder="Observaciones..."></textarea>
+            </div>
+            
+            <!-- Preview de cargos -->
+            <div id="previewCargosNuevo" style="display: none; margin-top: 16px; padding: 12px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <h4 style="margin: 0 0 8px 0; font-size: 13px; color: var(--text-secondary);">
+                <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">receipt</span>
+                Cargos que se generarán:
+              </h4>
+              <div id="listaCargosNuevo"></div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 14px;">
+                <strong>Total:</strong>
+                <strong id="totalCargosNuevo" style="color: var(--accent-primary);">$0.00</strong>
+              </div>
+            </div>
+          </div>
+        </div>
       </form>
     </div>
     <div class="modal__footer">
       <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn btn-secondary" id="btnCalcularCargos" onclick="calcularCargosNuevoCliente()">
+        <span class="material-symbols-outlined">calculate</span>Calcular Cargos
+      </button>
       <button type="button" class="btn btn-primary" id="btnGuardarCliente" onclick="guardarCliente()">
         <span class="material-symbols-outlined">save</span>Guardar Cliente
       </button>

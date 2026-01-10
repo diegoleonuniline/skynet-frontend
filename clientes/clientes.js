@@ -142,6 +142,14 @@ function abrirModalNuevo() {
   document.getElementById('formCliente').reset();
   document.getElementById('clienteId').value = '';
   document.getElementById('coloniaId').innerHTML = '<option value="">Primero selecciona ciudad...</option>';
+  document.getElementById('fechaInstalacion').value = new Date().toISOString().split('T')[0];
+  document.getElementById('diaCorte').value = 10;
+  document.getElementById('previewCargosNuevo').style.display = 'none';
+  
+  // Mostrar sección instalación y botón calcular
+  document.getElementById('seccionInstalacion').style.display = 'block';
+  document.getElementById('btnCalcularCargos').style.display = 'inline-flex';
+  
   document.getElementById('modalCliente').classList.add('active');
 }
 
@@ -162,6 +170,12 @@ async function editarClienteLista(id) {
     document.getElementById('referencia').value = c.referencia || '';
     document.getElementById('planId').value = c.plan_id || '';
     document.getElementById('cuotaMensual').value = c.cuota_mensual || '';
+    
+    // Ocultar sección instalación y botón calcular en modo edición
+    document.getElementById('seccionInstalacion').style.display = 'none';
+    document.getElementById('btnCalcularCargos').style.display = 'none';
+    document.getElementById('previewCargosNuevo').style.display = 'none';
+    
     document.getElementById('modalCliente').classList.add('active');
   } catch (err) { console.error('Error:', err); toastError('Error al cargar cliente'); }
 }
@@ -171,6 +185,8 @@ function cerrarModal() { document.getElementById('modalCliente').classList.remov
 async function guardarCliente() {
   const id = document.getElementById('clienteId').value;
   const btn = document.getElementById('btnGuardarCliente');
+  const esNuevo = !id;
+  
   const datos = {
     nombre: document.getElementById('nombre').value,
     apellido_paterno: document.getElementById('apellidoPaterno').value,
@@ -183,6 +199,21 @@ async function guardarCliente() {
     plan_id: document.getElementById('planId').value,
     cuota_mensual: parseFloat(document.getElementById('cuotaMensual').value) || 0
   };
+  
+  // Si es nuevo cliente, agregar datos de instalación
+  if (esNuevo) {
+    datos.fecha_instalacion = document.getElementById('fechaInstalacion').value;
+    datos.dia_corte = parseInt(document.getElementById('diaCorte').value) || 10;
+    datos.costo_instalacion = parseFloat(document.getElementById('costoInstalacion').value) || 0;
+    datos.tecnico_instalador = document.getElementById('tecnicoInstalador').value;
+    datos.notas_instalacion = document.getElementById('notasInstalacion').value;
+    datos.tarifa_mensual = datos.cuota_mensual;
+    
+    if (!datos.fecha_instalacion) {
+      toastAdvertencia('La fecha de instalación es requerida');
+      return;
+    }
+  }
 
   if (!datos.nombre || !datos.telefono || !datos.ciudad_id || !datos.colonia_id || !datos.direccion || !datos.plan_id) {
     toastAdvertencia('Por favor llena todos los campos requeridos');
@@ -191,30 +222,116 @@ async function guardarCliente() {
 
   btnLoading(btn, true);
   try {
-    const data = id ? await fetchPut(`/api/clientes/${id}`, datos) : await fetchPost('/api/clientes', datos);
+    let data;
+    if (id) {
+      // Edición simple
+      data = await fetchPut(`/api/clientes/${id}`, datos);
+    } else {
+      // Nuevo cliente con instalación
+      data = await fetchPost('/api/clientes/con-instalacion', datos);
+    }
+    
     btnLoading(btn, false);
     if (data.ok) {
       cerrarModal();
+      cargarClientes();
+      
       if (id) {
-        // Edición: recargar lista
-        cargarClientes();
         toastExito('Cliente actualizado');
       } else {
-        // Nuevo cliente: ir al detalle para instalar
-        const clienteId = data.cliente?.id || data.id || data.cliente_id;
-        if (clienteId) {
-          toastExito('Cliente creado. Redirigiendo a instalación...');
-          setTimeout(() => {
-            window.location.href = `detalle.html?id=${clienteId}&instalacion=1`;
-          }, 1000);
-        } else {
-          toastExito('Cliente creado exitosamente');
-          cargarClientes();
-        }
+        let msg = '¡Cliente creado con instalación!';
+        if (data.cargos_generados) msg += ` ${data.cargos_generados} cargos generados.`;
+        toastExito(msg);
       }
     }
     else { toastError(data.mensaje || 'Error al guardar'); }
-  } catch (err) { btnLoading(btn, false); toastError('Error al guardar cliente'); }
+  } catch (err) { 
+    console.error('Error:', err);
+    btnLoading(btn, false); 
+    toastError('Error al guardar cliente'); 
+  }
+}
+
+// Calcular cargos preview
+async function calcularCargosNuevoCliente() {
+  const fechaInstalacion = document.getElementById('fechaInstalacion').value;
+  const diaCorte = parseInt(document.getElementById('diaCorte').value) || 10;
+  const tarifa = parseFloat(document.getElementById('cuotaMensual').value) || 0;
+  const costoInstalacion = parseFloat(document.getElementById('costoInstalacion').value) || 0;
+  
+  if (!fechaInstalacion || !tarifa) {
+    toastAdvertencia('Completa fecha de instalación y cuota mensual');
+    return;
+  }
+  
+  // Calcular localmente (sin backend)
+  const fechaInst = new Date(fechaInstalacion + 'T12:00:00');
+  const diaInstalacion = fechaInst.getDate();
+  const cargos = [];
+  
+  // Prorrateo si aplica
+  if (diaInstalacion < diaCorte) {
+    const diasProrrateo = diaCorte - diaInstalacion;
+    const montoProrrateo = (tarifa / 30) * diasProrrateo;
+    cargos.push({
+      concepto: 'Prorrateo',
+      descripcion: `${diasProrrateo} días (del ${diaInstalacion} al ${diaCorte})`,
+      monto: montoProrrateo
+    });
+  } else if (diaInstalacion > diaCorte) {
+    const diasProrrateo = (30 - diaInstalacion) + diaCorte;
+    const montoProrrateo = (tarifa / 30) * diasProrrateo;
+    cargos.push({
+      concepto: 'Prorrateo',
+      descripcion: `${diasProrrateo} días hasta próximo corte`,
+      monto: montoProrrateo
+    });
+  }
+  
+  // Costo de instalación
+  if (costoInstalacion > 0) {
+    cargos.push({
+      concepto: 'Instalación',
+      descripcion: 'Costo único de instalación',
+      monto: costoInstalacion
+    });
+  }
+  
+  // Primera mensualidad
+  cargos.push({
+    concepto: 'Mensualidad',
+    descripcion: 'Primera mensualidad completa',
+    monto: tarifa
+  });
+  
+  // Mostrar preview
+  mostrarPreviewCargosNuevo(cargos);
+}
+
+function mostrarPreviewCargosNuevo(cargos) {
+  const container = document.getElementById('listaCargosNuevo');
+  const preview = document.getElementById('previewCargosNuevo');
+  
+  if (!cargos || cargos.length === 0) {
+    preview.style.display = 'none';
+    return;
+  }
+  
+  let total = 0;
+  container.innerHTML = cargos.map(c => {
+    total += parseFloat(c.monto);
+    return `
+    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;">
+      <div>
+        <strong>${c.concepto}</strong>
+        <span style="color: var(--text-muted); margin-left: 8px;">${c.descripcion || ''}</span>
+      </div>
+      <strong>${formatoMoneda(c.monto)}</strong>
+    </div>
+  `}).join('');
+  
+  document.getElementById('totalCargosNuevo').textContent = formatoMoneda(total);
+  preview.style.display = 'block';
 }
 
 function verCliente(id) { window.location.href = `detalle.html?id=${id}`; }
