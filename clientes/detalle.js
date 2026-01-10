@@ -206,7 +206,7 @@ async function cargarCargos(clienteId) {
         <td>${formatoFecha(c.fecha_vencimiento)}</td>
         <td>${formatoMoneda(c.monto)}</td>
         <td>${formatoMoneda(c.monto_pagado)}</td>
-        <td><strong style="color: var(--${estadoClass})">${formatoMoneda(c.saldo_pendiente)}</strong></td>
+        <td><strong style="color: var(--${estadoClass})">${formatoMoneda(c.pendiente)}</strong></td>
         <td><span class="badge badge--${estadoClass}">${estadoTexto}</span></td>
       </tr>
     `}).join('');
