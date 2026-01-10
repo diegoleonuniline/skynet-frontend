@@ -56,9 +56,9 @@ const ClienteDetalleView = {
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Estatus</label>
-                                    <select name="estatus_cliente_id" class="form-input">
+                                    <select name="estatus_id" class="form-input">
                                         ${estatusCliente.map(e => `
-                                            <option value="${e.id}" ${cliente?.estatus_cliente_id == e.id ? 'selected' : ''}>${e.nombre}</option>
+                                            <option value="${e.id}" ${cliente?.estatus_id == e.id ? 'selected' : ''}>${e.nombre}</option>
                                         `).join('')}
                                     </select>
                                 </div>
