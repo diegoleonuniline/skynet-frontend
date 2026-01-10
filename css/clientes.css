@@ -1190,7 +1190,43 @@ select.form-input {
         font-size: 1.25rem;
     }
 }
+.dropdown {
+    position: relative;
+}
 
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    min-width: 160px;
+    display: none;
+    z-index: 100;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.dropdown-item.text-warning { color: var(--warning); }
+.dropdown-item.text-danger { color: var(--danger); }
+.dropdown-item.text-success { color: var(--success); }
 /* ============================================
    Utilities
    ============================================ */
