@@ -122,11 +122,28 @@ function renderizarINE(c) {
   const ineFrente = document.getElementById('ineFrente');
   const ineReverso = document.getElementById('ineReverso');
   
+  // Reset
+  ineFrente.classList.remove('has-image');
+  ineReverso.classList.remove('has-image');
+  
   if (c.ine_frente) {
     ineFrente.classList.add('has-image');
     ineFrente.innerHTML = `
       <img src="${c.ine_frente}" alt="INE Frente">
       <span class="check"><span class="material-symbols-outlined">check</span></span>
+      <div class="ine-actions">
+        <button class="ine-action-btn" onclick="event.stopPropagation(); verDocumento('${c.ine_frente}')" title="Ver">
+          <span class="material-symbols-outlined">visibility</span>
+        </button>
+        <button class="ine-action-btn" onclick="event.stopPropagation(); descargarDocumento('${c.ine_frente}', 'ine_frente')" title="Descargar">
+          <span class="material-symbols-outlined">download</span>
+        </button>
+      </div>
+    `;
+  } else {
+    ineFrente.innerHTML = `
+      <span class="material-symbols-outlined">cloud_upload</span>
+      <span>Click para subir</span>
     `;
   }
   
@@ -135,8 +152,25 @@ function renderizarINE(c) {
     ineReverso.innerHTML = `
       <img src="${c.ine_reverso}" alt="INE Reverso">
       <span class="check"><span class="material-symbols-outlined">check</span></span>
+      <div class="ine-actions">
+        <button class="ine-action-btn" onclick="event.stopPropagation(); verDocumento('${c.ine_reverso}')" title="Ver">
+          <span class="material-symbols-outlined">visibility</span>
+        </button>
+        <button class="ine-action-btn" onclick="event.stopPropagation(); descargarDocumento('${c.ine_reverso}', 'ine_reverso')" title="Descargar">
+          <span class="material-symbols-outlined">download</span>
+        </button>
+      </div>
+    `;
+  } else {
+    ineReverso.innerHTML = `
+      <span class="material-symbols-outlined">add_photo_alternate</span>
+      <span>Subir Reverso</span>
+      <small>PNG, JPG hasta 10MB</small>
     `;
   }
+  
+  // Inicializar eventos de click
+  inicializarSubidaINE();
 }
 
 async function cargarEquipos(clienteId) {
@@ -228,4 +262,126 @@ function editarCliente() {
 
 function administrarEquipos() {
   toastInfo('Módulo de equipos en desarrollo');
+}
+
+// ========================================
+// SUBIDA DE DOCUMENTOS (INE)
+// ========================================
+
+function inicializarSubidaINE() {
+  const ineFrente = document.getElementById('ineFrente');
+  const ineReverso = document.getElementById('ineReverso');
+  
+  ineFrente.onclick = () => seleccionarArchivo('ine_frente');
+  ineReverso.onclick = () => seleccionarArchivo('ine_reverso');
+}
+
+function seleccionarArchivo(tipo) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const archivo = e.target.files[0];
+    if (archivo) {
+      if (archivo.size > 10 * 1024 * 1024) {
+        toastError('El archivo no debe superar 10MB');
+        return;
+      }
+      subirINE(archivo, tipo);
+    }
+  };
+  input.click();
+}
+
+async function subirINE(archivo, tipo) {
+  if (!clienteActual) return;
+  
+  const box = document.getElementById(tipo === 'ine_frente' ? 'ineFrente' : 'ineReverso');
+  box.innerHTML = `<span class="material-symbols-outlined rotating">sync</span><span>Subiendo...</span>`;
+  
+  try {
+    // Convertir a base64
+    const base64 = await convertirABase64(archivo);
+    
+    const data = await fetchPost('/api/documentos/subir', {
+      cliente_id: clienteActual.id,
+      tipo: tipo,
+      imagen: base64
+    });
+    
+    if (data.ok) {
+      toastExito('Documento subido correctamente');
+      // Actualizar vista
+      box.classList.add('has-image');
+      box.innerHTML = `
+        <img src="${data.url}" alt="INE">
+        <span class="check"><span class="material-symbols-outlined">check</span></span>
+        <div class="ine-actions">
+          <button class="ine-action-btn" onclick="event.stopPropagation(); verDocumento('${data.url}')" title="Ver">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+          <button class="ine-action-btn" onclick="event.stopPropagation(); descargarDocumento('${data.url}', '${tipo}')" title="Descargar">
+            <span class="material-symbols-outlined">download</span>
+          </button>
+          <button class="ine-action-btn danger" onclick="event.stopPropagation(); eliminarINE('${tipo}', '${data.public_id}')" title="Eliminar">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      `;
+      // Actualizar objeto local
+      clienteActual[tipo] = data.url;
+    } else {
+      toastError(data.mensaje || 'Error al subir');
+      renderizarINE(clienteActual);
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al subir documento');
+    renderizarINE(clienteActual);
+  }
+}
+
+function convertirABase64(archivo) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(archivo);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+function verDocumento(url) {
+  window.open(url, '_blank');
+}
+
+function descargarDocumento(url, nombre) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre + '.jpg';
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+async function eliminarINE(tipo, publicId) {
+  if (!confirm('¿Eliminar este documento?')) return;
+  
+  try {
+    const data = await fetchPost('/api/documentos/eliminar', {
+      public_id: publicId,
+      cliente_id: clienteActual.id,
+      tipo: tipo
+    });
+    
+    if (data.ok) {
+      toastExito('Documento eliminado');
+      clienteActual[tipo] = null;
+      renderizarINE(clienteActual);
+    } else {
+      toastError('Error al eliminar');
+    }
+  } catch (err) {
+    toastError('Error al eliminar documento');
+  }
 }

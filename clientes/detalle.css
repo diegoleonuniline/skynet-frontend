@@ -571,6 +571,64 @@
   color: var(--gray-400);
 }
 
+/* INE Actions */
+.ine-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.ine-box:hover .ine-actions {
+  opacity: 1;
+}
+
+.ine-action-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border: none;
+  border-radius: 50%;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-md);
+}
+
+.ine-action-btn:hover {
+  background: var(--gray-100);
+  transform: scale(1.1);
+}
+
+.ine-action-btn.danger:hover {
+  background: var(--red-50);
+  color: var(--red-600);
+}
+
+.ine-action-btn .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+/* Rotating animation */
+@keyframes rotating {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotating {
+  animation: rotating 1s linear infinite;
+}
+
 .side-card__btn {
   width: 100%;
   padding: 0.75rem;
