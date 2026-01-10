@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet - Client Profile</title>
+  <title>Skynet - Perfil del Cliente</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -11,52 +11,39 @@
   <link rel="stylesheet" href="detalle.css">
 </head>
 <body>
-
 <div class="app">
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   
   <aside class="sidebar">
     <div class="sidebar__header">
-      <div class="sidebar__logo">
-        <span class="material-symbols-outlined">hub</span>
-      </div>
+      <div class="sidebar__logo"><span class="material-symbols-outlined">hub</span></div>
       <div class="sidebar__brand">
         <span class="sidebar__title">Skynet</span>
-        <span class="sidebar__subtitle">ISP Management</span>
+        <span class="sidebar__subtitle">Gestión de ISP</span>
       </div>
     </div>
-
     <nav class="sidebar__nav">
       <a href="/skynet-frontend/dashboard/" class="sidebar__link">
-        <span class="material-symbols-outlined">dashboard</span>
-        <span>Dashboard</span>
+        <span class="material-symbols-outlined">dashboard</span><span>Panel Principal</span>
       </a>
       <a href="/skynet-frontend/clientes/" class="sidebar__link active">
-        <span class="material-symbols-outlined">group</span>
-        <span>Clients</span>
+        <span class="material-symbols-outlined">group</span><span>Clientes</span>
       </a>
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">inventory_2</span>
-        <span>Inventory</span>
+        <span class="material-symbols-outlined">inventory_2</span><span>Inventario</span>
       </a>
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">payments</span>
-        <span>Billing</span>
+        <span class="material-symbols-outlined">payments</span><span>Facturación</span>
       </a>
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">support_agent</span>
-        <span>Support</span>
+        <span class="material-symbols-outlined">support_agent</span><span>Soporte</span>
       </a>
-      
       <div class="sidebar__divider"></div>
-      
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">settings</span>
-        <span>Settings</span>
+        <span class="material-symbols-outlined">settings</span><span>Configuración</span>
       </a>
       <a href="#" class="sidebar__link" onclick="cerrarSesion(); return false;">
-        <span class="material-symbols-outlined">logout</span>
-        <span>Logout</span>
+        <span class="material-symbols-outlined">logout</span><span>Cerrar Sesión</span>
       </a>
     </nav>
   </aside>
@@ -65,13 +52,10 @@
     <header class="header">
       <div class="header__search">
         <span class="material-symbols-outlined header__search-icon">search</span>
-        <input type="text" class="header__search-input" placeholder="Search clients...">
+        <input type="text" class="header__search-input" placeholder="Buscar clientes...">
       </div>
-
       <div class="header__actions">
-        <button class="header__btn" onclick="toggleTheme()">
-          <span class="material-symbols-outlined">dark_mode</span>
-        </button>
+        <button class="header__btn" onclick="toggleTheme()"><span class="material-symbols-outlined">dark_mode</span></button>
         <button class="header__btn">
           <span class="material-symbols-outlined">notifications</span>
           <span class="header__btn-badge"></span>
@@ -80,7 +64,7 @@
         <div class="header__user">
           <div class="header__user-info">
             <p class="header__user-name" id="usuarioNombre">Admin</p>
-            <p class="header__user-role" id="usuarioRol">Administrator</p>
+            <p class="header__user-role" id="usuarioRol">Administrador</p>
           </div>
           <div class="header__user-avatar" id="usuarioAvatar">A</div>
         </div>
@@ -89,18 +73,18 @@
 
     <div class="app__content">
       <nav class="breadcrumb">
-        <a href="/skynet-frontend/clientes/">Skynet Customers</a>
+        <a href="/skynet-frontend/clientes/">Clientes Skynet</a>
         <span class="material-symbols-outlined breadcrumb__separator">chevron_right</span>
-        <span class="breadcrumb__current">Client Detail</span>
+        <span class="breadcrumb__current">Detalle del Cliente</span>
       </nav>
 
-      <!-- Profile Card -->
-      <div class="profile-card">
+      <!-- Perfil - Modo Vista -->
+      <div class="profile-card" id="perfilVista">
         <div class="profile-card__main">
           <div class="profile-card__avatar" id="clienteAvatar">--</div>
           <div class="profile-card__info">
             <div class="profile-card__name">
-              <h1 id="clienteNombre">Loading...</h1>
+              <h1 id="clienteNombre">Cargando...</h1>
               <span class="profile-card__badge" id="clienteEstado">--</span>
             </div>
             <div class="profile-card__meta">
@@ -111,44 +95,93 @@
         </div>
         <div class="profile-card__actions">
           <button class="btn btn-primary" onclick="registrarPago()">
-            <span class="material-symbols-outlined">payments</span>
-            Register Payment
+            <span class="material-symbols-outlined">payments</span>Registrar Pago
           </button>
-          <button class="btn btn-secondary" onclick="editarCliente()">
-            <span class="material-symbols-outlined">edit</span>
-            Edit Profile
+          <button class="btn btn-secondary" onclick="activarModoEdicion()">
+            <span class="material-symbols-outlined">edit</span>Editar Perfil
           </button>
         </div>
+      </div>
+
+      <!-- Perfil - Modo Edición -->
+      <div class="profile-card profile-card--edit hidden" id="perfilEdicion">
+        <form id="formEdicion" style="width: 100%;">
+          <div class="edit-header">
+            <h2><span class="material-symbols-outlined">edit</span> Editando Cliente</h2>
+            <div class="edit-header__actions">
+              <button type="button" class="btn btn-secondary" onclick="cancelarEdicion()">
+                <span class="material-symbols-outlined">close</span>Cancelar
+              </button>
+              <button type="submit" class="btn btn-success" id="btnGuardarEdicion">
+                <span class="material-symbols-outlined">save</span>Guardar Cambios
+              </button>
+            </div>
+          </div>
+          <div class="edit-grid">
+            <div class="edit-section">
+              <h4><span class="material-symbols-outlined">person</span> Datos Personales</h4>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-input" id="editNombre" required></div>
+                <div class="form-group"><label class="form-label">Apellido</label><input type="text" class="form-input" id="editApellido"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Teléfono *</label><input type="tel" class="form-input" id="editTelefono" required></div>
+                <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="editEmail"></div>
+              </div>
+            </div>
+            <div class="edit-section">
+              <h4><span class="material-symbols-outlined">location_on</span> Dirección</h4>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Ciudad *</label><select class="form-select" id="editCiudad" required></select></div>
+                <div class="form-group"><label class="form-label">Colonia *</label><select class="form-select" id="editColonia" required></select></div>
+              </div>
+              <div class="form-group"><label class="form-label">Calle y Número *</label><input type="text" class="form-input" id="editDireccion" required></div>
+              <div class="form-group"><label class="form-label">Referencia</label><input type="text" class="form-input" id="editReferencia"></div>
+            </div>
+            <div class="edit-section">
+              <h4><span class="material-symbols-outlined">router</span> Servicio</h4>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Plan *</label><select class="form-select" id="editPlan" required></select></div>
+                <div class="form-group"><label class="form-label">Cuota Mensual</label><input type="number" class="form-input" id="editCuota" step="0.01"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Día de Corte</label><input type="number" class="form-input" id="editDiaCorte" min="1" max="28"></div>
+                <div class="form-group">
+                  <label class="form-label">Estado</label>
+                  <select class="form-select" id="editEstado">
+                    <option value="activo">Activo</option>
+                    <option value="suspendido">Suspendido</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
 
       <!-- Stats -->
       <div class="detail-stats">
         <div class="detail-stat">
           <div class="detail-stat__header">
-            <span class="detail-stat__label">Monthly Rate</span>
-            <div class="detail-stat__icon detail-stat__icon--blue">
-              <span class="material-symbols-outlined">price_check</span>
-            </div>
+            <span class="detail-stat__label">Cuota Mensual</span>
+            <div class="detail-stat__icon detail-stat__icon--blue"><span class="material-symbols-outlined">price_check</span></div>
           </div>
-          <p class="detail-stat__value" id="cuotaMensual">$0.00 <small>/mo</small></p>
+          <p class="detail-stat__value" id="cuotaMensual">$0.00 <small>/mes</small></p>
           <p class="detail-stat__sub" id="planNombre">Plan: --</p>
         </div>
         <div class="detail-stat">
           <div class="detail-stat__header">
-            <span class="detail-stat__label">Current Balance</span>
-            <div class="detail-stat__icon detail-stat__icon--green">
-              <span class="material-symbols-outlined">account_balance_wallet</span>
-            </div>
+            <span class="detail-stat__label">Saldo Actual</span>
+            <div class="detail-stat__icon detail-stat__icon--green"><span class="material-symbols-outlined">account_balance_wallet</span></div>
           </div>
           <p class="detail-stat__value" id="saldoActual">$0.00</p>
-          <p class="detail-stat__sub" id="estadoCuenta">Account Up to date</p>
+          <p class="detail-stat__sub" id="estadoCuenta">Cuenta al corriente</p>
         </div>
         <div class="detail-stat">
           <div class="detail-stat__header">
-            <span class="detail-stat__label">Next Due Date</span>
-            <div class="detail-stat__icon detail-stat__icon--amber">
-              <span class="material-symbols-outlined">calendar_month</span>
-            </div>
+            <span class="detail-stat__label">Próximo Corte</span>
+            <div class="detail-stat__icon detail-stat__icon--amber"><span class="material-symbols-outlined">calendar_month</span></div>
           </div>
           <p class="detail-stat__value" id="proximoCorte">--</p>
           <p class="detail-stat__sub" id="diasRestantes">--</p>
@@ -157,124 +190,88 @@
 
       <!-- Tabs -->
       <div class="detail-tabs">
-        <button class="detail-tabs__btn active" data-tab="equipos">Equipment</button>
-        <button class="detail-tabs__btn" data-tab="historial">Account Statement</button>
-        <button class="detail-tabs__btn" data-tab="documentos">Documents</button>
+        <button class="detail-tabs__btn active" data-tab="equipos">Equipos</button>
+        <button class="detail-tabs__btn" data-tab="historial">Estado de Cuenta</button>
+        <button class="detail-tabs__btn" data-tab="documentos">Documentos</button>
       </div>
 
       <!-- Content Grid -->
       <div class="detail-grid">
         <div class="detail-grid__main">
-          <!-- Equipment Panel -->
           <div class="card detail-panel active" id="panel-equipos">
             <div class="card__header">
-              <div class="card__title">
-                <span class="material-symbols-outlined">router</span>
-                Skynet Installed Equipment
-              </div>
-              <button class="btn btn-sm btn-secondary">Manage All</button>
+              <div class="card__title"><span class="material-symbols-outlined">router</span>Equipos Instalados</div>
+              <button class="btn btn-sm btn-secondary">Administrar</button>
             </div>
             <div class="table-container">
               <table class="table">
-                <thead>
-                  <tr>
-                    <th>Device</th>
-                    <th>MAC Address</th>
-                    <th>Serial No.</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="tablaEquipos">
-                  <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
-                </tbody>
+                <thead><tr><th>Dispositivo</th><th>MAC Address</th><th>No. Serie</th><th>Estado</th></tr></thead>
+                <tbody id="tablaEquipos"><tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr></tbody>
               </table>
             </div>
           </div>
 
-          <!-- Transactions Panel -->
           <div class="card detail-panel" id="panel-historial">
             <div class="card__header">
-              <div class="card__title">
-                <span class="material-symbols-outlined">receipt_long</span>
-                Skynet Transaction History
-              </div>
-              <button class="btn btn-sm btn-secondary">View Statement</button>
+              <div class="card__title"><span class="material-symbols-outlined">receipt_long</span>Historial de Transacciones</div>
+              <button class="btn btn-sm btn-secondary">Ver Estado Completo</button>
             </div>
-            <div class="card__body" id="listaPagos">
-              <p class="text-center text-muted">Loading...</p>
-            </div>
+            <div class="card__body" id="listaPagos"><p class="text-center text-muted">Cargando...</p></div>
           </div>
 
-          <!-- Documents Panel -->
           <div class="card detail-panel" id="panel-documentos">
             <div class="card__header">
-              <div class="card__title">
-                <span class="material-symbols-outlined">folder</span>
-                Documents
-              </div>
+              <div class="card__title"><span class="material-symbols-outlined">folder</span>Documentos</div>
             </div>
             <div class="card__body">
               <div class="empty-state">
                 <span class="material-symbols-outlined">folder_open</span>
-                <p>No additional documents</p>
+                <p>Sin documentos adicionales</p>
               </div>
             </div>
           </div>
         </div>
 
         <div class="detail-grid__side">
-          <!-- INE Card -->
           <div class="card">
             <div class="card__header">
-              <div class="card__title">
-                <span class="material-symbols-outlined">badge</span>
-                Identification (INE)
-              </div>
+              <div class="card__title"><span class="material-symbols-outlined">badge</span>Identificación (INE)</div>
             </div>
             <div class="card__body">
               <div class="ine-grid">
                 <div class="ine-item">
-                  <label>Front Side</label>
+                  <label>Frente</label>
                   <div class="ine-box" id="ineFrente">
                     <span class="material-symbols-outlined">cloud_upload</span>
-                    <span>Click to upload</span>
+                    <span>Clic para subir</span>
                   </div>
                 </div>
                 <div class="ine-item">
-                  <label>Back Side</label>
+                  <label>Reverso</label>
                   <div class="ine-box" id="ineReverso">
                     <span class="material-symbols-outlined">add_photo_alternate</span>
-                    <span>Upload Back Side</span>
-                    <small>PNG, JPG up to 10MB</small>
+                    <span>Subir Reverso</span>
+                    <small>PNG, JPG hasta 10MB</small>
                   </div>
                 </div>
               </div>
               <button class="btn btn-secondary" style="width: 100%; margin-top: 16px;">
-                <span class="material-symbols-outlined">download</span>
-                Download All Docs
+                <span class="material-symbols-outlined">download</span>Descargar Documentos
               </button>
             </div>
           </div>
 
-          <!-- Support Card -->
           <div class="card support-card">
             <div class="card__header" style="border: none;">
-              <div class="card__title" style="color: white;">
-                <span class="material-symbols-outlined">help</span>
-                Skynet Support
-              </div>
+              <div class="card__title" style="color: white;"><span class="material-symbols-outlined">help</span>Soporte Skynet</div>
             </div>
             <div class="card__body">
-              <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 16px;">
-                Quick contact information and support options for this customer.
-              </p>
               <div class="support-info">
-                <p><strong>Phone:</strong> <span id="clienteTelefono">--</span></p>
-                <p><strong>Phone 2:</strong> <span id="clienteTelefono2">--</span></p>
+                <p><strong>Teléfono:</strong> <span id="clienteTelefono">--</span></p>
+                <p><strong>Tel. 2:</strong> <span id="clienteTelefono2">--</span></p>
               </div>
               <button class="btn btn-secondary" style="width: 100%; background: rgba(255,255,255,0.1); border: none;" id="btnWhatsApp">
-                <span class="material-symbols-outlined">chat</span>
-                Send WhatsApp
+                <span class="material-symbols-outlined">chat</span>Enviar WhatsApp
               </button>
             </div>
           </div>

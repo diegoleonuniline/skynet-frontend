@@ -1,16 +1,12 @@
 // ========================================
-// SKYNET - AUTH & GLOBAL FUNCTIONS
+// SKYNET - AUTH & FUNCIONES GLOBALES
 // ========================================
 
 const API_URL = 'https://skynet-backend-a47423108e2a.herokuapp.com';
 
-// ========================================
-// AUTENTICACIÓN
-// ========================================
-
+// Autenticación
 function verificarSesion() {
-  const token = localStorage.getItem('skynet_token');
-  if (!token) {
+  if (!localStorage.getItem('skynet_token')) {
     window.location.href = '/skynet-frontend/';
     return false;
   }
@@ -24,31 +20,26 @@ function cerrarSesion() {
 }
 
 function obtenerUsuario() {
-  const usuario = localStorage.getItem('skynet_usuario');
-  return usuario ? JSON.parse(usuario) : null;
+  const u = localStorage.getItem('skynet_usuario');
+  return u ? JSON.parse(u) : null;
 }
 
 function cargarUsuarioHeader() {
-  const usuario = obtenerUsuario();
-  if (usuario) {
+  const u = obtenerUsuario();
+  if (u) {
     const nombre = document.getElementById('usuarioNombre');
     const rol = document.getElementById('usuarioRol');
     const avatar = document.getElementById('usuarioAvatar');
-    
-    if (nombre) nombre.textContent = usuario.nombre || usuario.usuario;
-    if (rol) rol.textContent = usuario.rol || 'Administrator';
-    if (avatar) avatar.textContent = obtenerIniciales(usuario.nombre || usuario.usuario);
+    if (nombre) nombre.textContent = u.nombre || u.usuario;
+    if (rol) rol.textContent = u.rol || 'Administrador';
+    if (avatar) avatar.textContent = obtenerIniciales(u.nombre || u.usuario);
   }
 }
 
-// ========================================
-// TEMA OSCURO/CLARO
-// ========================================
-
+// Tema
 function initTheme() {
   const saved = localStorage.getItem('skynet_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
-  updateThemeIcon(saved);
 }
 
 function toggleTheme() {
@@ -56,20 +47,9 @@ function toggleTheme() {
   const newTheme = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', newTheme);
   localStorage.setItem('skynet_theme', newTheme);
-  updateThemeIcon(newTheme);
 }
 
-function updateThemeIcon(theme) {
-  const icon = document.querySelector('.theme-toggle__slider .material-symbols-outlined');
-  if (icon) {
-    icon.textContent = theme === 'dark' ? 'dark_mode' : 'light_mode';
-  }
-}
-
-// ========================================
-// FETCH HELPERS
-// ========================================
-
+// Fetch
 function getHeaders() {
   return {
     'Content-Type': 'application/json',
@@ -78,57 +58,33 @@ function getHeaders() {
 }
 
 async function fetchGet(endpoint) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'GET',
-    headers: getHeaders()
-  });
-  return response.json();
+  const r = await fetch(`${API_URL}${endpoint}`, { method: 'GET', headers: getHeaders() });
+  return r.json();
 }
 
 async function fetchPost(endpoint, data) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(data)
-  });
-  return response.json();
+  const r = await fetch(`${API_URL}${endpoint}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) });
+  return r.json();
 }
 
 async function fetchPut(endpoint, data) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'PUT',
-    headers: getHeaders(),
-    body: JSON.stringify(data)
-  });
-  return response.json();
+  const r = await fetch(`${API_URL}${endpoint}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(data) });
+  return r.json();
 }
 
 async function fetchDelete(endpoint) {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method: 'DELETE',
-    headers: getHeaders()
-  });
-  return response.json();
+  const r = await fetch(`${API_URL}${endpoint}`, { method: 'DELETE', headers: getHeaders() });
+  return r.json();
 }
 
-// ========================================
-// FORMATEO
-// ========================================
-
-function formatoMoneda(valor) {
-  return new Intl.NumberFormat('es-MX', {
-    style: 'currency',
-    currency: 'MXN'
-  }).format(valor || 0);
+// Formato
+function formatoMoneda(v) {
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v || 0);
 }
 
-function formatoFecha(fecha) {
-  if (!fecha) return '-';
-  return new Date(fecha).toLocaleDateString('es-MX', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
+function formatoFecha(f) {
+  if (!f) return '-';
+  return new Date(f).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function obtenerIniciales(nombre, apellido = '') {
@@ -137,10 +93,7 @@ function obtenerIniciales(nombre, apellido = '') {
   return n + a || '??';
 }
 
-// ========================================
-// TOASTS
-// ========================================
-
+// Toasts
 function toast(mensaje, tipo = 'info', duracion = 4000) {
   let container = document.getElementById('toastContainer');
   if (!container) {
@@ -149,29 +102,16 @@ function toast(mensaje, tipo = 'info', duracion = 4000) {
     container.className = 'toast-container';
     document.body.appendChild(container);
   }
-
-  const toast = document.createElement('div');
-  toast.className = `toast toast--${tipo}`;
-  
-  const icons = {
-    success: 'check_circle',
-    error: 'error',
-    warning: 'warning',
-    info: 'info'
-  };
-
-  toast.innerHTML = `
-    <div class="toast__icon">
-      <span class="material-symbols-outlined">${icons[tipo] || 'info'}</span>
-    </div>
+  const icons = { success: 'check_circle', error: 'error', warning: 'warning', info: 'info' };
+  const t = document.createElement('div');
+  t.className = `toast toast--${tipo}`;
+  t.innerHTML = `
+    <div class="toast__icon"><span class="material-symbols-outlined">${icons[tipo] || 'info'}</span></div>
     <span class="toast__message">${mensaje}</span>
-    <button class="toast__close" onclick="this.parentElement.remove()">
-      <span class="material-symbols-outlined">close</span>
-    </button>
+    <button class="toast__close" onclick="this.parentElement.remove()"><span class="material-symbols-outlined">close</span></button>
   `;
-
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), duracion);
+  container.appendChild(t);
+  setTimeout(() => t.remove(), duracion);
 }
 
 function toastExito(msg) { toast(msg, 'success'); }
@@ -179,35 +119,23 @@ function toastError(msg) { toast(msg, 'error', 6000); }
 function toastAdvertencia(msg) { toast(msg, 'warning', 5000); }
 function toastInfo(msg) { toast(msg, 'info'); }
 
-// ========================================
-// LOADING BUTTONS
-// ========================================
-
+// Loading
 function btnLoading(btn, loading) {
   if (!btn) return;
   if (loading) {
     btn.disabled = true;
     btn.dataset.originalText = btn.innerHTML;
-    btn.innerHTML = '<div class="spinner"></div>';
+    btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite"></div>';
   } else {
     btn.disabled = false;
     btn.innerHTML = btn.dataset.originalText || 'Guardar';
   }
 }
 
-// ========================================
-// SIDEBAR MOBILE
-// ========================================
-
+// Sidebar mobile
 function toggleSidebar() {
   document.querySelector('.sidebar')?.classList.toggle('open');
   document.querySelector('.sidebar-overlay')?.classList.toggle('active');
 }
 
-// ========================================
-// INICIALIZACIÓN
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-});
+document.addEventListener('DOMContentLoaded', () => { initTheme(); });

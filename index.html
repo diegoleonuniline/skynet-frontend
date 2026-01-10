@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet - Login</title>
+  <title>Skynet - Iniciar Sesión</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -18,12 +18,9 @@
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
       --accent-primary: #3b82f6;
-      --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
       --success: #10b981;
     }
-    
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg-primary);
@@ -32,8 +29,6 @@
       display: flex;
       flex-direction: column;
     }
-    
-    /* Navbar */
     .navbar {
       display: flex;
       align-items: center;
@@ -42,47 +37,12 @@
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
     }
-    
-    .navbar__brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .navbar__logo {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-primary);
-    }
-    
-    .navbar__logo .material-symbols-outlined {
-      font-size: 28px;
-    }
-    
-    .navbar__title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    
-    .navbar__links {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-    
-    .navbar__link {
-      font-size: 14px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    
-    .navbar__link:hover {
-      color: var(--text-primary);
-    }
-    
+    .navbar__brand { display: flex; align-items: center; gap: 10px; }
+    .navbar__logo .material-symbols-outlined { font-size: 28px; }
+    .navbar__title { font-size: 18px; font-weight: 700; }
+    .navbar__links { display: flex; align-items: center; gap: 24px; }
+    .navbar__link { font-size: 14px; color: var(--text-secondary); text-decoration: none; }
+    .navbar__link:hover { color: var(--text-primary); }
     .navbar__btn {
       padding: 8px 20px;
       background: var(--text-primary);
@@ -92,14 +52,7 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: opacity 0.2s;
     }
-    
-    .navbar__btn:hover {
-      opacity: 0.9;
-    }
-    
-    /* Main */
     .main {
       flex: 1;
       display: flex;
@@ -107,8 +60,6 @@
       justify-content: center;
       padding: 40px 20px;
     }
-    
-    /* Login Card */
     .login-card {
       width: 100%;
       max-width: 420px;
@@ -117,12 +68,7 @@
       border-radius: 16px;
       padding: 48px 40px;
     }
-    
-    .login-card__header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    
+    .login-card__header { text-align: center; margin-bottom: 32px; }
     .login-card__icon {
       width: 48px;
       height: 48px;
@@ -134,35 +80,11 @@
       justify-content: center;
       color: var(--text-secondary);
     }
-    
-    .login-card__title {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    
-    .login-card__subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-    
-    /* Form */
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-    }
-    
-    .form-input-wrapper {
-      position: relative;
-    }
-    
+    .login-card__title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .login-card__subtitle { font-size: 14px; color: var(--text-muted); }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+    .form-input-wrapper { position: relative; }
     .form-input-wrapper .material-symbols-outlined {
       position: absolute;
       left: 14px;
@@ -171,7 +93,6 @@
       font-size: 20px;
       color: var(--text-muted);
     }
-    
     .form-input {
       width: 100%;
       padding: 14px 14px 14px 46px;
@@ -180,19 +101,13 @@
       border-radius: 8px;
       color: var(--text-primary);
       font-size: 14px;
-      transition: all 0.2s;
     }
-    
-    .form-input::placeholder {
-      color: var(--text-muted);
-    }
-    
+    .form-input::placeholder { color: var(--text-muted); }
     .form-input:focus {
       outline: none;
       border-color: var(--accent-primary);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
-    
     .form-input-toggle {
       position: absolute;
       right: 14px;
@@ -202,10 +117,7 @@
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      padding: 4px;
     }
-    
-    /* Options Row */
     .options-row {
       display: flex;
       align-items: center;
@@ -213,31 +125,9 @@
       margin-bottom: 24px;
       font-size: 13px;
     }
-    
-    .checkbox-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-secondary);
-    }
-    
-    .checkbox-wrapper input {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--accent-primary);
-    }
-    
-    .forgot-link {
-      color: var(--accent-primary);
-      text-decoration: none;
-      opacity: 0.7;
-    }
-    
-    .forgot-link:hover {
-      opacity: 1;
-    }
-    
-    /* Submit Button */
+    .checkbox-wrapper { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
+    .checkbox-wrapper input { width: 16px; height: 16px; accent-color: var(--accent-primary); }
+    .forgot-link { color: var(--accent-primary); text-decoration: none; opacity: 0.7; }
     .submit-btn {
       width: 100%;
       padding: 14px;
@@ -248,23 +138,12 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
     }
-    
-    .submit-btn:hover {
-      background: var(--accent-primary);
-      border-color: var(--accent-primary);
-    }
-    
-    .submit-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
+    .submit-btn:hover { background: var(--accent-primary); border-color: var(--accent-primary); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .submit-btn .spinner {
       width: 18px;
       height: 18px;
@@ -273,12 +152,7 @@
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Secure Badge */
+    @keyframes spin { to { transform: rotate(360deg); } }
     .secure-badge {
       display: flex;
       align-items: center;
@@ -288,30 +162,10 @@
       font-size: 12px;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-    
-    .secure-badge .material-symbols-outlined {
-      font-size: 16px;
-      color: var(--success);
-    }
-    
-    /* Footer */
-    .footer {
-      padding: 20px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    
-    /* Toast */
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-    }
-    
+    .secure-badge .material-symbols-outlined { font-size: 16px; color: var(--success); }
+    .footer { padding: 20px; text-align: center; font-size: 12px; color: var(--text-muted); }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
     .toast {
       padding: 14px 20px;
       background: var(--bg-card);
@@ -323,86 +177,68 @@
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
       animation: slideIn 0.3s ease;
     }
-    
     .toast--error { border-left-color: #ef4444; }
     .toast--success { border-left-color: var(--success); }
-    
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   </style>
 </head>
 <body>
-
 <nav class="navbar">
   <div class="navbar__brand">
-    <div class="navbar__logo">
-      <span class="material-symbols-outlined">public</span>
-    </div>
+    <div class="navbar__logo"><span class="material-symbols-outlined">public</span></div>
     <span class="navbar__title">Skynet</span>
   </div>
   <div class="navbar__links">
-    <a href="#" class="navbar__link">Support</a>
-    <a href="#" class="navbar__link">Documentation</a>
-    <button class="navbar__btn">Sign Up</button>
+    <a href="#" class="navbar__link">Soporte</a>
+    <a href="#" class="navbar__link">Documentación</a>
+    <button class="navbar__btn">Registrarse</button>
   </div>
 </nav>
 
 <main class="main">
   <div class="login-card">
     <div class="login-card__header">
-      <div class="login-card__icon">
-        <span class="material-symbols-outlined">public</span>
-      </div>
-      <h1 class="login-card__title">Welcome to Skynet</h1>
-      <p class="login-card__subtitle">ISP Management Administrative Portal</p>
+      <div class="login-card__icon"><span class="material-symbols-outlined">public</span></div>
+      <h1 class="login-card__title">Bienvenido a Skynet</h1>
+      <p class="login-card__subtitle">Portal Administrativo de ISP</p>
     </div>
-    
     <form id="loginForm">
       <div class="form-group">
-        <label class="form-label">Username</label>
+        <label class="form-label">Usuario</label>
         <div class="form-input-wrapper">
           <span class="material-symbols-outlined">person</span>
-          <input type="text" id="usuario" class="form-input" placeholder="Enter your username" required>
+          <input type="text" id="usuario" class="form-input" placeholder="Ingresa tu usuario" required>
         </div>
       </div>
-      
       <div class="form-group">
-        <label class="form-label">Password</label>
+        <label class="form-label">Contraseña</label>
         <div class="form-input-wrapper">
           <span class="material-symbols-outlined">lock</span>
-          <input type="password" id="contrasena" class="form-input" placeholder="Enter your password" required>
+          <input type="password" id="contrasena" class="form-input" placeholder="Ingresa tu contraseña" required>
           <button type="button" class="form-input-toggle" onclick="togglePassword()">
             <span class="material-symbols-outlined" id="toggleIcon">visibility</span>
           </button>
         </div>
       </div>
-      
       <div class="options-row">
         <label class="checkbox-wrapper">
           <input type="checkbox" id="recordar">
-          <span>Keep me logged in</span>
+          <span>Mantener sesión</span>
         </label>
-        <a href="#" class="forgot-link">Forgot password?</a>
+        <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
       </div>
-      
       <button type="submit" class="submit-btn" id="btnLogin">
-        <span id="btnText">Log In</span>
+        <span id="btnText">Iniciar Sesión</span>
       </button>
-      
       <div class="secure-badge">
         <span class="material-symbols-outlined">verified_user</span>
-        <span>Secure Administrative Access</span>
+        <span>Acceso Administrativo Seguro</span>
       </div>
     </form>
   </div>
 </main>
 
-<footer class="footer">
-  © 2024 Skynet Systems. All rights reserved. Version 1.0.10
-</footer>
-
+<footer class="footer">© 2024 Skynet Systems. Todos los derechos reservados. Versión 1.0.10</footer>
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -411,13 +247,8 @@ const API_URL = 'https://skynet-backend-a47423108e2a.herokuapp.com';
 function togglePassword() {
   const input = document.getElementById('contrasena');
   const icon = document.getElementById('toggleIcon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.textContent = 'visibility_off';
-  } else {
-    input.type = 'password';
-    icon.textContent = 'visibility';
-  }
+  input.type = input.type === 'password' ? 'text' : 'password';
+  icon.textContent = input.type === 'password' ? 'visibility' : 'visibility_off';
 }
 
 function showToast(mensaje, tipo = 'info') {
@@ -431,16 +262,12 @@ function showToast(mensaje, tipo = 'info') {
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
   const usuario = document.getElementById('usuario').value.trim();
   const contrasena = document.getElementById('contrasena').value;
   const btn = document.getElementById('btnLogin');
   const btnText = document.getElementById('btnText');
   
-  if (!usuario || !contrasena) {
-    showToast('Please fill in all fields', 'error');
-    return;
-  }
+  if (!usuario || !contrasena) { showToast('Por favor llena todos los campos', 'error'); return; }
   
   btn.disabled = true;
   btnText.innerHTML = '<div class="spinner"></div>';
@@ -451,32 +278,25 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ usuario, contrasena })
     });
-    
     const data = await response.json();
     
     if (data.ok) {
       localStorage.setItem('skynet_token', data.token);
       localStorage.setItem('skynet_usuario', JSON.stringify(data.usuario));
-      showToast('Login successful!', 'success');
-      setTimeout(() => {
-        window.location.href = '/skynet-frontend/dashboard/';
-      }, 500);
+      showToast('¡Bienvenido!', 'success');
+      setTimeout(() => { window.location.href = '/skynet-frontend/dashboard/'; }, 500);
     } else {
-      showToast(data.mensaje || 'Invalid credentials', 'error');
+      showToast(data.mensaje || 'Credenciales inválidas', 'error');
     }
   } catch (err) {
-    console.error('Error:', err);
-    showToast('Connection error', 'error');
+    showToast('Error de conexión', 'error');
   } finally {
     btn.disabled = false;
-    btnText.textContent = 'Log In';
+    btnText.textContent = 'Iniciar Sesión';
   }
 });
 
-// Check if already logged in
-if (localStorage.getItem('skynet_token')) {
-  window.location.href = '/skynet-frontend/dashboard/';
-}
+if (localStorage.getItem('skynet_token')) { window.location.href = '/skynet-frontend/dashboard/'; }
 </script>
 </body>
 </html>

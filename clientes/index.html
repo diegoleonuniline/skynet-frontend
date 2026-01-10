@@ -3,66 +3,51 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet - Clients</title>
+  <title>Skynet - Clientes</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/global.css">
 </head>
 <body>
-
 <div class="app">
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   
   <aside class="sidebar">
     <div class="sidebar__header">
-      <div class="sidebar__logo">
-        <span class="material-symbols-outlined">hub</span>
-      </div>
+      <div class="sidebar__logo"><span class="material-symbols-outlined">hub</span></div>
       <div class="sidebar__brand">
         <span class="sidebar__title">Skynet</span>
-        <span class="sidebar__subtitle">ISP Management</span>
+        <span class="sidebar__subtitle">Gestión de ISP</span>
       </div>
     </div>
-
     <nav class="sidebar__nav">
       <a href="/skynet-frontend/dashboard/" class="sidebar__link">
-        <span class="material-symbols-outlined">dashboard</span>
-        <span>Dashboard</span>
+        <span class="material-symbols-outlined">dashboard</span><span>Panel Principal</span>
       </a>
       <a href="/skynet-frontend/clientes/" class="sidebar__link active">
-        <span class="material-symbols-outlined">group</span>
-        <span>Clients</span>
+        <span class="material-symbols-outlined">group</span><span>Clientes</span>
       </a>
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">inventory_2</span>
-        <span>Inventory</span>
+        <span class="material-symbols-outlined">inventory_2</span><span>Inventario</span>
       </a>
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">payments</span>
-        <span>Billing</span>
+        <span class="material-symbols-outlined">payments</span><span>Facturación</span>
       </a>
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">support_agent</span>
-        <span>Support</span>
+        <span class="material-symbols-outlined">support_agent</span><span>Soporte</span>
       </a>
-      
       <div class="sidebar__divider"></div>
-      
       <a href="#" class="sidebar__link">
-        <span class="material-symbols-outlined">settings</span>
-        <span>Settings</span>
+        <span class="material-symbols-outlined">settings</span><span>Configuración</span>
       </a>
       <a href="#" class="sidebar__link" onclick="cerrarSesion(); return false;">
-        <span class="material-symbols-outlined">logout</span>
-        <span>Logout</span>
+        <span class="material-symbols-outlined">logout</span><span>Cerrar Sesión</span>
       </a>
     </nav>
-
     <div class="sidebar__footer">
       <button class="sidebar__cta" onclick="abrirModalNuevo()">
-        <span class="material-symbols-outlined">person_add</span>
-        New Support Ticket
+        <span class="material-symbols-outlined">person_add</span>Nuevo Cliente
       </button>
     </div>
   </aside>
@@ -71,13 +56,10 @@
     <header class="header">
       <div class="header__search">
         <span class="material-symbols-outlined header__search-icon">search</span>
-        <input type="text" class="header__search-input" placeholder="Search Skynet clients..." id="buscadorGlobal">
+        <input type="text" class="header__search-input" placeholder="Buscar clientes..." id="buscadorGlobal">
       </div>
-
       <div class="header__actions">
-        <button class="header__btn" onclick="toggleTheme()">
-          <span class="material-symbols-outlined">dark_mode</span>
-        </button>
+        <button class="header__btn" onclick="toggleTheme()"><span class="material-symbols-outlined">dark_mode</span></button>
         <button class="header__btn">
           <span class="material-symbols-outlined">notifications</span>
           <span class="header__btn-badge"></span>
@@ -85,89 +67,76 @@
         <div class="header__divider"></div>
         <div class="header__user">
           <div class="header__user-info">
-            <p class="header__user-name" id="usuarioNombre">Skynet Administrator</p>
-            <p class="header__user-role" id="usuarioRol">Super Administrator</p>
+            <p class="header__user-name" id="usuarioNombre">Administrador</p>
+            <p class="header__user-role" id="usuarioRol">Super Admin</p>
           </div>
-          <div class="header__user-avatar" id="usuarioAvatar">SA</div>
+          <div class="header__user-avatar" id="usuarioAvatar">A</div>
         </div>
       </div>
     </header>
 
     <div class="app__content">
       <nav class="breadcrumb">
-        <a href="/skynet-frontend/dashboard/">Skynet Home</a>
+        <a href="/skynet-frontend/dashboard/">Skynet</a>
         <span class="material-symbols-outlined breadcrumb__separator">chevron_right</span>
-        <span class="breadcrumb__current">Client Directory</span>
+        <span class="breadcrumb__current">Directorio de Clientes</span>
       </nav>
 
       <div class="page-header">
         <div class="page-header__left">
-          <h1>Client Directory</h1>
-          <p>Total subscribers: <span id="totalClientes">0</span> active</p>
+          <h1>Directorio de Clientes</h1>
+          <p>Total de suscriptores: <span id="totalClientes">0</span> activos</p>
         </div>
         <div class="page-header__actions">
           <button class="btn btn-secondary" onclick="exportarCSV()">
-            <span class="material-symbols-outlined">download</span>
-            Export CSV
+            <span class="material-symbols-outlined">download</span>Exportar CSV
           </button>
           <button class="btn btn-primary" onclick="abrirModalNuevo()">
-            <span class="material-symbols-outlined">person_add</span>
-            Add New Client
+            <span class="material-symbols-outlined">person_add</span>Agregar Cliente
           </button>
         </div>
       </div>
 
-      <!-- Tabs -->
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
         <div class="tabs">
-          <button class="tabs__btn active" data-filtro="todos">All Clients</button>
-          <button class="tabs__btn" data-filtro="activo">Active</button>
-          <button class="tabs__btn" data-filtro="deudor">Debtor</button>
+          <button class="tabs__btn active" data-filtro="todos">Todos</button>
+          <button class="tabs__btn" data-filtro="activo">Activos</button>
+          <button class="tabs__btn" data-filtro="deudor">Deudores</button>
         </div>
         <button class="btn btn-secondary btn-sm">
-          <span class="material-symbols-outlined">filter_list</span>
-          Filter Results
+          <span class="material-symbols-outlined">filter_list</span>Filtrar
         </button>
       </div>
 
-      <!-- Table -->
       <div class="card">
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Client Name</th>
-                <th>Phone</th>
-                <th>City</th>
-                <th>Neighborhood</th>
-                <th>Status</th>
-                <th>Monthly Fee</th>
-                <th>Actions</th>
+                <th>Nombre del Cliente</th>
+                <th>Teléfono</th>
+                <th>Ciudad</th>
+                <th>Colonia</th>
+                <th>Estado</th>
+                <th>Cuota Mensual</th>
+                <th>Acciones</th>
               </tr>
               <tr>
-                <th><input type="text" class="table__search" placeholder="Search name" id="filtroNombre"></th>
-                <th><input type="text" class="table__search" placeholder="Search pho" id="filtroTelefono"></th>
-                <th><input type="text" class="table__search" placeholder="Search city" id="filtroCiudad"></th>
-                <th><input type="text" class="table__search" placeholder="Search neighborho" id="filtroColonia"></th>
-                <th></th>
-                <th></th>
-                <th></th>
+                <th><input type="text" class="table__search" placeholder="Buscar nombre" id="filtroNombre"></th>
+                <th><input type="text" class="table__search" placeholder="Buscar tel" id="filtroTelefono"></th>
+                <th><input type="text" class="table__search" placeholder="Buscar ciudad" id="filtroCiudad"></th>
+                <th><input type="text" class="table__search" placeholder="Buscar colonia" id="filtroColonia"></th>
+                <th></th><th></th><th></th>
               </tr>
             </thead>
             <tbody id="tablaClientes">
-              <tr>
-                <td colspan="7" class="text-center text-muted">Loading clients...</td>
-              </tr>
+              <tr><td colspan="7" class="text-center text-muted">Cargando clientes...</td></tr>
             </tbody>
           </table>
         </div>
         <div class="pagination">
-          <p class="pagination__info">
-            Showing <span id="paginaInicio">0</span> to <span id="paginaFin">0</span> of <span id="paginaTotal">0</span> Skynet clients
-          </p>
-          <div class="pagination__btns" id="paginacionBtns">
-            <!-- Generado dinámicamente -->
-          </div>
+          <p class="pagination__info">Mostrando <span id="paginaInicio">0</span> a <span id="paginaFin">0</span> de <span id="paginaTotal">0</span> clientes</p>
+          <div class="pagination__btns" id="paginacionBtns"></div>
         </div>
       </div>
     </div>
@@ -178,130 +147,76 @@
 <div class="modal-overlay" id="modalCliente">
   <div class="modal" style="max-width: 800px;">
     <div class="modal__header">
-      <h3 class="modal__title" id="modalTitulo">Register New Client</h3>
-      <button class="modal__close" onclick="cerrarModal()">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <h3 class="modal__title" id="modalTitulo">Registrar Nuevo Cliente</h3>
+      <button class="modal__close" onclick="cerrarModal()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
       <form id="formCliente">
         <input type="hidden" id="clienteId">
-        
-        <!-- Personal Data -->
         <div class="card mb-4" style="background: var(--bg-secondary);">
           <div class="card__header" style="border-color: var(--border-color);">
-            <div class="card__title">
-              <span class="material-symbols-outlined">person</span>
-              Personal Data
-            </div>
+            <div class="card__title"><span class="material-symbols-outlined">person</span>Datos Personales</div>
           </div>
           <div class="card__body">
             <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Full Name *</label>
-                <input type="text" class="form-input" id="nombre" placeholder="e.g. John Doe" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Last Name</label>
-                <input type="text" class="form-input" id="apellidoPaterno" placeholder="Paternal">
-              </div>
+              <div class="form-group"><label class="form-label">Nombre *</label><input type="text" class="form-input" id="nombre" placeholder="Ej. Juan" required></div>
+              <div class="form-group"><label class="form-label">Apellido Paterno</label><input type="text" class="form-input" id="apellidoPaterno" placeholder="Apellido"></div>
             </div>
             <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-input" id="email" placeholder="john@example.com">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Phone Number *</label>
-                <input type="tel" class="form-input" id="telefono" placeholder="(00) 00000-0000" required>
-              </div>
+              <div class="form-group"><label class="form-label">Correo Electrónico</label><input type="email" class="form-input" id="email" placeholder="juan@ejemplo.com"></div>
+              <div class="form-group"><label class="form-label">Teléfono *</label><input type="tel" class="form-input" id="telefono" placeholder="(00) 00000-0000" required></div>
             </div>
           </div>
         </div>
-
-        <!-- Address -->
         <div class="card mb-4" style="background: var(--bg-secondary);">
           <div class="card__header" style="border-color: var(--border-color);">
-            <div class="card__title">
-              <span class="material-symbols-outlined">location_on</span>
-              Address
-            </div>
+            <div class="card__title"><span class="material-symbols-outlined">location_on</span>Dirección</div>
           </div>
           <div class="card__body">
             <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">City *</label>
+              <div class="form-group"><label class="form-label">Ciudad *</label>
                 <div style="display: flex; gap: 8px;">
                   <select class="form-select" id="ciudadId" required style="flex: 1;"></select>
-                  <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalCiudad()">
-                    <span class="material-symbols-outlined">add</span>
-                  </button>
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalCiudad()"><span class="material-symbols-outlined">add</span></button>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Neighborhood *</label>
+              <div class="form-group"><label class="form-label">Colonia *</label>
                 <div style="display: flex; gap: 8px;">
                   <select class="form-select" id="coloniaId" required style="flex: 1;"></select>
-                  <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalColonia()">
-                    <span class="material-symbols-outlined">add</span>
-                  </button>
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalColonia()"><span class="material-symbols-outlined">add</span></button>
                 </div>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Street Address *</label>
-              <input type="text" class="form-input" id="direccion" placeholder="Main Avenue 123" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Reference</label>
-              <input type="text" class="form-input" id="referencia" placeholder="Near the park...">
-            </div>
+            <div class="form-group"><label class="form-label">Calle y Número *</label><input type="text" class="form-input" id="direccion" placeholder="Av. Principal 123" required></div>
+            <div class="form-group"><label class="form-label">Referencia</label><input type="text" class="form-input" id="referencia" placeholder="Cerca del parque..."></div>
           </div>
         </div>
-
-        <!-- Service Details -->
         <div class="card" style="background: var(--bg-secondary);">
           <div class="card__header" style="border-color: var(--border-color);">
-            <div class="card__title">
-              <span class="material-symbols-outlined">router</span>
-              Service Details
-            </div>
+            <div class="card__title"><span class="material-symbols-outlined">router</span>Detalles del Servicio</div>
           </div>
           <div class="card__body">
             <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Fiber Plan *</label>
+              <div class="form-group"><label class="form-label">Plan de Fibra *</label>
                 <div style="display: flex; gap: 8px;">
                   <select class="form-select" id="planId" required style="flex: 1;"></select>
-                  <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalPlan()">
-                    <span class="material-symbols-outlined">add</span>
-                  </button>
+                  <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalPlan()"><span class="material-symbols-outlined">add</span></button>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Monthly Fee (USD)</label>
-                <input type="number" class="form-input" id="cuotaMensual" placeholder="$ 0.00" step="0.01">
-              </div>
+              <div class="form-group"><label class="form-label">Cuota Mensual</label><input type="number" class="form-input" id="cuotaMensual" placeholder="$ 0.00" step="0.01"></div>
             </div>
             <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Billing Day</label>
-                <input type="number" class="form-input" id="diaCorte" value="10" min="1" max="28">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Installation Date</label>
-                <input type="date" class="form-input" id="fechaInstalacion">
-              </div>
+              <div class="form-group"><label class="form-label">Día de Corte</label><input type="number" class="form-input" id="diaCorte" value="10" min="1" max="28"></div>
+              <div class="form-group"><label class="form-label">Fecha de Instalación</label><input type="date" class="form-input" id="fechaInstalacion"></div>
             </div>
           </div>
         </div>
       </form>
     </div>
     <div class="modal__footer">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancel</button>
+      <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnGuardarCliente" onclick="guardarCliente()">
-        <span class="material-symbols-outlined">save</span>
-        Save Client
+        <span class="material-symbols-outlined">save</span>Guardar Cliente
       </button>
     </div>
   </div>
@@ -311,24 +226,16 @@
 <div class="modal-overlay" id="modalCiudad">
   <div class="modal" style="max-width: 400px;">
     <div class="modal__header">
-      <h3 class="modal__title">Add City</h3>
-      <button class="modal__close" onclick="cerrarModalCiudad()">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <h3 class="modal__title">Agregar Ciudad</h3>
+      <button class="modal__close" onclick="cerrarModalCiudad()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div class="form-group">
-        <label class="form-label">City Name *</label>
-        <input type="text" class="form-input" id="nuevaCiudadNombre" placeholder="City name">
-      </div>
-      <div class="form-group">
-        <label class="form-label">State</label>
-        <input type="text" class="form-input" id="nuevaCiudadEstado" placeholder="State">
-      </div>
+      <div class="form-group"><label class="form-label">Nombre de la Ciudad *</label><input type="text" class="form-input" id="nuevaCiudadNombre" placeholder="Nombre"></div>
+      <div class="form-group"><label class="form-label">Estado</label><input type="text" class="form-input" id="nuevaCiudadEstado" placeholder="Estado"></div>
     </div>
     <div class="modal__footer">
-      <button class="btn btn-secondary" onclick="cerrarModalCiudad()">Cancel</button>
-      <button class="btn btn-primary" id="btnGuardarCiudad" onclick="guardarCiudad()">Save</button>
+      <button class="btn btn-secondary" onclick="cerrarModalCiudad()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarCiudad" onclick="guardarCiudad()">Guardar</button>
     </div>
   </div>
 </div>
@@ -337,28 +244,17 @@
 <div class="modal-overlay" id="modalColonia">
   <div class="modal" style="max-width: 400px;">
     <div class="modal__header">
-      <h3 class="modal__title">Add Neighborhood</h3>
-      <button class="modal__close" onclick="cerrarModalColonia()">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <h3 class="modal__title">Agregar Colonia</h3>
+      <button class="modal__close" onclick="cerrarModalColonia()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div class="form-group">
-        <label class="form-label">City *</label>
-        <select class="form-select" id="nuevaColoniaCiudad"></select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Neighborhood Name *</label>
-        <input type="text" class="form-input" id="nuevaColoniaNombre" placeholder="Name">
-      </div>
-      <div class="form-group">
-        <label class="form-label">ZIP Code</label>
-        <input type="text" class="form-input" id="nuevaColoniaCP" placeholder="00000">
-      </div>
+      <div class="form-group"><label class="form-label">Ciudad *</label><select class="form-select" id="nuevaColoniaCiudad"></select></div>
+      <div class="form-group"><label class="form-label">Nombre de la Colonia *</label><input type="text" class="form-input" id="nuevaColoniaNombre" placeholder="Nombre"></div>
+      <div class="form-group"><label class="form-label">Código Postal</label><input type="text" class="form-input" id="nuevaColoniaCP" placeholder="00000"></div>
     </div>
     <div class="modal__footer">
-      <button class="btn btn-secondary" onclick="cerrarModalColonia()">Cancel</button>
-      <button class="btn btn-primary" id="btnGuardarColonia" onclick="guardarColonia()">Save</button>
+      <button class="btn btn-secondary" onclick="cerrarModalColonia()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarColonia" onclick="guardarColonia()">Guardar</button>
     </div>
   </div>
 </div>
@@ -367,30 +263,19 @@
 <div class="modal-overlay" id="modalPlan">
   <div class="modal" style="max-width: 400px;">
     <div class="modal__header">
-      <h3 class="modal__title">Add Plan</h3>
-      <button class="modal__close" onclick="cerrarModalPlan()">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <h3 class="modal__title">Agregar Plan</h3>
+      <button class="modal__close" onclick="cerrarModalPlan()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div class="form-group">
-        <label class="form-label">Plan Name *</label>
-        <input type="text" class="form-input" id="nuevoPlanNombre" placeholder="e.g. Fiber 100Mbps">
-      </div>
+      <div class="form-group"><label class="form-label">Nombre del Plan *</label><input type="text" class="form-input" id="nuevoPlanNombre" placeholder="Ej. Fibra 100Mbps"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Speed (Mbps) *</label>
-          <input type="number" class="form-input" id="nuevoPlanVelocidad" placeholder="100">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Monthly Price *</label>
-          <input type="number" class="form-input" id="nuevoPlanPrecio" placeholder="0.00" step="0.01">
-        </div>
+        <div class="form-group"><label class="form-label">Velocidad (Mbps) *</label><input type="number" class="form-input" id="nuevoPlanVelocidad" placeholder="100"></div>
+        <div class="form-group"><label class="form-label">Precio Mensual *</label><input type="number" class="form-input" id="nuevoPlanPrecio" placeholder="0.00" step="0.01"></div>
       </div>
     </div>
     <div class="modal__footer">
-      <button class="btn btn-secondary" onclick="cerrarModalPlan()">Cancel</button>
-      <button class="btn btn-primary" id="btnGuardarPlan" onclick="guardarPlan()">Save</button>
+      <button class="btn btn-secondary" onclick="cerrarModalPlan()">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarPlan" onclick="guardarPlan()">Guardar</button>
     </div>
   </div>
 </div>
