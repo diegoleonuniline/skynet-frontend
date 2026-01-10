@@ -560,25 +560,39 @@
   }
 }
 /* ========================================
-   FIX ANCHO COMPLETO
+   FIX ANCHO COMPLETO - FORZADO
    ======================================== */
+.content {
+  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+}
+
 .tabs {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.tab-panel,
+.tab-panel.active {
   width: 100% !important;
 }
 
-.tab-panel {
-  width: 100%;
+.panel {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
-.panel {
+.panel__header {
   width: 100%;
 }
 
 .table-wrapper {
   width: 100%;
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
-  table-layout: auto;
+  min-width: 100%;
 }
