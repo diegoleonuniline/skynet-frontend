@@ -1,7 +1,6 @@
 // ========================================
 // SKYNET - DETALLE CLIENTE JS
 // ========================================
-
 let clienteActual = null;
 let ciudades = [], colonias = [], planes = [];
 let tiposEquipo = [], estadosEquipo = [], metodosPago = [];
@@ -137,14 +136,16 @@ function renderizarCliente() {
   const direccion = document.getElementById('clienteDireccion');
   if (direccion) direccion.textContent = `${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
   
+  // CORREGIDO: Usar tarifa_mensual, cuota_mensual o tarifa_plan
+  const tarifaValor = parseFloat(c.tarifa_mensual) || parseFloat(c.cuota_mensual) || parseFloat(c.tarifa_plan) || 0;
   const tarifa = document.getElementById('tarifaMensual');
-  if (tarifa) tarifa.textContent = formatoMoneda(c.tarifa_mensual || c.cuota_mensual);
+  if (tarifa) tarifa.textContent = formatoMoneda(tarifaValor);
   
   const plan = document.getElementById('planNombre');
   if (plan) plan.textContent = c.plan_nombre || '--';
   
   const saldo = document.getElementById('saldoFavor');
-  if (saldo) saldo.textContent = formatoMoneda(c.saldo_favor);
+  if (saldo) saldo.textContent = formatoMoneda(c.saldo_favor || 0);
   
   // Próximo corte
   const hoy = new Date();
@@ -189,8 +190,8 @@ async function cargarMensualidades(clienteId) {
         <td>${m.concepto || 'Mensualidad'}</td>
         <td>${formatoFecha(m.fecha_vencimiento)}</td>
         <td>${formatoMoneda(m.monto)}</td>
-        <td class="text-success">${formatoMoneda(m.monto_pagado)}</td>
-        <td class="text-danger">${formatoMoneda(m.pendiente)}</td>
+        <td class="text-success">${formatoMoneda(m.monto_pagado || 0)}</td>
+        <td class="text-danger">${formatoMoneda(m.pendiente || (m.monto - (m.monto_pagado || 0)))}</td>
         <td><span class="badge badge--${estadoReal}">${estadoReal.toUpperCase()}</span></td>
       </tr>
     `}).join('');
@@ -217,26 +218,28 @@ async function cargarCargos(clienteId) {
     
     tbody.innerHTML = data.cargos.map(c => {
       const estadoReal = c.estado_real || c.estado;
+      const tipo = c.tipo || 'mensualidad';
       return `
       <tr>
-        <td><span class="badge badge--${c.tipo}">${c.tipo.toUpperCase()}</span></td>
+        <td><span class="badge badge--${tipo}">${tipo.toUpperCase()}</span></td>
         <td><strong>${c.concepto}</strong><br><small class="text-muted">${c.descripcion || ''}</small></td>
         <td>${formatoFecha(c.fecha_vencimiento)}</td>
         <td>${formatoMoneda(c.monto)}</td>
-        <td class="text-success">${formatoMoneda(c.monto_pagado)}</td>
-        <td class="text-danger">${formatoMoneda(c.pendiente)}</td>
+        <td class="text-success">${formatoMoneda(c.monto_pagado || 0)}</td>
+        <td class="text-danger">${formatoMoneda(c.pendiente || (c.monto - (c.monto_pagado || 0)))}</td>
         <td><span class="badge badge--${estadoReal}">${estadoReal.toUpperCase()}</span></td>
       </tr>
     `}).join('');
     
-    actualizarResumenCargos(data.resumen.total_monto, data.resumen.total_pagado, data.resumen.total_pendiente);
+    const resumen = data.resumen || {};
+    actualizarResumenCargos(resumen.total_monto || 0, resumen.total_pagado || 0, resumen.total_pendiente || 0);
     
     const adeudo = document.getElementById('adeudoTotal');
-    if (adeudo) adeudo.textContent = formatoMoneda(data.resumen.total_pendiente);
+    if (adeudo) adeudo.textContent = formatoMoneda(resumen.total_pendiente || 0);
     
     const estado = document.getElementById('estadoCuenta');
     if (estado) {
-      if (data.resumen.total_pendiente > 0) {
+      if ((resumen.total_pendiente || 0) > 0) {
         estado.textContent = 'Con adeudo';
         estado.className = 'stat-card__sub text-danger';
       } else {
@@ -295,37 +298,67 @@ async function cargarEquipos(clienteId) {
 }
 
 // ========================================
-// HISTORIAL PAGOS
+// HISTORIAL PAGOS - EN TABLA CON FILTROS
 // ========================================
 async function cargarHistorialPagos(clienteId) {
-  const container = document.getElementById('listaPagos');
-  if (!container) return;
+  const tbody = document.getElementById('tablaPagos');
+  if (!tbody) return;
   
   try {
-    const data = await fetchGet(`/api/pagos/historial/${clienteId}`);
+    // Obtener filtros
+    const fechaInicio = document.getElementById('filtroFechaInicio')?.value || '';
+    const fechaFin = document.getElementById('filtroFechaFin')?.value || '';
+    const estado = document.getElementById('filtroEstadoPago')?.value || 'todos';
+    
+    let url = `/api/pagos/historial/${clienteId}?estado=${estado}`;
+    if (fechaInicio) url += `&fecha_inicio=${fechaInicio}`;
+    if (fechaFin) url += `&fecha_fin=${fechaFin}`;
+    
+    const data = await fetchGet(url);
+    
     if (!data.ok || !data.pagos?.length) {
-      container.innerHTML = '<p class="empty">Sin pagos registrados</p>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin pagos registrados</td></tr>';
+      actualizarResumenPagos(0, 0);
       return;
     }
     
-    container.innerHTML = data.pagos.map(p => {
+    tbody.innerHTML = data.pagos.map(p => {
       const esCancelado = p.estado === 'cancelado';
       return `
-      <div class="pago-item ${esCancelado ? 'pago-item--cancelado' : ''}" onclick="verPago('${p.id}')">
-        <div class="pago-item__icon ${esCancelado ? 'pago-item__icon--cancelado' : ''}">
-          <span class="material-symbols-outlined">${esCancelado ? 'block' : 'check'}</span>
-        </div>
-        <div class="pago-item__info">
-          <p class="pago-item__title">${p.metodo_nombre || 'Pago'} ${esCancelado ? '(CANCELADO)' : ''}</p>
-          <p class="pago-item__detail">${formatoFecha(p.fecha_pago)} ${p.referencia ? '• ' + p.referencia : ''} ${p.aplicado_a ? '• ' + p.aplicado_a : ''}</p>
-        </div>
-        <span class="pago-item__monto">${formatoMoneda(p.monto)}</span>
-      </div>
+      <tr class="${esCancelado ? 'row--cancelado' : ''}" style="cursor: pointer;" onclick="verPago('${p.id}')">
+        <td>${formatoFecha(p.fecha_pago)}</td>
+        <td><strong class="${esCancelado ? 'text-muted line-through' : 'text-success'}">${formatoMoneda(p.monto)}</strong></td>
+        <td>${p.metodo_nombre || p.metodo_pago || '--'}</td>
+        <td>${p.referencia || '--'}</td>
+        <td><small>${p.aplicado_a || '--'}</small></td>
+        <td><span class="badge badge--${esCancelado ? 'cancelado' : 'activo'}">${esCancelado ? 'CANCELADO' : 'ACTIVO'}</span></td>
+        <td>
+          <div class="table__actions" onclick="event.stopPropagation();">
+            <button onclick="verPago('${p.id}')" title="Ver detalle"><span class="material-symbols-outlined">visibility</span></button>
+          </div>
+        </td>
+      </tr>
     `}).join('');
+    
+    // Actualizar resumen
+    const resumen = data.resumen || {};
+    actualizarResumenPagos(resumen.total_activos || 0, resumen.total_cancelados || 0);
+    
   } catch (err) {
     console.error('Error:', err);
-    container.innerHTML = '<p class="empty">Error al cargar</p>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
   }
+}
+
+function actualizarResumenPagos(activos, cancelados) {
+  const elActivos = document.getElementById('totalPagosActivos');
+  const elCancelados = document.getElementById('totalPagosCancelados');
+  if (elActivos) elActivos.textContent = formatoMoneda(activos);
+  if (elCancelados) elCancelados.textContent = formatoMoneda(cancelados);
+}
+
+function filtrarPagos() {
+  if (clienteActual) cargarHistorialPagos(clienteActual.id);
 }
 
 // ========================================
@@ -377,6 +410,7 @@ async function guardarPago() {
       cerrarModal('modalPago');
       let msg = `Pago de ${formatoMoneda(monto)} registrado.`;
       if (data.pago?.cargos_aplicados > 0) msg += ` Aplicado a ${data.pago.cargos_aplicados} cargo(s).`;
+      if (data.pago?.nuevo_saldo_favor > 0) msg += ` Saldo a favor: ${formatoMoneda(data.pago.nuevo_saldo_favor)}`;
       toastExito(msg);
       cargarCliente(clienteActual.id);
     } else {
@@ -781,7 +815,7 @@ async function activarModoEdicion() {
   setVal('editEmail', c.email);
   setVal('editDireccion', c.direccion);
   setVal('editReferencia', c.referencia);
-  setVal('editTarifa', c.tarifa_mensual);
+  setVal('editTarifa', c.tarifa_mensual || c.cuota_mensual);
   setVal('editDiaCorte', c.dia_corte || 10);
   setVal('editEstado', c.estado || 'activo');
   
