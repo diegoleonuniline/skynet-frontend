@@ -861,3 +861,154 @@
 
 .timeline-amount.positive { color: var(--success); }
 .timeline-amount.negative { color: var(--danger); }
+
+/* ============================================
+   MODAL BACKDROP (Servicios, etc.)
+   ============================================ */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--space-4);
+    backdrop-filter: blur(4px);
+}
+
+.modal-backdrop .modal {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+}
+
+.modal-backdrop .modal.modal-lg {
+    max-width: 700px;
+}
+
+.modal-backdrop .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-hover);
+}
+
+.modal-backdrop .modal-header h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-backdrop .modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-backdrop .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background: var(--bg-hover);
+}
+
+/* Form Section dentro de Modal */
+.modal-body .form-section {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+.modal-body .form-section:last-child {
+    margin-bottom: 0;
+}
+
+.modal-body .form-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-body .form-grid.cols-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+/* Preview de Cargos */
+.cargos-preview {
+    background: var(--bg-hover);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.cargos-preview .table {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.cargos-preview .table th {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.6875rem;
+    background: transparent;
+}
+
+.cargos-preview .table td {
+    padding: 0.5rem 0.75rem;
+}
+
+.cargos-preview .table tfoot tr {
+    border-top: 2px solid var(--border-color);
+}
+
+.cargos-preview .table tfoot td {
+    padding-top: 0.75rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-primary {
+    color: var(--primary) !important;
+}
+
+.text-sm {
+    font-size: 0.8125rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .modal-backdrop .modal.modal-lg {
+        max-width: 100%;
+    }
+    
+    .modal-body .form-grid.cols-2 {
+        grid-template-columns: 1fr;
+    }
+}
