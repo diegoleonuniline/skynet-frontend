@@ -1,75 +1,51 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skynet ISP - Login</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skynet ISP Management</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236366f1'/%3E%3Ctext x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='system-ui' font-weight='bold'%3ES%3C/text%3E%3C/svg%3E">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/utilities.css">
 </head>
 <body>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-logo">
-        <div class="login-logo-icon">📡</div>
-        <h1>SKYNET</h1>
-        <p>ISP Management System</p>
-      </div>
+    <!-- App Container -->
+    <div id="app"></div>
 
-      <form class="login-form" id="loginForm">
-        <div class="form-group">
-          <label class="form-label">Usuario</label>
-          <input type="text" class="form-input" id="username" placeholder="Ingresa tu usuario" required>
-        </div>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
 
-        <div class="form-group">
-          <label class="form-label">Contraseña</label>
-          <div class="input-group">
-            <input type="password" class="form-input" id="password" placeholder="Ingresa tu contraseña" required>
-            <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
-          </div>
-        </div>
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
 
-        <button type="submit" class="btn btn-primary" id="loginBtn">
-          Iniciar Sesión
-        </button>
-      </form>
+    <!-- Loader -->
+    <div id="loader" class="loader-overlay" style="display: none;">
+        <div class="loader"></div>
     </div>
-  </div>
 
-  <script src="js/api.js"></script>
-  <script>
-    // Si ya está logueado, redirigir
-    if (api.isAuthenticated()) {
-      window.location.href = 'pages/dashboard.html';
-    }
-
-    function togglePassword() {
-      const input = document.getElementById('password');
-      input.type = input.type === 'password' ? 'text' : 'password';
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const btn = document.getElementById('loginBtn');
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-
-      btn.disabled = true;
-      btn.textContent = 'Ingresando...';
-
-      try {
-        await auth.login(username, password);
-        window.location.href = 'pages/dashboard.html';
-      } catch (error) {
-        toast.error(error.message || 'Credenciales inválidas');
-        btn.disabled = false;
-        btn.textContent = 'Iniciar Sesión';
-      }
-    });
-  </script>
+    <!-- JavaScript Files -->
+    <script src="js/config.js"></script>
+    <script src="js/icons.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/views/login.js"></script>
+    <script src="js/views/clientes.js"></script>
+    <script src="js/views/cliente-detalle.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

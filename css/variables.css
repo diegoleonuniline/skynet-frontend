@@ -1,0 +1,124 @@
+/* ============================================
+   SKYNET ISP - CSS Variables
+   Sistema de temas Light/Dark
+   ============================================ */
+
+:root {
+    /* Colores Base */
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --primary-light: #e0e7ff;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --info: #3b82f6;
+    --info-light: #dbeafe;
+
+    /* Tipografía */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 2rem;
+
+    /* Espaciado */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+
+    /* Bordes */
+    --radius-sm: 0.25rem;
+    --radius: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+    /* Transiciones */
+    --transition-fast: 150ms ease;
+    --transition: 200ms ease;
+    --transition-slow: 300ms ease;
+
+    /* Layout */
+    --sidebar-width: 260px;
+    --sidebar-collapsed: 70px;
+    --header-height: 64px;
+}
+
+/* ============================================
+   TEMA CLARO (Default)
+   ============================================ */
+:root,
+[data-theme="light"] {
+    --bg-body: #f8fafc;
+    --bg-sidebar: #1e293b;
+    --bg-card: #ffffff;
+    --bg-input: #ffffff;
+    --bg-hover: #f1f5f9;
+    --bg-active: #e2e8f0;
+    --bg-modal: #ffffff;
+    --bg-tooltip: #1e293b;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --text-inverse: #ffffff;
+    --text-sidebar: #cbd5e1;
+    --text-sidebar-active: #ffffff;
+
+    --border-color: #e2e8f0;
+    --border-light: #f1f5f9;
+
+    --sidebar-hover: rgba(255, 255, 255, 0.1);
+    --sidebar-active: rgba(99, 102, 241, 0.2);
+}
+
+/* ============================================
+   TEMA OSCURO
+   ============================================ */
+[data-theme="dark"] {
+    --bg-body: #0f172a;
+    --bg-sidebar: #020617;
+    --bg-card: #1e293b;
+    --bg-input: #334155;
+    --bg-hover: #334155;
+    --bg-active: #475569;
+    --bg-modal: #1e293b;
+    --bg-tooltip: #f1f5f9;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --text-inverse: #0f172a;
+    --text-sidebar: #94a3b8;
+    --text-sidebar-active: #ffffff;
+
+    --border-color: #334155;
+    --border-light: #1e293b;
+
+    --sidebar-hover: rgba(255, 255, 255, 0.05);
+    --sidebar-active: rgba(99, 102, 241, 0.3);
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+}
