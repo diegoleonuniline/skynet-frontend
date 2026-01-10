@@ -1,99 +1,118 @@
 // ========================================
-// SKYNET - AUTENTICACIÓN Y UTILIDADES
+// SKYNET - AUTH & GLOBAL FUNCTIONS
 // ========================================
 
-const API = "https://skynet-backend-a47423108e2a.herokuapp.com";
+const API_URL = 'https://skynet-backend-a47423108e2a.herokuapp.com';
 
 // ========================================
-// SESIÓN
+// AUTENTICACIÓN
 // ========================================
 
 function verificarSesion() {
-  const token = localStorage.getItem("token");
-  const usuario = localStorage.getItem("usuario");
-  
-  if (!token || !usuario) {
-    window.location.href = "/skynet-frontend/";
-    return null;
+  const token = localStorage.getItem('skynet_token');
+  if (!token) {
+    window.location.href = '/skynet-frontend/';
+    return false;
   }
-  
-  return JSON.parse(usuario);
+  return true;
 }
 
 function cerrarSesion() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("usuario");
-  window.location.href = "/skynet-frontend/";
+  localStorage.removeItem('skynet_token');
+  localStorage.removeItem('skynet_usuario');
+  window.location.href = '/skynet-frontend/';
 }
 
-function obtenerToken() {
-  return localStorage.getItem("token");
+function obtenerUsuario() {
+  const usuario = localStorage.getItem('skynet_usuario');
+  return usuario ? JSON.parse(usuario) : null;
 }
 
-function headersAuth() {
+function cargarUsuarioHeader() {
+  const usuario = obtenerUsuario();
+  if (usuario) {
+    const nombre = document.getElementById('usuarioNombre');
+    const rol = document.getElementById('usuarioRol');
+    const avatar = document.getElementById('usuarioAvatar');
+    
+    if (nombre) nombre.textContent = usuario.nombre || usuario.usuario;
+    if (rol) rol.textContent = usuario.rol || 'Administrator';
+    if (avatar) avatar.textContent = obtenerIniciales(usuario.nombre || usuario.usuario);
+  }
+}
+
+// ========================================
+// TEMA OSCURO/CLARO
+// ========================================
+
+function initTheme() {
+  const saved = localStorage.getItem('skynet_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const newTheme = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('skynet_theme', newTheme);
+  updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.querySelector('.theme-toggle__slider .material-symbols-outlined');
+  if (icon) {
+    icon.textContent = theme === 'dark' ? 'dark_mode' : 'light_mode';
+  }
+}
+
+// ========================================
+// FETCH HELPERS
+// ========================================
+
+function getHeaders() {
   return {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + obtenerToken()
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('skynet_token')}`
   };
 }
 
-// ========================================
-// PETICIONES HTTP
-// ========================================
-
 async function fetchGet(endpoint) {
-  const r = await fetch(API + endpoint, {
-    method: "GET",
-    headers: headersAuth()
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'GET',
+    headers: getHeaders()
   });
-  return r.json();
+  return response.json();
 }
 
 async function fetchPost(endpoint, data) {
-  const r = await fetch(API + endpoint, {
-    method: "POST",
-    headers: headersAuth(),
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'POST',
+    headers: getHeaders(),
     body: JSON.stringify(data)
   });
-  return r.json();
+  return response.json();
 }
 
 async function fetchPut(endpoint, data) {
-  const r = await fetch(API + endpoint, {
-    method: "PUT",
-    headers: headersAuth(),
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'PUT',
+    headers: getHeaders(),
     body: JSON.stringify(data)
   });
-  return r.json();
+  return response.json();
 }
 
 async function fetchDelete(endpoint) {
-  const r = await fetch(API + endpoint, {
-    method: "DELETE",
-    headers: headersAuth()
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'DELETE',
+    headers: getHeaders()
   });
-  return r.json();
+  return response.json();
 }
 
 // ========================================
-// USUARIO HEADER
-// ========================================
-
-function cargarUsuarioHeader() {
-  const usuario = verificarSesion();
-  if (!usuario) return;
-  
-  const nombreEl = document.getElementById("usuarioNombre");
-  const rolEl = document.getElementById("usuarioRol");
-  const avatarEl = document.querySelector(".header__user-avatar");
-  
-  if (nombreEl) nombreEl.textContent = usuario.usuario;
-  if (rolEl) rolEl.textContent = usuario.rol?.nombre || usuario.rol?.clave || "Usuario";
-  if (avatarEl) avatarEl.textContent = usuario.usuario?.charAt(0).toUpperCase() || "U";
-}
-
-// ========================================
-// FORMATO
+// FORMATEO
 // ========================================
 
 function formatoMoneda(valor) {
@@ -106,315 +125,89 @@ function formatoMoneda(valor) {
 function formatoFecha(fecha) {
   if (!fecha) return '-';
   return new Date(fecha).toLocaleDateString('es-MX', {
-    year: 'numeric',
+    day: '2-digit',
     month: 'short',
-    day: 'numeric'
+    year: 'numeric'
   });
 }
 
-function obtenerIniciales(nombre, apellido) {
-  const n = nombre ? nombre.charAt(0).toUpperCase() : '';
-  const a = apellido ? apellido.charAt(0).toUpperCase() : '';
+function obtenerIniciales(nombre, apellido = '') {
+  const n = (nombre || '').charAt(0).toUpperCase();
+  const a = (apellido || '').charAt(0).toUpperCase();
   return n + a || '??';
 }
 
 // ========================================
-// SIDEBAR MÓVIL
+// TOASTS
 // ========================================
-
-function toggleSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.querySelector('.sidebar-overlay');
-  
-  sidebar?.classList.toggle('open');
-  overlay?.classList.toggle('open');
-}
-
-// ========================================
-// SISTEMA DE TOASTS
-// ========================================
-
-function crearContenedorToasts() {
-  let contenedor = document.getElementById('toast-container');
-  if (!contenedor) {
-    contenedor = document.createElement('div');
-    contenedor.id = 'toast-container';
-    contenedor.className = 'toast-container';
-    document.body.appendChild(contenedor);
-  }
-  return contenedor;
-}
 
 function toast(mensaje, tipo = 'info', duracion = 4000) {
-  const contenedor = crearContenedorToasts();
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast--${tipo}`;
   
-  const iconos = {
+  const icons = {
     success: 'check_circle',
     error: 'error',
     warning: 'warning',
     info: 'info'
   };
-  
-  const titulos = {
-    success: 'Éxito',
-    error: 'Error',
-    warning: 'Advertencia',
-    info: 'Información'
-  };
-  
-  const toastEl = document.createElement('div');
-  toastEl.className = `toast toast--${tipo}`;
-  toastEl.innerHTML = `
+
+  toast.innerHTML = `
     <div class="toast__icon">
-      <span class="material-symbols-outlined">${iconos[tipo]}</span>
+      <span class="material-symbols-outlined">${icons[tipo] || 'info'}</span>
     </div>
-    <div class="toast__content">
-      <p class="toast__title">${titulos[tipo]}</p>
-      <p class="toast__message">${mensaje}</p>
-    </div>
-    <button class="toast__close" onclick="cerrarToast(this)">
+    <span class="toast__message">${mensaje}</span>
+    <button class="toast__close" onclick="this.parentElement.remove()">
       <span class="material-symbols-outlined">close</span>
     </button>
   `;
-  
-  contenedor.appendChild(toastEl);
-  
-  // Auto cerrar
-  if (duracion > 0) {
-    setTimeout(() => {
-      cerrarToastElemento(toastEl);
-    }, duracion);
-  }
-  
-  return toastEl;
+
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), duracion);
 }
 
-function cerrarToast(btn) {
-  const toastEl = btn.closest('.toast');
-  cerrarToastElemento(toastEl);
-}
-
-function cerrarToastElemento(toastEl) {
-  if (!toastEl) return;
-  toastEl.classList.add('hiding');
-  setTimeout(() => {
-    toastEl.remove();
-  }, 300);
-}
-
-// Funciones de acceso rápido
-function toastExito(mensaje) {
-  return toast(mensaje, 'success');
-}
-
-function toastError(mensaje) {
-  return toast(mensaje, 'error', 6000);
-}
-
-function toastAdvertencia(mensaje) {
-  return toast(mensaje, 'warning', 5000);
-}
-
-function toastInfo(mensaje) {
-  return toast(mensaje, 'info');
-}
+function toastExito(msg) { toast(msg, 'success'); }
+function toastError(msg) { toast(msg, 'error', 6000); }
+function toastAdvertencia(msg) { toast(msg, 'warning', 5000); }
+function toastInfo(msg) { toast(msg, 'info'); }
 
 // ========================================
-// MODAL DE CONFIRMACIÓN
+// LOADING BUTTONS
 // ========================================
 
-function confirmar(opciones) {
-  return new Promise((resolve) => {
-    const {
-      titulo = '¿Estás seguro?',
-      mensaje = '',
-      tipo = 'warning', // warning, danger, success
-      textoConfirmar = 'Confirmar',
-      textoCancelar = 'Cancelar',
-      colorConfirmar = 'primary' // primary, danger, success
-    } = opciones;
-    
-    const iconos = {
-      warning: 'warning',
-      danger: 'delete_forever',
-      success: 'check_circle'
-    };
-    
-    // Crear overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'confirm-modal-overlay';
-    
-    overlay.innerHTML = `
-      <div class="modal modal--sm">
-        <div class="modal__body confirm-modal">
-          <div class="confirm-modal__icon confirm-modal__icon--${tipo}">
-            <span class="material-symbols-outlined">${iconos[tipo]}</span>
-          </div>
-          <h3 class="confirm-modal__title">${titulo}</h3>
-          <p class="confirm-modal__message">${mensaje}</p>
-          <div class="confirm-modal__actions">
-            <button class="btn btn-secondary" id="confirm-cancel">${textoCancelar}</button>
-            <button class="btn btn-${colorConfirmar}" id="confirm-ok">${textoConfirmar}</button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(overlay);
-    
-    // Mostrar con animación
-    requestAnimationFrame(() => {
-      overlay.classList.add('active');
-    });
-    
-    // Eventos
-    const btnCancelar = overlay.querySelector('#confirm-cancel');
-    const btnConfirmar = overlay.querySelector('#confirm-ok');
-    
-    function cerrar(resultado) {
-      overlay.classList.remove('active');
-      setTimeout(() => {
-        overlay.remove();
-      }, 200);
-      resolve(resultado);
-    }
-    
-    btnCancelar.addEventListener('click', () => cerrar(false));
-    btnConfirmar.addEventListener('click', () => cerrar(true));
-    
-    // Cerrar con ESC
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') {
-        cerrar(false);
-        document.removeEventListener('keydown', handleEsc);
-      }
-    };
-    document.addEventListener('keydown', handleEsc);
-  });
-}
-
-// ========================================
-// LOADING EN BOTONES
-// ========================================
-
-function btnLoading(btn, loading = true) {
+function btnLoading(btn, loading) {
+  if (!btn) return;
   if (loading) {
     btn.disabled = true;
     btn.dataset.originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner"></span> Procesando...';
+    btn.innerHTML = '<div class="spinner"></div>';
   } else {
     btn.disabled = false;
-    btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+    btn.innerHTML = btn.dataset.originalText || 'Guardar';
   }
 }
 
 // ========================================
-// ANIMACIÓN DE ÉXITO CON CONFETTI
+// SIDEBAR MOBILE
 // ========================================
 
-function mostrarExitoCreacion(opciones = {}) {
-  const {
-    titulo = '¡Creado exitosamente!',
-    mensaje = 'El registro se ha guardado correctamente',
-    detalle = '',
-    textoBoton = 'Continuar',
-    onClose = () => {}
-  } = opciones;
-
-  // Crear confetti
-  crearConfetti();
-
-  // Crear overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'success-overlay';
-  overlay.id = 'success-overlay';
-  
-  overlay.innerHTML = `
-    <div class="success-card">
-      <div class="success-icon-wrapper">
-        <div class="success-rings">
-          <div class="success-ring"></div>
-          <div class="success-ring"></div>
-          <div class="success-ring"></div>
-        </div>
-        <div class="success-circle">
-          <span class="material-symbols-outlined">check</span>
-        </div>
-      </div>
-      <h2 class="success-title">${titulo}</h2>
-      <p class="success-message">${mensaje}</p>
-      ${detalle ? `<p class="success-detail">${detalle}</p>` : ''}
-      <button class="success-btn" onclick="cerrarExitoCreacion()">${textoBoton}</button>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-  
-  // Guardar callback
-  overlay.dataset.onClose = 'true';
-  window._successCallback = onClose;
-
-  // Mostrar con animación
-  requestAnimationFrame(() => {
-    overlay.classList.add('active');
-  });
-
-  // Auto cerrar después de 5 segundos
-  setTimeout(() => {
-    cerrarExitoCreacion();
-  }, 5000);
+function toggleSidebar() {
+  document.querySelector('.sidebar')?.classList.toggle('open');
+  document.querySelector('.sidebar-overlay')?.classList.toggle('active');
 }
 
-function cerrarExitoCreacion() {
-  const overlay = document.getElementById('success-overlay');
-  if (!overlay) return;
+// ========================================
+// INICIALIZACIÓN
+// ========================================
 
-  overlay.classList.remove('active');
-  
-  setTimeout(() => {
-    overlay.remove();
-    // Limpiar confetti
-    document.querySelectorAll('.confetti-container').forEach(c => c.remove());
-    // Ejecutar callback
-    if (window._successCallback) {
-      window._successCallback();
-      window._successCallback = null;
-    }
-  }, 300);
-}
-
-function crearConfetti() {
-  const container = document.createElement('div');
-  container.className = 'confetti-container';
-  
-  const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
-  const shapes = ['square', 'circle'];
-  
-  for (let i = 0; i < 100; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.style.left = Math.random() * 100 + 'vw';
-    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-    confetti.style.animationDelay = Math.random() * 0.5 + 's';
-    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    
-    if (shapes[Math.floor(Math.random() * shapes.length)] === 'circle') {
-      confetti.style.borderRadius = '50%';
-    } else {
-      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-    }
-    
-    confetti.style.width = (Math.random() * 10 + 5) + 'px';
-    confetti.style.height = (Math.random() * 10 + 5) + 'px';
-    
-    container.appendChild(confetti);
-  }
-  
-  document.body.appendChild(container);
-  
-  // Limpiar después de la animación
-  setTimeout(() => {
-    container.remove();
-  }, 4000);
-}
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+});

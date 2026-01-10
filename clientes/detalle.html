@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet - Perfil del Cliente</title>
+  <title>Skynet - Client Profile</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -12,13 +12,13 @@
 </head>
 <body>
 
-<div class="app-layout">
+<div class="app">
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
+  
   <aside class="sidebar">
     <div class="sidebar__header">
       <div class="sidebar__logo">
-        <span class="material-symbols-outlined">rocket_launch</span>
+        <span class="material-symbols-outlined">hub</span>
       </div>
       <div class="sidebar__brand">
         <span class="sidebar__title">Skynet</span>
@@ -29,93 +29,79 @@
     <nav class="sidebar__nav">
       <a href="/skynet-frontend/dashboard/" class="sidebar__link">
         <span class="material-symbols-outlined">dashboard</span>
-        <span>Panel Principal</span>
+        <span>Dashboard</span>
       </a>
       <a href="/skynet-frontend/clientes/" class="sidebar__link active">
         <span class="material-symbols-outlined">group</span>
-        <span>Clientes</span>
+        <span>Clients</span>
       </a>
-      <a href="/skynet-frontend/pagos/" class="sidebar__link">
+      <a href="#" class="sidebar__link">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span>Inventory</span>
+      </a>
+      <a href="#" class="sidebar__link">
         <span class="material-symbols-outlined">payments</span>
-        <span>Pagos</span>
+        <span>Billing</span>
       </a>
-      <a href="/skynet-frontend/equipos/" class="sidebar__link">
-        <span class="material-symbols-outlined">router</span>
-        <span>Equipos</span>
+      <a href="#" class="sidebar__link">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span>Support</span>
       </a>
-      <a href="/skynet-frontend/reportes/" class="sidebar__link">
-        <span class="material-symbols-outlined">assessment</span>
-        <span>Reportes</span>
-      </a>
-
+      
       <div class="sidebar__divider"></div>
-
-      <a href="/skynet-frontend/configuracion/" class="sidebar__link">
+      
+      <a href="#" class="sidebar__link">
         <span class="material-symbols-outlined">settings</span>
-        <span>Configuración</span>
+        <span>Settings</span>
       </a>
-      <a href="#" class="sidebar__link" onclick="cerrarSesion()">
+      <a href="#" class="sidebar__link" onclick="cerrarSesion(); return false;">
         <span class="material-symbols-outlined">logout</span>
-        <span>Cerrar Sesión</span>
+        <span>Logout</span>
       </a>
     </nav>
-
-    <div class="sidebar__footer">
-      <div class="sidebar__status">
-        <span class="sidebar__status-label">Estado del Sistema</span>
-        <span class="sidebar__status-dot"></span>
-      </div>
-      <div class="sidebar__progress">
-        <div class="sidebar__progress-bar"></div>
-      </div>
-      <p class="sidebar__status-text">Sistema operativo</p>
-    </div>
   </aside>
 
-  <main class="app-main">
+  <main class="app__main">
     <header class="header">
-      <div class="header__left">
-        <button class="header__btn header__menu-btn" onclick="toggleSidebar()">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <h2 class="header__title">Perfil del Cliente</h2>
+      <div class="header__search">
+        <span class="material-symbols-outlined header__search-icon">search</span>
+        <input type="text" class="header__search-input" placeholder="Search clients...">
       </div>
 
       <div class="header__actions">
+        <button class="header__btn" onclick="toggleTheme()">
+          <span class="material-symbols-outlined">dark_mode</span>
+        </button>
         <button class="header__btn">
           <span class="material-symbols-outlined">notifications</span>
           <span class="header__btn-badge"></span>
-        </button>
-        <button class="header__btn">
-          <span class="material-symbols-outlined">settings</span>
         </button>
         <div class="header__divider"></div>
         <div class="header__user">
           <div class="header__user-info">
             <p class="header__user-name" id="usuarioNombre">Admin</p>
-            <p class="header__user-role" id="usuarioRol">Administrador</p>
+            <p class="header__user-role" id="usuarioRol">Administrator</p>
           </div>
-          <div class="header__user-avatar"></div>
+          <div class="header__user-avatar" id="usuarioAvatar">A</div>
         </div>
       </div>
     </header>
 
-    <div class="app-content">
-      <!-- Breadcrumb -->
+    <div class="app__content">
       <nav class="breadcrumb">
-        <a href="/skynet-frontend/clientes/">Clientes</a>
-        <span class="material-symbols-outlined">chevron_right</span>
-        <span class="breadcrumb__current">Detalle del Cliente</span>
+        <a href="/skynet-frontend/clientes/">Skynet Customers</a>
+        <span class="material-symbols-outlined breadcrumb__separator">chevron_right</span>
+        <span class="breadcrumb__current">Client Detail</span>
       </nav>
 
       <!-- Profile Card -->
-      <div class="profile-card" id="profileCard">
-        <div class="profile-card__left">
+      <div class="profile-card">
+        <div class="profile-card__main">
           <div class="profile-card__avatar" id="clienteAvatar">--</div>
           <div class="profile-card__info">
-            <div class="profile-card__header">
-              <h1 id="clienteNombre">Cargando...</h1>
-              <span class="profile-badge" id="clienteEstado">--</span>
+            <div class="profile-card__name">
+              <h1 id="clienteNombre">Loading...</h1>
+              <span class="profile-card__badge" id="clienteEstado">--</span>
             </div>
             <div class="profile-card__meta">
               <span id="clienteEmail"><span class="material-symbols-outlined">mail</span> --</span>
@@ -126,154 +112,179 @@
         <div class="profile-card__actions">
           <button class="btn btn-primary" onclick="registrarPago()">
             <span class="material-symbols-outlined">payments</span>
-            Registrar Pago
+            Register Payment
           </button>
           <button class="btn btn-secondary" onclick="editarCliente()">
             <span class="material-symbols-outlined">edit</span>
-            Editar Perfil
+            Edit Profile
           </button>
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="stats-row">
-        <div class="stat-box">
-          <div class="stat-box__header">
-            <span class="stat-box__label">Cuota Mensual</span>
-            <div class="stat-box__icon stat-box__icon--blue">
+      <!-- Stats -->
+      <div class="detail-stats">
+        <div class="detail-stat">
+          <div class="detail-stat__header">
+            <span class="detail-stat__label">Monthly Rate</span>
+            <div class="detail-stat__icon detail-stat__icon--blue">
               <span class="material-symbols-outlined">price_check</span>
             </div>
           </div>
-          <p class="stat-box__value" id="cuotaMensual">$0.00 <small>/mes</small></p>
-          <p class="stat-box__sub" id="planNombre">Plan: --</p>
+          <p class="detail-stat__value" id="cuotaMensual">$0.00 <small>/mo</small></p>
+          <p class="detail-stat__sub" id="planNombre">Plan: --</p>
         </div>
-        <div class="stat-box">
-          <div class="stat-box__header">
-            <span class="stat-box__label">Saldo Actual</span>
-            <div class="stat-box__icon stat-box__icon--green">
+        <div class="detail-stat">
+          <div class="detail-stat__header">
+            <span class="detail-stat__label">Current Balance</span>
+            <div class="detail-stat__icon detail-stat__icon--green">
               <span class="material-symbols-outlined">account_balance_wallet</span>
             </div>
           </div>
-          <p class="stat-box__value" id="saldoActual">$0.00</p>
-          <p class="stat-box__sub" id="estadoCuenta">Cuenta al corriente</p>
+          <p class="detail-stat__value" id="saldoActual">$0.00</p>
+          <p class="detail-stat__sub" id="estadoCuenta">Account Up to date</p>
         </div>
-        <div class="stat-box">
-          <div class="stat-box__header">
-            <span class="stat-box__label">Próximo Corte</span>
-            <div class="stat-box__icon stat-box__icon--amber">
+        <div class="detail-stat">
+          <div class="detail-stat__header">
+            <span class="detail-stat__label">Next Due Date</span>
+            <div class="detail-stat__icon detail-stat__icon--amber">
               <span class="material-symbols-outlined">calendar_month</span>
             </div>
           </div>
-          <p class="stat-box__value" id="proximoCorte">--</p>
-          <p class="stat-box__sub" id="diasRestantes">--</p>
+          <p class="detail-stat__value" id="proximoCorte">--</p>
+          <p class="detail-stat__sub" id="diasRestantes">--</p>
         </div>
       </div>
 
       <!-- Tabs -->
-      <div class="content-tabs">
-        <button class="content-tabs__btn active" data-tab="equipos">Equipos</button>
-        <button class="content-tabs__btn" data-tab="historial">Estado de Cuenta</button>
-        <button class="content-tabs__btn" data-tab="documentos">Documentos</button>
+      <div class="detail-tabs">
+        <button class="detail-tabs__btn active" data-tab="equipos">Equipment</button>
+        <button class="detail-tabs__btn" data-tab="historial">Account Statement</button>
+        <button class="detail-tabs__btn" data-tab="documentos">Documents</button>
       </div>
 
       <!-- Content Grid -->
-      <div class="content-grid">
-        <div class="content-main">
-          <!-- Panel Equipos -->
-          <div class="content-panel active" id="panel-equipos">
-            <div class="content-panel__header">
-              <h3><span class="material-symbols-outlined">router</span> Equipos Instalados</h3>
-              <button class="content-panel__link" onclick="administrarEquipos()">Administrar</button>
+      <div class="detail-grid">
+        <div class="detail-grid__main">
+          <!-- Equipment Panel -->
+          <div class="card detail-panel active" id="panel-equipos">
+            <div class="card__header">
+              <div class="card__title">
+                <span class="material-symbols-outlined">router</span>
+                Skynet Installed Equipment
+              </div>
+              <button class="btn btn-sm btn-secondary">Manage All</button>
             </div>
-            <div class="content-panel__body">
-              <table class="content-table">
+            <div class="table-container">
+              <table class="table">
                 <thead>
                   <tr>
-                    <th>Dispositivo</th>
+                    <th>Device</th>
                     <th>MAC Address</th>
-                    <th>No. Serie</th>
-                    <th>Estado</th>
+                    <th>Serial No.</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody id="tablaEquipos">
-                  <tr><td colspan="4" class="text-center">Cargando...</td></tr>
+                  <tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
 
-          <!-- Panel Historial -->
-          <div class="content-panel" id="panel-historial">
-            <div class="content-panel__header">
-              <h3><span class="material-symbols-outlined">receipt_long</span> Historial de Transacciones</h3>
-              <button class="content-panel__link">Ver Estado Completo</button>
-            </div>
-            <div class="content-panel__body">
-              <div class="transactions-list" id="listaPagos">
-                <p class="text-center">Cargando...</p>
+          <!-- Transactions Panel -->
+          <div class="card detail-panel" id="panel-historial">
+            <div class="card__header">
+              <div class="card__title">
+                <span class="material-symbols-outlined">receipt_long</span>
+                Skynet Transaction History
               </div>
+              <button class="btn btn-sm btn-secondary">View Statement</button>
+            </div>
+            <div class="card__body" id="listaPagos">
+              <p class="text-center text-muted">Loading...</p>
             </div>
           </div>
 
-          <!-- Panel Documentos -->
-          <div class="content-panel" id="panel-documentos">
-            <div class="content-panel__header">
-              <h3><span class="material-symbols-outlined">folder</span> Documentos</h3>
+          <!-- Documents Panel -->
+          <div class="card detail-panel" id="panel-documentos">
+            <div class="card__header">
+              <div class="card__title">
+                <span class="material-symbols-outlined">folder</span>
+                Documents
+              </div>
             </div>
-            <div class="content-panel__body">
+            <div class="card__body">
               <div class="empty-state">
                 <span class="material-symbols-outlined">folder_open</span>
-                <p>Sin documentos adicionales</p>
+                <p>No additional documents</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="content-sidebar">
+        <div class="detail-grid__side">
           <!-- INE Card -->
-          <div class="side-card">
-            <h4><span class="material-symbols-outlined">badge</span> Identificación (INE)</h4>
-            <div class="ine-grid">
-              <div class="ine-item">
-                <label>Frente</label>
-                <div class="ine-box" id="ineFrente">
-                  <span class="material-symbols-outlined">cloud_upload</span>
-                  <span>Click para subir</span>
-                </div>
-              </div>
-              <div class="ine-item">
-                <label>Reverso</label>
-                <div class="ine-box" id="ineReverso">
-                  <span class="material-symbols-outlined">add_photo_alternate</span>
-                  <span>Subir Reverso</span>
-                  <small>PNG, JPG hasta 10MB</small>
-                </div>
+          <div class="card">
+            <div class="card__header">
+              <div class="card__title">
+                <span class="material-symbols-outlined">badge</span>
+                Identification (INE)
               </div>
             </div>
-            <button class="side-card__btn">
-              <span class="material-symbols-outlined">download</span>
-              Descargar Documentos
-            </button>
+            <div class="card__body">
+              <div class="ine-grid">
+                <div class="ine-item">
+                  <label>Front Side</label>
+                  <div class="ine-box" id="ineFrente">
+                    <span class="material-symbols-outlined">cloud_upload</span>
+                    <span>Click to upload</span>
+                  </div>
+                </div>
+                <div class="ine-item">
+                  <label>Back Side</label>
+                  <div class="ine-box" id="ineReverso">
+                    <span class="material-symbols-outlined">add_photo_alternate</span>
+                    <span>Upload Back Side</span>
+                    <small>PNG, JPG up to 10MB</small>
+                  </div>
+                </div>
+              </div>
+              <button class="btn btn-secondary" style="width: 100%; margin-top: 16px;">
+                <span class="material-symbols-outlined">download</span>
+                Download All Docs
+              </button>
+            </div>
           </div>
 
-          <!-- Contact Card -->
-          <div class="side-card side-card--dark">
-            <h4><span class="material-symbols-outlined">contact_phone</span> Contacto Rápido</h4>
-            <div class="contact-info">
-              <p><strong>Teléfono:</strong> <span id="clienteTelefono">--</span></p>
-              <p><strong>Tel. Secundario:</strong> <span id="clienteTelefono2">--</span></p>
-              <p><strong>Referencia:</strong> <span id="clienteReferencia">--</span></p>
+          <!-- Support Card -->
+          <div class="card support-card">
+            <div class="card__header" style="border: none;">
+              <div class="card__title" style="color: white;">
+                <span class="material-symbols-outlined">help</span>
+                Skynet Support
+              </div>
             </div>
-            <button class="whatsapp-btn" id="btnWhatsApp">
-              <span class="material-symbols-outlined">chat</span>
-              Enviar WhatsApp
-            </button>
+            <div class="card__body">
+              <p style="font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 16px;">
+                Quick contact information and support options for this customer.
+              </p>
+              <div class="support-info">
+                <p><strong>Phone:</strong> <span id="clienteTelefono">--</span></p>
+                <p><strong>Phone 2:</strong> <span id="clienteTelefono2">--</span></p>
+              </div>
+              <button class="btn btn-secondary" style="width: 100%; background: rgba(255,255,255,0.1); border: none;" id="btnWhatsApp">
+                <span class="material-symbols-outlined">chat</span>
+                Send WhatsApp
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </main>
 </div>
+
+<div class="toast-container" id="toastContainer"></div>
 
 <script src="../js/auth.js"></script>
 <script src="detalle.js"></script>

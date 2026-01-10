@@ -5,6 +5,7 @@
 let clienteActual = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  verificarSesion();
   cargarUsuarioHeader();
   inicializarTabs();
   
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const clienteId = params.get('id');
   
   if (!clienteId) {
-    toastError('Cliente no especificado');
+    toastError('Client not specified');
     setTimeout(() => window.location.href = '/skynet-frontend/clientes/', 2000);
     return;
   }
@@ -21,10 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function inicializarTabs() {
-  document.querySelectorAll('.content-tabs__btn').forEach(btn => {
+  document.querySelectorAll('.detail-tabs__btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.content-tabs__btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.detail-tabs__btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('active'));
       
       btn.classList.add('active');
       document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
@@ -37,7 +38,7 @@ async function cargarCliente(id) {
     const data = await fetchGet(`/api/clientes/${id}`);
     
     if (!data.ok) {
-      toastError('Error al cargar cliente');
+      toastError('Error loading client');
       return;
     }
 
@@ -45,46 +46,40 @@ async function cargarCliente(id) {
     renderizarCliente(clienteActual);
     cargarEquipos(id);
     cargarPagos(id);
+    inicializarSubidaINE();
     
   } catch (err) {
     console.error('Error:', err);
-    toastError('Error al cargar cliente');
+    toastError('Error loading client');
   }
 }
 
 function renderizarCliente(c) {
-  // Avatar e iniciales
-  const iniciales = obtenerIniciales(c.nombre, c.apellido_paterno);
-  document.getElementById('clienteAvatar').textContent = iniciales;
+  // Avatar
+  document.getElementById('clienteAvatar').textContent = obtenerIniciales(c.nombre, c.apellido_paterno);
   
-  // Nombre completo con ID
-  const nombreCompleto = `${c.nombre} ${c.apellido_paterno || ''} ${c.apellido_materno || ''}`.trim();
-  document.getElementById('clienteNombre').textContent = `${nombreCompleto} - ID: #${c.numero_cliente || 'SKY-0000'}`;
+  // Nombre con ID
+  document.getElementById('clienteNombre').textContent = `${c.nombre} ${c.apellido_paterno || ''} ${c.apellido_materno || ''} - ID: #${c.numero_cliente || 'SKY-0000'}`.trim();
   
-  // Estado
-  const badgeEstado = document.getElementById('clienteEstado');
-  badgeEstado.textContent = (c.estado || 'activo').toUpperCase();
-  badgeEstado.className = 'profile-badge ' + (c.estado || 'active');
+  // Badge Estado
+  const badge = document.getElementById('clienteEstado');
+  badge.textContent = (c.estado || 'active').toUpperCase();
+  badge.className = 'profile-card__badge ' + (c.estado || 'active');
   
   // Email y dirección
-  document.getElementById('clienteEmail').innerHTML = `<span class="material-symbols-outlined">mail</span> ${c.email || 'Sin email'}`;
+  document.getElementById('clienteEmail').innerHTML = `<span class="material-symbols-outlined">mail</span> ${c.email || 'No email'}`;
   document.getElementById('clienteDireccion').innerHTML = `<span class="material-symbols-outlined">location_on</span> ${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
   
   // Stats
-  document.getElementById('cuotaMensual').innerHTML = `${formatoMoneda(c.cuota_mensual)} <small>/mes</small>`;
-  document.getElementById('planNombre').textContent = `Plan: ${c.plan_nombre || 'Sin plan'}`;
+  document.getElementById('cuotaMensual').innerHTML = `${formatoMoneda(c.cuota_mensual)} <small>/mo</small>`;
+  document.getElementById('planNombre').textContent = `Skynet Plan: ${c.plan_nombre || 'No plan'}`;
   
   // Saldo
   const saldo = c.saldo_pendiente || 0;
   document.getElementById('saldoActual').textContent = formatoMoneda(saldo);
   const estadoCuenta = document.getElementById('estadoCuenta');
-  if (saldo > 0) {
-    estadoCuenta.textContent = 'Saldo pendiente';
-    estadoCuenta.className = 'stat-box__sub danger';
-  } else {
-    estadoCuenta.textContent = 'Cuenta al corriente';
-    estadoCuenta.className = 'stat-box__sub success';
-  }
+  estadoCuenta.textContent = saldo > 0 ? 'Balance pending' : 'Account Up to date';
+  estadoCuenta.className = 'detail-stat__sub ' + (saldo > 0 ? 'danger' : 'success');
   
   // Próximo corte
   const hoy = new Date();
@@ -94,24 +89,21 @@ function renderizarCliente(c) {
   }
   const diasRestantes = Math.ceil((proximoCorte - hoy) / (1000 * 60 * 60 * 24));
   
-  document.getElementById('proximoCorte').textContent = proximoCorte.toLocaleDateString('es-MX', { 
-    day: 'numeric', 
+  document.getElementById('proximoCorte').textContent = proximoCorte.toLocaleDateString('en-US', { 
     month: 'short', 
+    day: 'numeric', 
     year: 'numeric' 
   });
-  document.getElementById('diasRestantes').textContent = `En ${diasRestantes} días`;
+  document.getElementById('diasRestantes').textContent = `In ${diasRestantes} days`;
   
   // Contacto
   document.getElementById('clienteTelefono').textContent = c.telefono || '--';
   document.getElementById('clienteTelefono2').textContent = c.telefono_secundario || '--';
-  document.getElementById('clienteReferencia').textContent = c.referencia || '--';
   
   // WhatsApp
   document.getElementById('btnWhatsApp').onclick = () => {
     const tel = c.telefono?.replace(/\D/g, '');
-    if (tel) {
-      window.open(`https://wa.me/52${tel}`, '_blank');
-    }
+    if (tel) window.open(`https://wa.me/52${tel}`, '_blank');
   };
   
   // INE
@@ -122,55 +114,35 @@ function renderizarINE(c) {
   const ineFrente = document.getElementById('ineFrente');
   const ineReverso = document.getElementById('ineReverso');
   
-  // Reset
   ineFrente.classList.remove('has-image');
   ineReverso.classList.remove('has-image');
   
   if (c.ine_frente) {
     ineFrente.classList.add('has-image');
     ineFrente.innerHTML = `
-      <img src="${c.ine_frente}" alt="INE Frente">
+      <img src="${c.ine_frente}" alt="INE Front">
       <span class="check"><span class="material-symbols-outlined">check</span></span>
-      <div class="ine-actions">
-        <button class="ine-action-btn" onclick="event.stopPropagation(); verDocumento('${c.ine_frente}')" title="Ver">
-          <span class="material-symbols-outlined">visibility</span>
-        </button>
-        <button class="ine-action-btn" onclick="event.stopPropagation(); descargarDocumento('${c.ine_frente}', 'ine_frente')" title="Descargar">
-          <span class="material-symbols-outlined">download</span>
-        </button>
-      </div>
     `;
   } else {
     ineFrente.innerHTML = `
       <span class="material-symbols-outlined">cloud_upload</span>
-      <span>Click para subir</span>
+      <span>Click to upload</span>
     `;
   }
   
   if (c.ine_reverso) {
     ineReverso.classList.add('has-image');
     ineReverso.innerHTML = `
-      <img src="${c.ine_reverso}" alt="INE Reverso">
+      <img src="${c.ine_reverso}" alt="INE Back">
       <span class="check"><span class="material-symbols-outlined">check</span></span>
-      <div class="ine-actions">
-        <button class="ine-action-btn" onclick="event.stopPropagation(); verDocumento('${c.ine_reverso}')" title="Ver">
-          <span class="material-symbols-outlined">visibility</span>
-        </button>
-        <button class="ine-action-btn" onclick="event.stopPropagation(); descargarDocumento('${c.ine_reverso}', 'ine_reverso')" title="Descargar">
-          <span class="material-symbols-outlined">download</span>
-        </button>
-      </div>
     `;
   } else {
     ineReverso.innerHTML = `
       <span class="material-symbols-outlined">add_photo_alternate</span>
-      <span>Subir Reverso</span>
-      <small>PNG, JPG hasta 10MB</small>
+      <span>Upload Back Side</span>
+      <small>PNG, JPG up to 10MB</small>
     `;
   }
-  
-  // Inicializar eventos de click
-  inicializarSubidaINE();
 }
 
 async function cargarEquipos(clienteId) {
@@ -185,7 +157,7 @@ async function cargarEquipos(clienteId) {
           <td colspan="4">
             <div class="empty-state">
               <span class="material-symbols-outlined">router</span>
-              <p>Sin equipos registrados</p>
+              <p>No equipment registered</p>
             </div>
           </td>
         </tr>
@@ -195,14 +167,11 @@ async function cargarEquipos(clienteId) {
 
     tbody.innerHTML = data.equipos.map(e => `
       <tr>
-        <td>
-          <span class="material-symbols-outlined">${e.tipo === 'router' ? 'router' : 'cell_tower'}</span>
-          ${e.marca || ''} ${e.modelo || ''}
-        </td>
-        <td><code>${e.mac || '--'}</code></td>
+        <td>${e.marca || ''} ${e.modelo || ''}</td>
+        <td><code style="font-size: 12px; color: var(--text-muted);">${e.mac || '--'}</code></td>
         <td>${e.serial || '--'}</td>
         <td>
-          <span class="${e.estado === 'activo' ? 'status-online' : 'status-offline'}">
+          <span class="equipment-status ${e.estado === 'activo' ? 'online' : 'offline'}">
             ${e.estado === 'activo' ? 'Online' : 'Offline'}
           </span>
         </td>
@@ -210,8 +179,7 @@ async function cargarEquipos(clienteId) {
     `).join('');
     
   } catch (err) {
-    console.error('Error cargando equipos:', err);
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Error al cargar</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Error loading</td></tr>';
   }
 }
 
@@ -225,7 +193,7 @@ async function cargarPagos(clienteId) {
       container.innerHTML = `
         <div class="empty-state">
           <span class="material-symbols-outlined">receipt_long</span>
-          <p>Sin transacciones registradas</p>
+          <p>No transactions recorded</p>
         </div>
       `;
       return;
@@ -233,47 +201,29 @@ async function cargarPagos(clienteId) {
 
     container.innerHTML = data.pagos.map(p => `
       <div class="transaction-item">
-        <div class="transaction-item__icon ${p.tipo === 'mensualidad' ? 'green' : ''}">
-          <span class="material-symbols-outlined">${p.tipo === 'mensualidad' ? 'add' : 'description'}</span>
+        <div class="transaction-item__icon green">
+          <span class="material-symbols-outlined">add</span>
         </div>
         <div class="transaction-item__info">
-          <p class="transaction-item__title">Pago de ${p.tipo || 'Servicio'}</p>
-          <p class="transaction-item__date">${formatoFecha(p.fecha_pago)} • ${p.metodo_pago || 'Efectivo'}</p>
+          <p class="transaction-item__title">Monthly Subscription Payment</p>
+          <p class="transaction-item__date">${formatoFecha(p.fecha_pago)} • ${p.metodo_pago || 'Cash'}</p>
         </div>
         <p class="transaction-item__amount">-${formatoMoneda(p.monto)}</p>
       </div>
     `).join('');
     
   } catch (err) {
-    console.error('Error cargando pagos:', err);
-    container.innerHTML = '<p class="text-center">Error al cargar</p>';
+    container.innerHTML = '<p class="text-center text-muted">Error loading</p>';
   }
 }
 
-function registrarPago() {
-  if (!clienteActual) return;
-  toastInfo('Módulo de pagos en desarrollo');
-}
-
-function editarCliente() {
-  if (!clienteActual) return;
-  window.location.href = `/skynet-frontend/clientes/?editar=${clienteActual.id}`;
-}
-
-function administrarEquipos() {
-  toastInfo('Módulo de equipos en desarrollo');
-}
-
 // ========================================
-// SUBIDA DE DOCUMENTOS (INE)
+// SUBIDA INE
 // ========================================
 
 function inicializarSubidaINE() {
-  const ineFrente = document.getElementById('ineFrente');
-  const ineReverso = document.getElementById('ineReverso');
-  
-  ineFrente.onclick = () => seleccionarArchivo('ine_frente');
-  ineReverso.onclick = () => seleccionarArchivo('ine_reverso');
+  document.getElementById('ineFrente').onclick = () => seleccionarArchivo('ine_frente');
+  document.getElementById('ineReverso').onclick = () => seleccionarArchivo('ine_reverso');
 }
 
 function seleccionarArchivo(tipo) {
@@ -284,7 +234,7 @@ function seleccionarArchivo(tipo) {
     const archivo = e.target.files[0];
     if (archivo) {
       if (archivo.size > 10 * 1024 * 1024) {
-        toastError('El archivo no debe superar 10MB');
+        toastError('File must be less than 10MB');
         return;
       }
       subirINE(archivo, tipo);
@@ -297,10 +247,9 @@ async function subirINE(archivo, tipo) {
   if (!clienteActual) return;
   
   const box = document.getElementById(tipo === 'ine_frente' ? 'ineFrente' : 'ineReverso');
-  box.innerHTML = `<span class="material-symbols-outlined rotating">sync</span><span>Subiendo...</span>`;
+  box.innerHTML = `<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span><span>Uploading...</span>`;
   
   try {
-    // Convertir a base64
     const base64 = await convertirABase64(archivo);
     
     const data = await fetchPost('/api/documentos/subir', {
@@ -310,33 +259,16 @@ async function subirINE(archivo, tipo) {
     });
     
     if (data.ok) {
-      toastExito('Documento subido correctamente');
-      // Actualizar vista
-      box.classList.add('has-image');
-      box.innerHTML = `
-        <img src="${data.url}" alt="INE">
-        <span class="check"><span class="material-symbols-outlined">check</span></span>
-        <div class="ine-actions">
-          <button class="ine-action-btn" onclick="event.stopPropagation(); verDocumento('${data.url}')" title="Ver">
-            <span class="material-symbols-outlined">visibility</span>
-          </button>
-          <button class="ine-action-btn" onclick="event.stopPropagation(); descargarDocumento('${data.url}', '${tipo}')" title="Descargar">
-            <span class="material-symbols-outlined">download</span>
-          </button>
-          <button class="ine-action-btn danger" onclick="event.stopPropagation(); eliminarINE('${tipo}', '${data.public_id}')" title="Eliminar">
-            <span class="material-symbols-outlined">delete</span>
-          </button>
-        </div>
-      `;
-      // Actualizar objeto local
+      toastExito('Document uploaded successfully');
       clienteActual[tipo] = data.url;
+      renderizarINE(clienteActual);
     } else {
-      toastError(data.mensaje || 'Error al subir');
+      toastError(data.mensaje || 'Error uploading');
       renderizarINE(clienteActual);
     }
   } catch (err) {
     console.error('Error:', err);
-    toastError('Error al subir documento');
+    toastError('Error uploading document');
     renderizarINE(clienteActual);
   }
 }
@@ -350,38 +282,16 @@ function convertirABase64(archivo) {
   });
 }
 
-function verDocumento(url) {
-  window.open(url, '_blank');
+// ========================================
+// ACCIONES
+// ========================================
+
+function registrarPago() {
+  toastInfo('Payment module coming soon');
 }
 
-function descargarDocumento(url, nombre) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nombre + '.jpg';
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-async function eliminarINE(tipo, publicId) {
-  if (!confirm('¿Eliminar este documento?')) return;
-  
-  try {
-    const data = await fetchPost('/api/documentos/eliminar', {
-      public_id: publicId,
-      cliente_id: clienteActual.id,
-      tipo: tipo
-    });
-    
-    if (data.ok) {
-      toastExito('Documento eliminado');
-      clienteActual[tipo] = null;
-      renderizarINE(clienteActual);
-    } else {
-      toastError('Error al eliminar');
-    }
-  } catch (err) {
-    toastError('Error al eliminar documento');
+function editarCliente() {
+  if (clienteActual) {
+    window.location.href = `/skynet-frontend/clientes/?editar=${clienteActual.id}`;
   }
 }

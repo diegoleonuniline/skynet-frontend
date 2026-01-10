@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skynet - Panel Principal</title>
+  <title>Skynet - Dashboard</title>
   <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/global.css">
-  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<div class="app-layout">
+<div class="app">
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
+  
   <aside class="sidebar">
     <div class="sidebar__header">
       <div class="sidebar__logo">
-        <span class="material-symbols-outlined">rocket_launch</span>
+        <span class="material-symbols-outlined">hub</span>
       </div>
       <div class="sidebar__brand">
         <span class="sidebar__title">Skynet</span>
@@ -29,62 +29,66 @@
     <nav class="sidebar__nav">
       <a href="/skynet-frontend/dashboard/" class="sidebar__link active">
         <span class="material-symbols-outlined">dashboard</span>
-        <span>Panel Principal</span>
+        <span>Dashboard</span>
       </a>
       <a href="/skynet-frontend/clientes/" class="sidebar__link">
         <span class="material-symbols-outlined">group</span>
-        <span>Clientes</span>
+        <span>Clients</span>
       </a>
-      <a href="/skynet-frontend/pagos/" class="sidebar__link">
+      <a href="#" class="sidebar__link">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span>Inventory</span>
+      </a>
+      <a href="#" class="sidebar__link">
         <span class="material-symbols-outlined">payments</span>
-        <span>Pagos</span>
+        <span>Billing</span>
       </a>
-      <a href="/skynet-frontend/equipos/" class="sidebar__link">
-        <span class="material-symbols-outlined">router</span>
-        <span>Equipos</span>
+      <a href="#" class="sidebar__link">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span>Support Tickets</span>
       </a>
-      <a href="/skynet-frontend/reportes/" class="sidebar__link">
-        <span class="material-symbols-outlined">assessment</span>
-        <span>Reportes</span>
+      <a href="#" class="sidebar__link">
+        <span class="material-symbols-outlined">cell_tower</span>
+        <span>Infrastructure</span>
       </a>
-
+      
       <div class="sidebar__divider"></div>
-
-      <a href="/skynet-frontend/configuracion/" class="sidebar__link">
+      
+      <a href="#" class="sidebar__link">
         <span class="material-symbols-outlined">settings</span>
-        <span>Configuración</span>
+        <span>Settings</span>
       </a>
-      <a href="#" class="sidebar__link" onclick="cerrarSesion()">
+      <a href="#" class="sidebar__link" onclick="cerrarSesion(); return false;">
         <span class="material-symbols-outlined">logout</span>
-        <span>Cerrar Sesión</span>
+        <span>Logout</span>
       </a>
     </nav>
 
     <div class="sidebar__footer">
       <div class="sidebar__status">
-        <span class="sidebar__status-label">Estado del Sistema</span>
-        <span class="sidebar__status-dot"></span>
+        <div class="sidebar__status-header">
+          <span class="sidebar__status-label">Skynet Nodes</span>
+          <span class="sidebar__status-dot"></span>
+        </div>
+        <div class="sidebar__status-bar">
+          <div class="sidebar__status-fill"></div>
+        </div>
+        <p class="sidebar__status-text">All systems operational</p>
       </div>
-      <div class="sidebar__progress">
-        <div class="sidebar__progress-bar"></div>
-      </div>
-      <p class="sidebar__status-text">Sistema operativo</p>
     </div>
   </aside>
 
-  <main class="app-main">
+  <main class="app__main">
     <header class="header">
-      <div class="header__left">
-        <button class="header__btn header__menu-btn" onclick="toggleSidebar()">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div class="header__search">
-          <span class="material-symbols-outlined header__search-icon">search</span>
-          <input type="text" class="header__search-input" placeholder="Buscar en Skynet...">
-        </div>
+      <div class="header__search">
+        <span class="material-symbols-outlined header__search-icon">search</span>
+        <input type="text" class="header__search-input" placeholder="Search Skynet network...">
       </div>
 
       <div class="header__actions">
+        <button class="header__btn" onclick="toggleTheme()">
+          <span class="material-symbols-outlined">dark_mode</span>
+        </button>
         <button class="header__btn">
           <span class="material-symbols-outlined">notifications</span>
           <span class="header__btn-badge"></span>
@@ -96,153 +100,147 @@
         <div class="header__user">
           <div class="header__user-info">
             <p class="header__user-name" id="usuarioNombre">Admin</p>
-            <p class="header__user-role" id="usuarioRol">Administrador</p>
+            <p class="header__user-role" id="usuarioRol">System Manager</p>
           </div>
-          <div class="header__user-avatar"></div>
+          <div class="header__user-avatar" id="usuarioAvatar">A</div>
         </div>
       </div>
     </header>
 
-    <div class="app-content">
-      <div class="breadcrumb">
-        <a href="#">Skynet</a>
-        <span class="material-symbols-outlined">chevron_right</span>
-        <span class="breadcrumb__current">Panel Principal</span>
-      </div>
+    <div class="app__content">
+      <nav class="breadcrumb">
+        <a href="#">Skynet Admin</a>
+        <span class="material-symbols-outlined breadcrumb__separator">chevron_right</span>
+        <span class="breadcrumb__current">Dashboard Overview</span>
+      </nav>
 
       <div class="page-header">
-        <div>
-          <h1 class="page-header__title">Panel Principal</h1>
-          <p class="page-header__subtitle">Resumen general del sistema</p>
+        <div class="page-header__left">
+          <h1>Dashboard Overview</h1>
         </div>
         <div class="page-header__actions">
           <button class="btn btn-secondary">
-            <span class="material-symbols-outlined">calendar_today</span>
-            Últimos 30 días
+            <span class="material-symbols-outlined">calendar_month</span>
+            Last 30 Days
           </button>
           <button class="btn btn-primary">
             <span class="material-symbols-outlined">download</span>
-            Generar Reporte
+            Generate Report
           </button>
         </div>
       </div>
 
+      <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-card__header">
-            <div class="stat-card__icon stat-card__icon--green">
+            <div class="stat-card__icon stat-card__icon--success">
               <span class="material-symbols-outlined">person_add</span>
             </div>
-            <span class="stat-card__badge stat-card__badge--green" id="badgeActivos">+0%</span>
+            <span class="stat-card__change stat-card__change--up">+12%</span>
           </div>
-          <p class="stat-card__label">Clientes Activos</p>
+          <p class="stat-card__label">Active Clients</p>
           <p class="stat-card__value" id="totalActivos">0</p>
         </div>
 
         <div class="stat-card">
           <div class="stat-card__header">
-            <div class="stat-card__icon stat-card__icon--red">
+            <div class="stat-card__icon stat-card__icon--danger">
               <span class="material-symbols-outlined">person_remove</span>
             </div>
-            <span class="stat-card__badge stat-card__badge--red" id="badgeCancelados">0</span>
+            <span class="stat-card__change stat-card__change--down">-2%</span>
           </div>
-          <p class="stat-card__label">Clientes Cancelados</p>
+          <p class="stat-card__label">Cancelled Clients</p>
           <p class="stat-card__value" id="totalCancelados">0</p>
         </div>
 
         <div class="stat-card">
           <div class="stat-card__header">
-            <div class="stat-card__icon stat-card__icon--amber">
-              <span class="material-symbols-outlined">error</span>
+            <div class="stat-card__icon stat-card__icon--warning">
+              <span class="material-symbols-outlined">warning</span>
             </div>
-            <span class="stat-card__badge stat-card__badge--amber">Atención</span>
+            <span class="stat-card__change stat-card__change--attention">Attention</span>
           </div>
-          <p class="stat-card__label">Clientes Deudores</p>
+          <p class="stat-card__label">Debtor Clients</p>
           <p class="stat-card__value" id="totalDeudores">0</p>
         </div>
 
         <div class="stat-card">
           <div class="stat-card__header">
-            <div class="stat-card__icon stat-card__icon--blue">
-              <span class="material-symbols-outlined">monetization_on</span>
+            <div class="stat-card__icon stat-card__icon--info">
+              <span class="material-symbols-outlined">attach_money</span>
             </div>
-            <span class="stat-card__badge stat-card__badge--blue" id="badgeIngresos">+0%</span>
+            <span class="stat-card__change stat-card__change--up">+5%</span>
           </div>
-          <p class="stat-card__label">Ingresos del Mes</p>
-          <p class="stat-card__value" id="totalIngresos">$0.00</p>
+          <p class="stat-card__label">Monthly Revenue</p>
+          <p class="stat-card__value" id="ingresosMensuales">$0.00</p>
         </div>
       </div>
 
-      <div class="dashboard-grid">
-        <div class="card dashboard-chart">
+      <!-- Chart and Transactions -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+        <!-- Revenue Chart -->
+        <div class="card">
           <div class="card__header">
-            <div>
-              <h3 class="card__title">Tendencia de Ingresos</h3>
-              <p class="chart-subtitle">Ingresos mensuales del año actual</p>
+            <div class="card__title">
+              <span class="material-symbols-outlined">trending_up</span>
+              Skynet Revenue Trend
             </div>
-            <div class="chart-legend">
-              <div class="chart-legend__item">
-                <span class="chart-legend__dot chart-legend__dot--primary"></span>
-                <span>Año Actual</span>
-              </div>
-              <div class="chart-legend__item">
-                <span class="chart-legend__dot chart-legend__dot--gray"></span>
-                <span>Año Anterior</span>
-              </div>
+            <div style="display: flex; gap: 16px; font-size: 12px;">
+              <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%;"></span>
+                Current Year
+              </span>
+              <span style="display: flex; align-items: center; gap: 6px; color: var(--text-muted);">
+                <span style="width: 8px; height: 8px; background: var(--text-muted); border-radius: 50%;"></span>
+                Previous Year
+              </span>
             </div>
           </div>
           <div class="card__body">
-            <div class="chart-placeholder">
-              <span class="material-symbols-outlined">show_chart</span>
-              <p>Gráfica de ingresos</p>
-            </div>
+            <canvas id="revenueChart" height="250"></canvas>
           </div>
         </div>
 
-        <div class="card dashboard-transactions">
+        <!-- Map placeholder -->
+        <div class="card">
           <div class="card__header">
-            <h3 class="card__title">Últimos Pagos</h3>
-            <a href="/skynet-frontend/pagos/" class="card__link">Ver todos</a>
+            <div class="card__title">
+              <span class="material-symbols-outlined">public</span>
+              Skynet Global Map
+            </div>
           </div>
-          <div class="table-container">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Monto</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody id="tablaPagos">
-                <tr>
-                  <td colspan="3" class="text-center">Cargando...</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="card__body" style="height: 250px; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+            <div style="text-align: center;">
+              <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.5;">map</span>
+              <p style="margin-top: 8px; font-size: 13px;">Network Coverage Map</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="card mt-4">
+      <!-- Recent Transactions Table -->
+      <div class="card">
         <div class="card__header">
-          <h3 class="card__title">Clientes con Adeudo</h3>
-          <a href="/skynet-frontend/clientes/?filtro=deudor" class="card__link">Ver todos</a>
+          <div class="card__title">
+            <span class="material-symbols-outlined">receipt_long</span>
+            Recent Transactions
+          </div>
+          <button class="btn btn-sm btn-secondary">View All</button>
         </div>
         <div class="table-container">
           <table class="table">
             <thead>
               <tr>
-                <th>Cliente</th>
-                <th>Teléfono</th>
-                <th>Ciudad</th>
-                <th>Adeudo</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th>Client</th>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Status</th>
               </tr>
             </thead>
-            <tbody id="tablaDeudores">
+            <tbody id="tablaTransacciones">
               <tr>
-                <td colspan="6" class="text-center">Cargando...</td>
+                <td colspan="4" class="text-center text-muted">Loading transactions...</td>
               </tr>
             </tbody>
           </table>
@@ -252,7 +250,114 @@
   </main>
 </div>
 
+<div class="toast-container" id="toastContainer"></div>
+
 <script src="../js/auth.js"></script>
-<script src="dashboard.js"></script>
+<script>
+verificarSesion();
+cargarUsuarioHeader();
+
+// Cargar estadísticas
+async function cargarEstadisticas() {
+  try {
+    const data = await fetchGet('/api/dashboard/estadisticas');
+    
+    if (data.ok) {
+      document.getElementById('totalActivos').textContent = data.activos || 0;
+      document.getElementById('totalCancelados').textContent = data.cancelados || 0;
+      document.getElementById('totalDeudores').textContent = data.deudores || 0;
+      document.getElementById('ingresosMensuales').textContent = formatoMoneda(data.ingresosMensuales || 0);
+    }
+  } catch (err) {
+    console.error('Error:', err);
+  }
+}
+
+// Cargar transacciones recientes
+async function cargarTransacciones() {
+  const tbody = document.getElementById('tablaTransacciones');
+  
+  try {
+    const data = await fetchGet('/api/pagos?limite=5');
+    
+    if (!data.ok || !data.pagos?.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No transactions found</td></tr>';
+      return;
+    }
+
+    const colores = ['blue', 'purple', 'green', 'orange', 'pink'];
+    
+    tbody.innerHTML = data.pagos.map((p, i) => `
+      <tr>
+        <td>
+          <div class="table__user">
+            <div class="table__avatar table__avatar--${colores[i % colores.length]}">${obtenerIniciales(p.cliente_nombre || 'C')}</div>
+            <span class="table__name">${p.cliente_nombre || 'Cliente'}</span>
+          </div>
+        </td>
+        <td>${p.plan_nombre || 'Plan Básico'}</td>
+        <td class="font-semibold">${formatoMoneda(p.monto)}</td>
+        <td><span class="badge badge--active">Paid</span></td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Error:', err);
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Error loading data</td></tr>';
+  }
+}
+
+// Gráfica de ingresos
+function inicializarGrafica() {
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      datasets: [{
+        label: 'Current Year',
+        data: [30000, 35000, 32000, 40000, 45000, 50000, 55000, 52000, 48000, 52000, 58000, 65000],
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#3b82f6'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#64748b' }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { 
+            color: '#64748b',
+            callback: value => '$' + (value / 1000) + 'k'
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  });
+}
+
+// Inicializar
+cargarEstadisticas();
+cargarTransacciones();
+inicializarGrafica();
+</script>
 </body>
 </html>
