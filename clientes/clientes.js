@@ -16,9 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
   inicializarEventos();
 });
 
-// Inicializar eventos
 function inicializarEventos() {
-  // Tabs de estado
+  // Tabs
   document.querySelectorAll('.tabs__btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tabs__btn').forEach(b => b.classList.remove('active'));
@@ -31,7 +30,7 @@ function inicializarEventos() {
 
   // Buscador
   let timeout;
-  document.getElementById('buscadorGlobal')?.addEventListener('input', (e) => {
+  document.getElementById('buscadorGlobal')?.addEventListener('input', () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       paginaActual = 1;
@@ -39,12 +38,12 @@ function inicializarEventos() {
     }, 300);
   });
 
-  // Cambio de ciudad para cargar colonias
+  // Ciudad -> Colonias
   document.getElementById('ciudadId')?.addEventListener('change', (e) => {
     cargarColoniasPorCiudad(e.target.value);
   });
 
-  // Cambio de plan para poner cuota
+  // Plan -> Cuota
   document.getElementById('planId')?.addEventListener('change', (e) => {
     const plan = planes.find(p => p.id === e.target.value);
     if (plan) {
@@ -59,8 +58,11 @@ function inicializarEventos() {
 
 async function cargarCatalogos() {
   try {
-    // Ciudades
-    const rCiudades = await fetchGet('/api/catalogos/ciudades');
+    const [rCiudades, rPlanes] = await Promise.all([
+      fetchGet('/api/catalogos/ciudades'),
+      fetchGet('/api/catalogos/planes')
+    ]);
+
     if (rCiudades.ok) {
       ciudades = rCiudades.ciudades;
       llenarSelect('ciudadId', ciudades, 'id', 'nombre');
@@ -68,8 +70,6 @@ async function cargarCatalogos() {
       llenarSelect('nuevaColoniaCiudad', ciudades, 'id', 'nombre');
     }
 
-    // Planes
-    const rPlanes = await fetchGet('/api/catalogos/planes');
     if (rPlanes.ok) {
       planes = rPlanes.planes;
       llenarSelect('planId', planes, 'id', 'nombre');
@@ -122,12 +122,8 @@ async function cargarClientes() {
     const busqueda = document.getElementById('buscadorGlobal')?.value || '';
     let url = `/api/clientes?pagina=${paginaActual}&limite=${porPagina}`;
     
-    if (filtroEstado !== 'todos') {
-      url += `&estado=${filtroEstado}`;
-    }
-    if (busqueda) {
-      url += `&busqueda=${encodeURIComponent(busqueda)}`;
-    }
+    if (filtroEstado !== 'todos') url += `&estado=${filtroEstado}`;
+    if (busqueda) url += `&busqueda=${encodeURIComponent(busqueda)}`;
 
     const data = await fetchGet(url);
 
@@ -154,9 +150,6 @@ async function cargarClientes() {
         <td class="font-semibold">${formatoMoneda(c.cuota_mensual)}</td>
         <td>
           <div class="table-actions">
-            <button class="btn btn-secondary" onclick="verCliente('${c.id}')" title="Ver">
-              <span class="material-symbols-outlined">visibility</span>
-            </button>
             <button class="btn btn-secondary" onclick="editarCliente('${c.id}')" title="Editar">
               <span class="material-symbols-outlined">edit</span>
             </button>
@@ -171,7 +164,7 @@ async function cargarClientes() {
 
   } catch (err) {
     console.error('Error cargando clientes:', err);
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error al cargar clientes</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error al cargar</td></tr>';
   }
 }
 
@@ -244,7 +237,7 @@ async function editarCliente(id) {
   try {
     const data = await fetchGet(`/api/clientes/${id}`);
     if (!data.ok) {
-      alert('Error al cargar cliente');
+      toastError('Error al cargar cliente');
       return;
     }
 
@@ -273,12 +266,8 @@ async function editarCliente(id) {
     document.getElementById('modalCliente').classList.add('active');
   } catch (err) {
     console.error('Error:', err);
-    alert('Error al cargar cliente');
+    toastError('Error al cargar cliente');
   }
-}
-
-function verCliente(id) {
-  window.location.href = `detalle.html?id=${id}`;
 }
 
 function cerrarModal() {
@@ -287,6 +276,7 @@ function cerrarModal() {
 
 async function guardarCliente() {
   const id = document.getElementById('clienteId').value;
+  const btn = document.getElementById('btnGuardarCliente');
   
   const datos = {
     nombre: document.getElementById('nombre').value,
@@ -305,9 +295,11 @@ async function guardarCliente() {
   };
 
   if (!datos.nombre || !datos.telefono || !datos.ciudad_id || !datos.colonia_id || !datos.direccion || !datos.plan_id) {
-    alert('Por favor completa todos los campos requeridos');
+    toastAdvertencia('Completa todos los campos requeridos');
     return;
   }
+
+  btnLoading(btn, true);
 
   try {
     let data;
@@ -317,16 +309,19 @@ async function guardarCliente() {
       data = await fetchPost('/api/clientes', datos);
     }
 
+    btnLoading(btn, false);
+
     if (data.ok) {
       cerrarModal();
       cargarClientes();
-      alert(id ? 'Cliente actualizado' : 'Cliente creado');
+      toastExito(id ? 'Cliente actualizado correctamente' : 'Cliente creado correctamente');
     } else {
-      alert(data.mensaje || 'Error al guardar');
+      toastError(data.mensaje || 'Error al guardar');
     }
   } catch (err) {
     console.error('Error:', err);
-    alert('Error al guardar cliente');
+    btnLoading(btn, false);
+    toastError('Error al guardar cliente');
   }
 }
 
@@ -347,30 +342,35 @@ function cerrarModalCiudad() {
 async function guardarCiudad() {
   const nombre = document.getElementById('nuevaCiudadNombre').value.trim();
   const estado = document.getElementById('nuevaCiudadEstado').value.trim();
+  const btn = document.getElementById('btnGuardarCiudad');
 
   if (!nombre) {
-    alert('El nombre de la ciudad es requerido');
+    toastAdvertencia('El nombre de la ciudad es requerido');
     return;
   }
+
+  btnLoading(btn, true);
 
   try {
     const data = await fetchPost('/api/catalogos/ciudades', { nombre, estado_republica: estado });
 
+    btnLoading(btn, false);
+
     if (data.ok) {
       cerrarModalCiudad();
-      // Recargar ciudades y seleccionar la nueva
       await cargarCatalogos();
       if (data.ciudad?.id) {
         document.getElementById('ciudadId').value = data.ciudad.id;
         await cargarColoniasPorCiudad(data.ciudad.id);
       }
-      alert('Ciudad creada');
+      toastExito('Ciudad creada correctamente');
     } else {
-      alert(data.mensaje || 'Error al crear ciudad');
+      toastError(data.mensaje || 'Error al crear ciudad');
     }
   } catch (err) {
     console.error('Error:', err);
-    alert('Error al crear ciudad');
+    btnLoading(btn, false);
+    toastError('Error al crear ciudad');
   }
 }
 
@@ -382,9 +382,8 @@ function abrirModalColonia() {
   document.getElementById('nuevaColoniaNombre').value = '';
   document.getElementById('nuevaColoniaCP').value = '';
   
-  // Preseleccionar la ciudad del formulario principal
-  const ciudadSeleccionada = document.getElementById('ciudadId').value;
   llenarSelect('nuevaColoniaCiudad', ciudades, 'id', 'nombre');
+  const ciudadSeleccionada = document.getElementById('ciudadId').value;
   if (ciudadSeleccionada) {
     document.getElementById('nuevaColoniaCiudad').value = ciudadSeleccionada;
   }
@@ -400,11 +399,14 @@ async function guardarColonia() {
   const ciudadId = document.getElementById('nuevaColoniaCiudad').value;
   const nombre = document.getElementById('nuevaColoniaNombre').value.trim();
   const cp = document.getElementById('nuevaColoniaCP').value.trim();
+  const btn = document.getElementById('btnGuardarColonia');
 
   if (!ciudadId || !nombre) {
-    alert('La ciudad y el nombre de la colonia son requeridos');
+    toastAdvertencia('Ciudad y nombre son requeridos');
     return;
   }
+
+  btnLoading(btn, true);
 
   try {
     const data = await fetchPost('/api/catalogos/colonias', { 
@@ -413,20 +415,22 @@ async function guardarColonia() {
       codigo_postal: cp 
     });
 
+    btnLoading(btn, false);
+
     if (data.ok) {
       cerrarModalColonia();
-      // Recargar colonias de la ciudad seleccionada
       await cargarColoniasPorCiudad(ciudadId);
       if (data.colonia?.id) {
         document.getElementById('coloniaId').value = data.colonia.id;
       }
-      alert('Colonia creada');
+      toastExito('Colonia creada correctamente');
     } else {
-      alert(data.mensaje || 'Error al crear colonia');
+      toastError(data.mensaje || 'Error al crear colonia');
     }
   } catch (err) {
     console.error('Error:', err);
-    alert('Error al crear colonia');
+    btnLoading(btn, false);
+    toastError('Error al crear colonia');
   }
 }
 
@@ -453,11 +457,14 @@ async function guardarPlan() {
   const precio = parseFloat(document.getElementById('nuevoPlanPrecio').value) || 0;
   const instalacion = parseFloat(document.getElementById('nuevoPlanInstalacion').value) || 0;
   const descripcion = document.getElementById('nuevoPlanDescripcion').value.trim();
+  const btn = document.getElementById('btnGuardarPlan');
 
   if (!nombre || !velocidad || !precio) {
-    alert('El nombre, velocidad y precio son requeridos');
+    toastAdvertencia('Nombre, velocidad y precio son requeridos');
     return;
   }
+
+  btnLoading(btn, true);
 
   try {
     const data = await fetchPost('/api/catalogos/planes', { 
@@ -468,21 +475,23 @@ async function guardarPlan() {
       descripcion
     });
 
+    btnLoading(btn, false);
+
     if (data.ok) {
       cerrarModalPlan();
-      // Recargar planes y seleccionar el nuevo
       await cargarCatalogos();
       if (data.plan?.id) {
         document.getElementById('planId').value = data.plan.id;
         document.getElementById('cuotaMensual').value = data.plan.precio_mensual;
       }
-      alert('Plan creado');
+      toastExito('Plan creado correctamente');
     } else {
-      alert(data.mensaje || 'Error al crear plan');
+      toastError(data.mensaje || 'Error al crear plan');
     }
   } catch (err) {
     console.error('Error:', err);
-    alert('Error al crear plan');
+    btnLoading(btn, false);
+    toastError('Error al crear plan');
   }
 }
 
@@ -490,6 +499,7 @@ async function guardarPlan() {
 // EXPORTAR
 // ========================================
 
-function exportarCSV() {
-  alert('Función de exportar CSV - Próximamente');
+async function exportarCSV() {
+  toastInfo('Preparando exportación...');
+  // Implementar exportación
 }

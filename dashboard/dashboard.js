@@ -9,14 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarDeudores();
 });
 
-// Cargar estadísticas generales
 async function cargarEstadisticas() {
   try {
     const data = await fetchGet('/api/dashboard/estadisticas');
     
     if (data.ok) {
       const stats = data.estadisticas;
-      
       document.getElementById('totalActivos').textContent = stats.clientesActivos || 0;
       document.getElementById('totalCancelados').textContent = stats.clientesCancelados || 0;
       document.getElementById('totalDeudores').textContent = stats.clientesDeudores || 0;
@@ -27,7 +25,6 @@ async function cargarEstadisticas() {
   }
 }
 
-// Cargar últimos pagos
 async function cargarUltimosPagos() {
   try {
     const data = await fetchGet('/api/pagos?limite=5');
@@ -45,7 +42,7 @@ async function cargarUltimosPagos() {
             <div class="table__avatar-circle table__avatar-circle--blue">
               ${obtenerIniciales(p.cliente_nombre, p.cliente_apellido)}
             </div>
-            <span class="table__avatar-name">${p.cliente_nombre} ${p.cliente_apellido || ''}</span>
+            <span class="table__avatar-name">${p.cliente_nombre || ''} ${p.cliente_apellido || ''}</span>
           </div>
         </td>
         <td class="font-semibold">${formatoMoneda(p.monto)}</td>
@@ -54,14 +51,13 @@ async function cargarUltimosPagos() {
     `).join('');
   } catch (err) {
     console.error('Error cargando pagos:', err);
-    document.getElementById('tablaPagos').innerHTML = '<tr><td colspan="3" class="text-center">Error al cargar</td></tr>';
+    document.getElementById('tablaPagos').innerHTML = '<tr><td colspan="3" class="text-center">Sin pagos</td></tr>';
   }
 }
 
-// Cargar clientes deudores
 async function cargarDeudores() {
   try {
-    const data = await fetchGet('/api/clientes?estado=deudor&limite=5');
+    const data = await fetchGet('/api/clientes?estado=suspendido&limite=5');
     const tbody = document.getElementById('tablaDeudores');
     
     if (!data.ok || !data.clientes?.length) {
@@ -92,11 +88,10 @@ async function cargarDeudores() {
     `).join('');
   } catch (err) {
     console.error('Error cargando deudores:', err);
-    document.getElementById('tablaDeudores').innerHTML = '<tr><td colspan="6" class="text-center">Error al cargar</td></tr>';
+    document.getElementById('tablaDeudores').innerHTML = '<tr><td colspan="6" class="text-center">Sin datos</td></tr>';
   }
 }
 
-// Ver detalle de cliente
 function verCliente(id) {
   window.location.href = `/skynet-frontend/clientes/detalle.html?id=${id}`;
 }

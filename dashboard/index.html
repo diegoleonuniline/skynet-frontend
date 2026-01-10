@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Skynet - Panel Principal</title>
+  <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/global.css">
@@ -12,10 +13,8 @@
 <body>
 
 <div class="app-layout">
-  <!-- Overlay móvil -->
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar__header">
       <div class="sidebar__logo">
@@ -73,9 +72,7 @@
     </div>
   </aside>
 
-  <!-- CONTENIDO PRINCIPAL -->
   <main class="app-main">
-    <!-- HEADER -->
     <header class="header">
       <div class="header__left">
         <button class="header__btn header__menu-btn" onclick="toggleSidebar()">
@@ -106,16 +103,13 @@
       </div>
     </header>
 
-    <!-- CONTENIDO -->
     <div class="app-content">
-      <!-- Breadcrumb -->
       <div class="breadcrumb">
         <a href="#">Skynet</a>
         <span class="material-symbols-outlined">chevron_right</span>
         <span class="breadcrumb__current">Panel Principal</span>
       </div>
 
-      <!-- Page Header -->
       <div class="page-header">
         <div>
           <h1 class="page-header__title">Panel Principal</h1>
@@ -133,7 +127,6 @@
         </div>
       </div>
 
-      <!-- Stats Grid -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-card__header">
@@ -180,9 +173,7 @@
         </div>
       </div>
 
-      <!-- Gráfica y Transacciones -->
       <div class="dashboard-grid">
-        <!-- Gráfica -->
         <div class="card dashboard-chart">
           <div class="card__header">
             <div>
@@ -208,7 +199,6 @@
           </div>
         </div>
 
-        <!-- Últimas transacciones -->
         <div class="card dashboard-transactions">
           <div class="card__header">
             <h3 class="card__title">Últimos Pagos</h3>
@@ -233,7 +223,6 @@
         </div>
       </div>
 
-      <!-- Clientes con adeudo -->
       <div class="card mt-4">
         <div class="card__header">
           <h3 class="card__title">Clientes con Adeudo</h3>

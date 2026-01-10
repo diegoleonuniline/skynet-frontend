@@ -4,6 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Skynet - Clientes</title>
+  <link rel="icon" href="data:,">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/global.css">
@@ -14,7 +15,6 @@
 <div class="app-layout">
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar__header">
       <div class="sidebar__logo">
@@ -72,7 +72,6 @@
     </div>
   </aside>
 
-  <!-- CONTENIDO PRINCIPAL -->
   <main class="app-main">
     <header class="header">
       <div class="header__left">
@@ -133,8 +132,8 @@
           <div class="tabs">
             <button class="tabs__btn active" data-filtro="todos">Todos</button>
             <button class="tabs__btn" data-filtro="activo">Activos</button>
-            <button class="tabs__btn" data-filtro="deudor">Deudores</button>
             <button class="tabs__btn" data-filtro="suspendido">Suspendidos</button>
+            <button class="tabs__btn" data-filtro="cancelado">Cancelados</button>
           </div>
 
           <button class="btn btn-secondary btn-sm" onclick="toggleFiltros()">
@@ -198,7 +197,7 @@
   </main>
 </div>
 
-<!-- MODAL NUEVO/EDITAR CLIENTE -->
+<!-- MODAL CLIENTE -->
 <div class="modal-overlay" id="modalCliente">
   <div class="modal modal--lg">
     <div class="modal__header">
@@ -304,7 +303,7 @@
     </div>
     <div class="modal__footer">
       <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarCliente()">
+      <button class="btn btn-primary" id="btnGuardarCliente" onclick="guardarCliente()">
         <span class="material-symbols-outlined">save</span>
         Guardar
       </button>
@@ -312,7 +311,7 @@
   </div>
 </div>
 
-<!-- MODAL NUEVA CIUDAD -->
+<!-- MODAL CIUDAD -->
 <div class="modal-overlay" id="modalCiudad">
   <div class="modal modal--sm">
     <div class="modal__header">
@@ -333,7 +332,7 @@
     </div>
     <div class="modal__footer">
       <button class="btn btn-secondary" onclick="cerrarModalCiudad()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarCiudad()">
+      <button class="btn btn-primary" id="btnGuardarCiudad" onclick="guardarCiudad()">
         <span class="material-symbols-outlined">save</span>
         Guardar
       </button>
@@ -341,7 +340,7 @@
   </div>
 </div>
 
-<!-- MODAL NUEVA COLONIA -->
+<!-- MODAL COLONIA -->
 <div class="modal-overlay" id="modalColonia">
   <div class="modal modal--sm">
     <div class="modal__header">
@@ -368,7 +367,7 @@
     </div>
     <div class="modal__footer">
       <button class="btn btn-secondary" onclick="cerrarModalColonia()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarColonia()">
+      <button class="btn btn-primary" id="btnGuardarColonia" onclick="guardarColonia()">
         <span class="material-symbols-outlined">save</span>
         Guardar
       </button>
@@ -376,7 +375,7 @@
   </div>
 </div>
 
-<!-- MODAL NUEVO PLAN -->
+<!-- MODAL PLAN -->
 <div class="modal-overlay" id="modalPlan">
   <div class="modal modal--sm">
     <div class="modal__header">
@@ -411,7 +410,7 @@
     </div>
     <div class="modal__footer">
       <button class="btn btn-secondary" onclick="cerrarModalPlan()">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarPlan()">
+      <button class="btn btn-primary" id="btnGuardarPlan" onclick="guardarPlan()">
         <span class="material-symbols-outlined">save</span>
         Guardar
       </button>

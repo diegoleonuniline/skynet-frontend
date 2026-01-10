@@ -1,44 +1,28 @@
 /* ========================================
-   SKYNET LOGIN - CSS INDEPENDIENTE
+   SKYNET LOGIN - CSS
    ======================================== */
 
-/* --- VARIABLES ROOT --- */
 :root {
   --primary: #1E2A3A;
   --primary-hover: #2d3f54;
   --primary-light: rgba(30, 42, 58, 0.1);
   --bg-light: #f6f7f7;
-  --bg-dark: #16191c;
   --white: #ffffff;
-  --gray-100: #f8f9fa;
   --gray-200: #dee0e3;
-  --gray-400: #9ca3af;
   --gray-500: #6d757e;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
   --green-600: #16a34a;
   --red-600: #dc2626;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-  --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --transition: all 0.2s ease;
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* --- RESET --- */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-html {
-  font-size: 16px;
-  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -52,35 +36,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+input { font-family: inherit; border: none; outline: none; }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-
-input {
-  font-family: inherit;
-  border: none;
-  outline: none;
-}
-
-/* --- ICONOS MATERIAL --- */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   user-select: none;
 }
 
-/* --- ENCABEZADO --- */
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0.75rem 2.5rem;
   background-color: var(--white);
   border-bottom: 1px solid var(--gray-200);
@@ -93,18 +60,9 @@ input {
   color: var(--primary);
 }
 
-.header__logo {
-  width: 1.5rem;
-  height: 1.5rem;
-}
+.header__logo { width: 1.5rem; height: 1.5rem; }
+.header__title { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.015em; }
 
-.header__title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-}
-
-/* --- CONTENIDO PRINCIPAL --- */
 .main {
   flex: 1;
   display: flex;
@@ -113,7 +71,6 @@ input {
   padding: 1.5rem;
 }
 
-/* --- TARJETA LOGIN --- */
 .login-card {
   width: 100%;
   max-width: 480px;
@@ -142,7 +99,6 @@ input {
   margin-top: 0.25rem;
 }
 
-/* --- FORMULARIO LOGIN --- */
 .login-form {
   padding: 1rem 2rem 2.5rem;
   display: flex;
@@ -150,17 +106,8 @@ input {
   gap: 1.25rem;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--primary);
-}
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-label { font-size: 0.875rem; font-weight: 500; color: var(--primary); }
 
 .input-wrapper {
   position: relative;
@@ -183,13 +130,10 @@ input {
   color: var(--gray-500);
   font-size: 1.25rem;
   cursor: pointer;
-  pointer-events: auto;
   transition: var(--transition);
 }
 
-.input-icon-right:hover {
-  color: var(--primary);
-}
+.input-icon-right:hover { color: var(--primary); }
 
 .form-input {
   width: 100%;
@@ -203,20 +147,10 @@ input {
   transition: var(--transition);
 }
 
-.form-input::placeholder {
-  color: var(--gray-500);
-}
+.form-input::placeholder { color: var(--gray-500); }
+.form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.form-input[type="password"] { padding-right: 3rem; }
 
-.form-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-.form-input[type="password"] {
-  padding-right: 3rem;
-}
-
-/* --- OPCIONES FORMULARIO --- */
 .form-options {
   display: flex;
   align-items: center;
@@ -235,15 +169,12 @@ input {
   width: 1rem;
   height: 1rem;
   border: 2px solid var(--gray-200);
-  border-radius: var(--radius-sm);
+  border-radius: 0.25rem;
   cursor: pointer;
   accent-color: var(--primary);
 }
 
-.checkbox-label {
-  font-size: 0.875rem;
-  color: var(--primary);
-}
+.checkbox-label { font-size: 0.875rem; color: var(--primary); }
 
 .forgot-link {
   font-size: 0.875rem;
@@ -252,12 +183,8 @@ input {
   transition: var(--transition);
 }
 
-.forgot-link:hover {
-  text-decoration: underline;
-  opacity: 0.8;
-}
+.forgot-link:hover { text-decoration: underline; opacity: 0.8; }
 
-/* --- BOTON --- */
 .btn-login {
   width: 100%;
   height: 3rem;
@@ -267,34 +194,17 @@ input {
   color: var(--white);
   background-color: var(--primary);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-login:hover {
-  background-color: var(--primary-hover);
-}
+.btn-login:hover { background-color: var(--primary-hover); }
+.btn-login:active { transform: scale(0.98); }
+.btn-login:disabled { opacity: 0.7; cursor: not-allowed; }
 
-.btn-login:active {
-  transform: scale(0.98);
-}
-
-/* --- MENSAJE DE ERROR --- */
-.error-message {
-  display: none;
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--red-600);
-  padding: 0.5rem;
-  background-color: rgba(220, 38, 38, 0.1);
-  border-radius: var(--radius-sm);
-}
-
-.error-message.show {
-  display: block;
-}
-
-/* --- INSIGNIA SEGURIDAD --- */
 .secure-badge {
   display: flex;
   align-items: center;
@@ -303,10 +213,7 @@ input {
   margin-top: 0.5rem;
 }
 
-.secure-icon {
-  font-size: 1rem;
-  color: var(--green-600);
-}
+.secure-icon { font-size: 1rem; color: var(--green-600); }
 
 .secure-text {
   font-size: 0.75rem;
@@ -316,7 +223,6 @@ input {
   letter-spacing: 0.05em;
 }
 
-/* --- PIE DE PAGINA --- */
 .footer {
   text-align: center;
   padding: 1.5rem;
@@ -325,138 +231,14 @@ input {
   opacity: 0.4;
 }
 
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-
-/* Tablet */
-@media (max-width: 768px) {
-  .header {
-    padding: 0.75rem 1.5rem;
-  }
-
-  .login-card {
-    max-width: 100%;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-  }
-
-  .login-form {
-    padding: 1rem 1.5rem 2rem;
-  }
-}
-
-/* Movil */
 @media (max-width: 480px) {
-  .header {
-    padding: 0.75rem 1rem;
-  }
-
-  .header__title {
-    font-size: 1rem;
-  }
-
-  .main {
-    padding: 1rem;
-    align-items: flex-start;
-    padding-top: 2rem;
-  }
-
-  .login-card {
-    border: none;
-    box-shadow: var(--shadow-sm);
-  }
-
-  .login-card__header {
-    padding: 2rem 1rem 0.75rem;
-  }
-
-  .login-card__title {
-    font-size: 1.25rem;
-  }
-
-  .login-card__subtitle {
-    font-size: 0.8125rem;
-  }
-
-  .login-form {
-    padding: 1rem;
-    gap: 1rem;
-  }
-
-  .form-input {
-    height: 2.75rem;
-    font-size: 0.9375rem;
-  }
-
-  .form-options {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .btn-login {
-    height: 2.75rem;
-    font-size: 0.9375rem;
-  }
-
-  .footer {
-    padding: 1rem;
-  }
-}
-
-/* Movil Pequeño */
-@media (max-width: 360px) {
-  .login-card__title {
-    font-size: 1.125rem;
-  }
-
-  .form-label {
-    font-size: 0.8125rem;
-  }
-
-  .checkbox-label,
-  .forgot-link {
-    font-size: 0.8125rem;
-  }
-}
-
-/* Modo Oscuro (opcional) */
-@media (prefers-color-scheme: dark) {
-  body.dark-mode {
-    background-color: var(--bg-dark);
-    color: var(--white);
-  }
-
-  body.dark-mode .header {
-    background-color: var(--bg-dark);
-    border-color: var(--gray-800);
-  }
-
-  body.dark-mode .header__brand {
-    color: var(--white);
-  }
-
-  body.dark-mode .login-card {
-    background-color: var(--gray-900);
-    border-color: var(--gray-800);
-  }
-
-  body.dark-mode .login-card__title {
-    color: var(--white);
-  }
-
-  body.dark-mode .form-label {
-    color: var(--gray-400);
-  }
-
-  body.dark-mode .form-input {
-    background-color: var(--gray-800);
-    border-color: var(--gray-700);
-    color: var(--white);
-  }
-
-  body.dark-mode .checkbox-label {
-    color: var(--gray-400);
-  }
+  .header { padding: 0.75rem 1rem; }
+  .main { padding: 1rem; align-items: flex-start; padding-top: 2rem; }
+  .login-card { border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .login-card__header { padding: 2rem 1rem 0.75rem; }
+  .login-card__title { font-size: 1.25rem; }
+  .login-form { padding: 1rem; gap: 1rem; }
+  .form-input { height: 2.75rem; font-size: 0.9375rem; }
+  .form-options { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .btn-login { height: 2.75rem; font-size: 0.9375rem; }
 }
