@@ -814,8 +814,14 @@ function verificarInstalacion() {
   const btn = document.getElementById('btnInstalacion');
   if (!btn || !clienteActual) return;
   
-  // Ocultar botón si YA tiene instalación
-  if (clienteActual.fecha_instalacion) {
+  // Verificar si tiene instalación (fecha_instalacion no es null, undefined, cadena vacía o "null")
+  const tieneInstalacion = clienteActual.fecha_instalacion && 
+                           clienteActual.fecha_instalacion !== 'null' && 
+                           clienteActual.fecha_instalacion !== '';
+  
+  console.log('fecha_instalacion:', clienteActual.fecha_instalacion, 'tieneInstalacion:', tieneInstalacion);
+  
+  if (tieneInstalacion) {
     btn.style.display = 'none';
   } else {
     btn.style.display = 'inline-flex';
@@ -841,12 +847,22 @@ async function abrirModalInstalacion() {
   equiposParaInstalar = [];
   cargosCalculados = null;
   
-  // Cargar planes
+  // Asegurar que planes estén cargados
+  if (planes.length === 0) {
+    try {
+      const r = await fetchGet('/api/catalogos/planes');
+      if (r.ok) planes = r.planes;
+    } catch (err) { console.error('Error cargando planes:', err); }
+  }
+  
+  // Cargar planes en select
   llenarSelect('instPlan', planes);
   if (clienteActual.plan_id) {
     document.getElementById('instPlan').value = clienteActual.plan_id;
     const plan = planes.find(p => p.id === clienteActual.plan_id);
     if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
+  } else if (clienteActual.cuota_mensual) {
+    document.getElementById('instTarifa').value = clienteActual.cuota_mensual;
   }
   
   // Evento cambio de plan
@@ -854,6 +870,11 @@ async function abrirModalInstalacion() {
     const plan = planes.find(p => p.id === e.target.value);
     if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
   };
+  
+  // Asegurar catálogos de equipos
+  if (tiposEquipo.length === 0 || estadosEquipo.length === 0) {
+    await cargarCatalogosEquipos();
+  }
   
   // Renderizar equipos
   renderizarEquiposInstalacion();

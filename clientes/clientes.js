@@ -86,7 +86,7 @@ async function cargarClientes() {
 
     const colores = ['blue', 'purple', 'green', 'orange', 'pink'];
     tbody.innerHTML = data.clientes.map((c, i) => `
-      <tr>
+      <tr onclick="verCliente('${c.id}')" style="cursor: pointer;">
         <td>
           <div class="table__user">
             <div class="table__avatar table__avatar--${colores[i % colores.length]}">${obtenerIniciales(c.nombre, c.apellido_paterno)}</div>
@@ -99,10 +99,9 @@ async function cargarClientes() {
         <td><span class="badge badge--${c.estado || 'activo'}">${(c.estado || 'activo').toUpperCase()}</span></td>
         <td class="font-semibold">${formatoMoneda(c.cuota_mensual)}</td>
         <td>
-          <div class="table__actions">
-            <button class="table__action-btn" onclick="verCliente('${c.id}')" title="Ver"><span class="material-symbols-outlined">visibility</span></button>
+          <div class="table__actions" onclick="event.stopPropagation();">
+            <button class="table__action-btn" onclick="verCliente('${c.id}')" title="Ver detalle"><span class="material-symbols-outlined">visibility</span></button>
             <button class="table__action-btn" onclick="editarClienteLista('${c.id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-            <button class="table__action-btn" title="Más"><span class="material-symbols-outlined">more_vert</span></button>
           </div>
         </td>
       </tr>
@@ -202,10 +201,16 @@ async function guardarCliente() {
         toastExito('Cliente actualizado');
       } else {
         // Nuevo cliente: ir al detalle para instalar
-        toastExito('Cliente creado. Registra la instalación...');
-        setTimeout(() => {
-          window.location.href = `detalle.html?id=${data.cliente.id}&instalacion=1`;
-        }, 1000);
+        const clienteId = data.cliente?.id || data.id || data.cliente_id;
+        if (clienteId) {
+          toastExito('Cliente creado. Redirigiendo a instalación...');
+          setTimeout(() => {
+            window.location.href = `detalle.html?id=${clienteId}&instalacion=1`;
+          }, 1000);
+        } else {
+          toastExito('Cliente creado exitosamente');
+          cargarClientes();
+        }
       }
     }
     else { toastError(data.mensaje || 'Error al guardar'); }
