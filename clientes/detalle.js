@@ -26,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarTodosCatalogos();
   cargarCliente(clienteId);
   
-  // Eventos
   document.getElementById('formEdicion').addEventListener('submit', async (e) => {
     e.preventDefault();
     await guardarEdicion();
@@ -41,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (plan) document.getElementById('editTarifa').value = plan.precio_mensual;
   });
   
-  // Evento comprobante
   document.getElementById('comprobanteInput').addEventListener('change', handleComprobanteChange);
 });
 
@@ -139,27 +137,12 @@ function renderizarCliente(c) {
   document.getElementById('clienteEmail').innerHTML = `<span class="material-symbols-outlined">mail</span> ${c.email || 'Sin email'}`;
   document.getElementById('clienteDireccion').innerHTML = `<span class="material-symbols-outlined">location_on</span> ${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
   
-  // Stats
   document.getElementById('tarifaMensual').innerHTML = `${formatoMoneda(c.tarifa_mensual)} <small>/mes</small>`;
   document.getElementById('planNombre').textContent = `Plan: ${c.plan_nombre || 'Sin plan'}`;
   
-  // Adeudo
-  const adeudo = parseFloat(c.saldo_pendiente) || 0;
-  document.getElementById('adeudoTotal').textContent = formatoMoneda(adeudo);
-  const estadoCuenta = document.getElementById('estadoCuenta');
-  if (adeudo > 0) {
-    estadoCuenta.textContent = 'Tiene adeudo pendiente';
-    estadoCuenta.className = 'detail-stat__sub danger';
-  } else {
-    estadoCuenta.textContent = 'Cuenta al corriente';
-    estadoCuenta.className = 'detail-stat__sub success';
-  }
-  
-  // Saldo a favor
   const saldoFavor = parseFloat(c.saldo_favor) || 0;
   document.getElementById('saldoFavor').textContent = formatoMoneda(saldoFavor);
   
-  // Próximo corte
   const hoy = new Date();
   let proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth(), c.dia_corte || 10);
   if (proximoCorte < hoy) proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth() + 1, c.dia_corte || 10);
@@ -168,19 +151,15 @@ function renderizarCliente(c) {
   document.getElementById('proximoCorte').textContent = proximoCorte.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
   document.getElementById('diasRestantes').textContent = `En ${diasRestantes} días`;
   
-  // Contacto
   document.getElementById('clienteTelefono').textContent = c.telefono || '--';
   document.getElementById('clienteTelefono2').textContent = c.telefono_secundario || '--';
   
-  // WhatsApp
   document.getElementById('btnWhatsApp').onclick = () => {
     const tel = c.telefono?.replace(/\D/g, '');
     if (tel) window.open(`https://wa.me/52${tel}`, '_blank');
   };
   
-  // Verificar si mostrar botón de instalación
   verificarInstalacion();
-  
   renderizarINE(c);
 }
 
@@ -214,7 +193,6 @@ async function cargarCargos(clienteId) {
       </tr>
     `}).join('');
 
-    // Calcular adeudo total
     const adeudoTotal = data.cargos.reduce((sum, c) => sum + (parseFloat(c.pendiente) || 0), 0);
     document.getElementById('adeudoTotal').textContent = formatoMoneda(adeudoTotal);
     
@@ -278,15 +256,17 @@ async function abrirModalPago() {
   
   await cargarMetodosPago();
   
-  // Leer adeudo del DOM (ya calculado por cargarCargos)
   const adeudoTexto = document.getElementById('adeudoTotal').textContent;
   document.getElementById('pagoAdeudoTotal').textContent = adeudoTexto;
   
-  // Saldo a favor
   const saldoFavor = parseFloat(clienteActual?.saldo_favor) || 0;
   document.getElementById('pagoSaldoFavor').textContent = formatoMoneda(saldoFavor);
   
   document.getElementById('modalPago').classList.add('active');
+}
+
+function cerrarModalPago() {
+  document.getElementById('modalPago').classList.remove('active');
 }
 
 async function cargarMetodosPago() {
@@ -353,7 +333,6 @@ async function guardarPago() {
   btnLoading(btn, true);
   
   try {
-    // Subir comprobante a Cloudinary si existe
     let comprobanteUrl = null;
     if (comprobanteBase64) {
       const uploadData = await fetchPost('/api/documentos/subir', {
@@ -366,7 +345,6 @@ async function guardarPago() {
       }
     }
     
-    // Registrar pago
     const datos = {
       cliente_id: clienteActual.id,
       monto: monto,
@@ -383,20 +361,17 @@ async function guardarPago() {
     btnLoading(btn, false);
     
     if (data.ok) {
-    document.getElementById('modalPago').classList.remove('active');
+      cerrarModalPago();
       
-      // Mostrar resumen del pago
       let mensaje = `Pago de ${formatoMoneda(monto)} registrado.`;
-      if (data.pago.cargos_aplicados > 0) {
+      if (data.pago?.cargos_aplicados > 0) {
         mensaje += ` Se aplicó a ${data.pago.cargos_aplicados} cargo(s).`;
       }
-      if (data.pago.nuevo_saldo_favor > 0) {
+      if (data.pago?.nuevo_saldo_favor > 0) {
         mensaje += ` Nuevo saldo a favor: ${formatoMoneda(data.pago.nuevo_saldo_favor)}`;
       }
       
       toastExito(mensaje);
-      
-      // Recargar datos
       cargarCliente(clienteActual.id);
     } else {
       toastError(data.mensaje || 'Error al registrar pago');
@@ -699,6 +674,27 @@ async function guardarEquipo() {
   const id = document.getElementById('equipoId').value;
   const btn = document.getElementById('btnGuardarEquipo');
   
+  // Si es modo instalación
+  if (id && id.startsWith('inst_')) {
+    const idx = parseInt(id.replace('inst_', ''));
+    
+    equiposParaInstalar[idx] = {
+      tipo: document.getElementById('equipoTipo').value,
+      estado: document.getElementById('equipoEstado').value,
+      marca: document.getElementById('equipoMarca').value,
+      modelo: document.getElementById('equipoModelo').value,
+      serie: document.getElementById('equipoSerial').value,
+      mac: document.getElementById('equipoMac').value.toUpperCase(),
+      ip: document.getElementById('equipoIp').value,
+      notas: document.getElementById('equipoNotas').value
+    };
+    
+    cerrarModalEquipo();
+    renderizarEquiposInstalacion();
+    toastExito('Equipo agregado');
+    return;
+  }
+  
   const datos = {
     cliente_id: clienteActual.id,
     tipo: document.getElementById('equipoTipo').value,
@@ -766,13 +762,14 @@ async function confirmarEliminarEquipo() {
   }
 }
 
-// Catálogos equipos
 function abrirModalTipoEquipo() {
   document.getElementById('nuevoTipoNombre').value = '';
   document.getElementById('nuevoTipoDescripcion').value = '';
   document.getElementById('modalTipoEquipo').classList.add('active');
 }
+
 function cerrarModalTipoEquipo() { document.getElementById('modalTipoEquipo').classList.remove('active'); }
+
 async function guardarTipoEquipo() {
   const nombre = document.getElementById('nuevoTipoNombre').value.trim();
   const descripcion = document.getElementById('nuevoTipoDescripcion').value.trim();
@@ -797,7 +794,9 @@ function abrirModalEstadoEquipo() {
   document.getElementById('nuevoEstadoOperativo').value = '0';
   document.getElementById('modalEstadoEquipo').classList.add('active');
 }
+
 function cerrarModalEstadoEquipo() { document.getElementById('modalEstadoEquipo').classList.remove('active'); }
+
 async function guardarEstadoEquipo() {
   const nombre = document.getElementById('nuevoEstadoNombre').value.trim();
   const color = document.getElementById('nuevoEstadoColor').value;
@@ -828,22 +827,17 @@ function verificarInstalacion() {
   const btn = document.getElementById('btnInstalacion');
   if (!btn || !clienteActual) return;
   
-  // Verificar si tiene instalación (fecha_instalacion no es null, undefined, cadena vacía o "null")
   const tieneInstalacion = clienteActual.fecha_instalacion && 
                            clienteActual.fecha_instalacion !== 'null' && 
                            clienteActual.fecha_instalacion !== '';
-  
-  console.log('fecha_instalacion:', clienteActual.fecha_instalacion, 'tieneInstalacion:', tieneInstalacion);
   
   if (tieneInstalacion) {
     btn.style.display = 'none';
   } else {
     btn.style.display = 'inline-flex';
     
-    // Si viene con parámetro instalacion=1, abrir modal automáticamente
     const params = new URLSearchParams(window.location.search);
     if (params.get('instalacion') === '1') {
-      // Quitar parámetro de URL para que no se abra de nuevo al recargar
       window.history.replaceState({}, '', `detalle.html?id=${clienteActual.id}`);
       setTimeout(() => abrirModalInstalacion(), 500);
     }
@@ -853,7 +847,6 @@ function verificarInstalacion() {
 async function abrirModalInstalacion() {
   if (!clienteActual) return;
   
-  // Reset form
   document.getElementById('formInstalacion').reset();
   document.getElementById('instFechaInstalacion').value = new Date().toISOString().split('T')[0];
   document.getElementById('instDiaCorte').value = clienteActual.dia_corte || 10;
@@ -861,7 +854,6 @@ async function abrirModalInstalacion() {
   equiposParaInstalar = [];
   cargosCalculados = null;
   
-  // Asegurar que planes estén cargados
   if (planes.length === 0) {
     try {
       const r = await fetchGet('/api/catalogos/planes');
@@ -869,7 +861,6 @@ async function abrirModalInstalacion() {
     } catch (err) { console.error('Error cargando planes:', err); }
   }
   
-  // Cargar planes en select
   llenarSelect('instPlan', planes);
   if (clienteActual.plan_id) {
     document.getElementById('instPlan').value = clienteActual.plan_id;
@@ -879,20 +870,16 @@ async function abrirModalInstalacion() {
     document.getElementById('instTarifa').value = clienteActual.cuota_mensual;
   }
   
-  // Evento cambio de plan
   document.getElementById('instPlan').onchange = (e) => {
     const plan = planes.find(p => p.id === e.target.value);
     if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
   };
   
-  // Asegurar catálogos de equipos
   if (tiposEquipo.length === 0 || estadosEquipo.length === 0) {
     await cargarCatalogosEquipos();
   }
   
-  // Renderizar equipos
   renderizarEquiposInstalacion();
-  
   document.getElementById('modalInstalacion').classList.add('active');
 }
 
@@ -922,7 +909,6 @@ function renderizarEquiposInstalacion() {
 }
 
 function agregarEquipoInstalacion() {
-  // Crear mini modal o usar prompt simple
   const tipoId = tiposEquipo.length > 0 ? tiposEquipo[0].id : null;
   const estadoId = estadosEquipo.length > 0 ? estadosEquipo[0].id : null;
   
@@ -935,14 +921,12 @@ function agregarEquipoInstalacion() {
     mac: ''
   });
   
-  // Abrir modal de equipo para editar
   editarEquipoInstalacion(equiposParaInstalar.length - 1);
 }
 
 function editarEquipoInstalacion(idx) {
   const eq = equiposParaInstalar[idx];
   
-  // Usar el modal de equipo existente pero en modo instalación
   document.getElementById('modalEquipoTitulo').textContent = 'Agregar Equipo de Instalación';
   document.getElementById('formEquipo').reset();
   document.getElementById('equipoId').value = 'inst_' + idx;
@@ -957,7 +941,6 @@ function editarEquipoInstalacion(idx) {
   }
   
   document.getElementById('equipoFechaInstalacion').value = document.getElementById('instFechaInstalacion').value;
-  
   document.getElementById('modalEquipo').classList.add('active');
 }
 
@@ -965,36 +948,6 @@ function quitarEquipoInstalacion(idx) {
   equiposParaInstalar.splice(idx, 1);
   renderizarEquiposInstalacion();
 }
-
-// Sobrescribir guardarEquipo para manejar modo instalación
-const guardarEquipoOriginal = guardarEquipo;
-guardarEquipo = async function() {
-  const id = document.getElementById('equipoId').value;
-  
-  // Si es modo instalación
-  if (id && id.startsWith('inst_')) {
-    const idx = parseInt(id.replace('inst_', ''));
-    
-    equiposParaInstalar[idx] = {
-      tipo: document.getElementById('equipoTipo').value,
-      estado: document.getElementById('equipoEstado').value,
-      marca: document.getElementById('equipoMarca').value,
-      modelo: document.getElementById('equipoModelo').value,
-      serie: document.getElementById('equipoSerial').value,
-      mac: document.getElementById('equipoMac').value.toUpperCase(),
-      ip: document.getElementById('equipoIp').value,
-      notas: document.getElementById('equipoNotas').value
-    };
-    
-    cerrarModalEquipo();
-    renderizarEquiposInstalacion();
-    toastExito('Equipo agregado');
-    return;
-  }
-  
-  // Sino, usar función original
-  await guardarEquipoOriginal();
-};
 
 async function calcularCargosInstalacion() {
   const fechaInstalacion = document.getElementById('instFechaInstalacion').value;
@@ -1007,12 +960,10 @@ async function calcularCargosInstalacion() {
     return;
   }
   
-  // Calcular localmente
   const fechaInst = new Date(fechaInstalacion + 'T12:00:00');
   const diaInstalacion = fechaInst.getDate();
   const cargos = [];
   
-  // Prorrateo si aplica
   if (diaInstalacion < diaCorte) {
     const diasProrrateo = diaCorte - diaInstalacion;
     const montoProrrateo = (tarifa / 30) * diasProrrateo;
@@ -1031,7 +982,6 @@ async function calcularCargosInstalacion() {
     });
   }
   
-  // Costo de instalación
   if (costoInstalacion > 0) {
     cargos.push({
       concepto: 'Instalación',
@@ -1040,7 +990,6 @@ async function calcularCargosInstalacion() {
     });
   }
   
-  // Primera mensualidad
   cargos.push({
     concepto: 'Mensualidad',
     descripcion: 'Primera mensualidad completa',
@@ -1121,8 +1070,6 @@ async function confirmarInstalacion() {
       }
       
       toastExito(mensaje);
-      
-      // Recargar todo
       cargarCliente(clienteActual.id);
     } else {
       toastError(data.mensaje || 'Error al registrar instalación');
