@@ -197,6 +197,7 @@ const ClienteDetalleView = {
         const iniciales = (cliente.nombre?.charAt(0) || '') + (cliente.apellido_paterno?.charAt(0) || '');
         const direccion = [cliente.calle, cliente.numero_exterior, cliente.ciudad, cliente.estado].filter(Boolean).join(', ');
         const estatus = (cliente.estatus || 'Activo').toLowerCase();
+        const saldo = parseFloat(cliente.saldo || 0);
 
         return `
             <!-- Header Card -->
@@ -273,24 +274,24 @@ const ClienteDetalleView = {
                             ${ICONS.dollarSign}
                         </div>
                     </div>
-                    <p class="finance-card-value">$${cliente.tarifa_monto || '0.00'} <span class="finance-card-currency">MXN</span></p>
+                    <p class="finance-card-value">$${parseFloat(cliente.tarifa_monto || 0).toFixed(2)} <span class="finance-card-currency">MXN</span></p>
                     <div class="finance-card-footer">
                         <span class="finance-card-dot blue"></span>
                         <span>${cliente.tarifa_nombre || 'Sin plan asignado'}</span>
                     </div>
                 </div>
 
-                <div class="finance-card success">
+                <div class="finance-card ${saldo <= 0 ? 'success' : ''}">
                     <div class="finance-card-header">
                         <span class="finance-card-label">Saldo Actual</span>
-                        <div class="finance-card-icon green">
+                        <div class="finance-card-icon ${saldo > 0 ? 'red' : 'green'}">
                             ${ICONS.creditCard}
                         </div>
                     </div>
-                    <p class="finance-card-value ${(cliente.saldo || 0) > 0 ? 'text-danger' : 'text-success'}">$${cliente.saldo || '0.00'}</p>
+                    <p class="finance-card-value ${saldo > 0 ? 'text-danger' : 'text-success'}">$${saldo.toFixed(2)}</p>
                     <div class="finance-card-footer">
-                        <span class="finance-card-dot ${(cliente.saldo || 0) > 0 ? 'red' : 'green'}"></span>
-                        <span>${(cliente.saldo || 0) > 0 ? 'Saldo pendiente' : 'Cuenta al corriente'}</span>
+                        <span class="finance-card-dot ${saldo > 0 ? 'red' : 'green'}"></span>
+                        <span>${saldo > 0 ? 'Saldo pendiente' : 'Cuenta al corriente'}</span>
                     </div>
                 </div>
 
@@ -304,7 +305,7 @@ const ClienteDetalleView = {
                     <p class="finance-card-value">${cliente.proximo_vencimiento || 'N/A'}</p>
                     <div class="finance-card-footer">
                         <span class="finance-card-dot yellow"></span>
-                        <span>${cliente.dias_vencimiento || 0} días restantes</span>
+                        <span>${cliente.dias_vencimiento !== null ? cliente.dias_vencimiento + ' días restantes' : 'Sin cargos pendientes'}</span>
                     </div>
                 </div>
             </div>
@@ -336,14 +337,15 @@ const ClienteDetalleView = {
                                             <th>Tarifa</th>
                                             <th>Fecha Alta</th>
                                             <th class="text-center">Estatus</th>
+                                            <th class="text-right">Saldo</th>
                                             <th class="text-right">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabla-servicios">
                                         <tr>
-                                            <td colspan="5" class="table-empty">
+                                            <td colspan="6" class="table-empty">
                                                 <div class="empty-state">
-                                                    <p>Sin servicios registrados</p>
+                                                    <p>Cargando servicios...</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -353,14 +355,13 @@ const ClienteDetalleView = {
                         </div>
                     </div>
 
-                    <!-- Tab Pagos -->
+                    <!-- Tab Estado de Cuenta -->
                     <div class="tab-panel" id="tab-pagos">
                         <div class="card">
                             <div class="card-header">
-                                <h3>${ICONS.fileText} Historial de Movimientos</h3>
-                                <button class="btn btn-sm btn-outline">Ver Todo</button>
+                                <h3>${ICONS.fileText} Estado de Cuenta</h3>
                             </div>
-                            <div id="lista-pagos" class="movimientos-list">
+                            <div class="table-wrapper" id="lista-pagos">
                                 <p class="text-muted text-center py-4">Cargando movimientos...</p>
                             </div>
                         </div>
@@ -385,7 +386,7 @@ const ClienteDetalleView = {
                                             }
                                             ${cliente.ine_frente ? `<div class="ine-verified">${ICONS.check}</div>` : ''}
                                         </div>
-                                        ${cliente.ine_frente_fecha ? `<p class="ine-date">${ICONS.clock} Subido: ${cliente.ine_frente_fecha}</p>` : ''}
+                                        ${cliente.ine_frente_fecha ? `<p class="ine-date">${ICONS.clock} Subido: ${new Date(cliente.ine_frente_fecha).toLocaleDateString('es-MX')}</p>` : ''}
                                     </div>
 
                                     <!-- Reverso -->
@@ -399,13 +400,9 @@ const ClienteDetalleView = {
                                             }
                                             ${cliente.ine_reverso ? `<div class="ine-verified">${ICONS.check}</div>` : ''}
                                         </div>
-                                        ${cliente.ine_reverso_fecha ? `<p class="ine-date">${ICONS.clock} Subido: ${cliente.ine_reverso_fecha}</p>` : ''}
+                                        ${cliente.ine_reverso_fecha ? `<p class="ine-date">${ICONS.clock} Subido: ${new Date(cliente.ine_reverso_fecha).toLocaleDateString('es-MX')}</p>` : ''}
                                     </div>
                                 </div>
-                                <button class="btn btn-outline btn-block mt-4" onclick="ClienteDetalleView.descargarINE()">
-                                    ${ICONS.download}
-                                    <span>Descargar Archivos</span>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -429,12 +426,15 @@ const ClienteDetalleView = {
         `;
     },
 
+    // ============================================
+    // INIT
+    // ============================================
+
     async init() {
         const hash = window.location.hash;
         const isNew = hash.includes('nuevo');
         const isEdit = hash.includes('editar');
         
-        // Precargar catálogos siempre
         if (!State.catalogos.estatusCliente || !State.catalogos.estados) {
             await State.preloadCatalogos();
         }
@@ -458,7 +458,6 @@ const ClienteDetalleView = {
             await this.guardarCliente();
         });
 
-        // Cargar ciudades si hay estado seleccionado
         const estadoSelect = $('#select-estado');
         if (estadoSelect?.value) {
             this.cargarCiudades(estadoSelect.value);
@@ -477,6 +476,10 @@ const ClienteDetalleView = {
         });
     },
 
+    // ============================================
+    // CARGAR CLIENTE
+    // ============================================
+
     async cargarCliente() {
         const id = window.location.hash.split('/').pop();
         
@@ -491,6 +494,7 @@ const ClienteDetalleView = {
                 
                 this.initTabs();
                 this.cargarServicios();
+                this.cargarEstadoCuenta();
                 this.cargarNotas();
             }
         } catch (error) {
@@ -542,6 +546,10 @@ const ClienteDetalleView = {
         }
     },
 
+    // ============================================
+    // GUARDAR CLIENTE
+    // ============================================
+
     async guardarCliente() {
         const form = $('#form-cliente');
         const formData = new FormData(form);
@@ -579,6 +587,10 @@ const ClienteDetalleView = {
             btn.innerHTML = `${ICONS.save}<span>${id ? 'Actualizar Cliente' : 'Guardar Cliente'}</span>`;
         }
     },
+
+    // ============================================
+    // CAMBIAR ESTATUS
+    // ============================================
 
     async cambiarEstatus(nuevoEstatus) {
         if (!this.cliente) return;
@@ -622,24 +634,170 @@ const ClienteDetalleView = {
         window.location.hash = `#/cliente/${this.cliente.id}/editar`;
     },
 
+    // ============================================
+    // CARGAR SERVICIOS
+    // ============================================
+
     async cargarServicios() {
         const tbody = $('#tabla-servicios');
+        if (!tbody) return;
+
         if (this.cliente?.servicios?.length) {
-            tbody.innerHTML = this.cliente.servicios.map(s => `
+            tbody.innerHTML = this.cliente.servicios.map(s => {
+                const saldo = parseFloat(s.saldo || 0);
+                const fechaAlta = s.fecha_instalacion ? new Date(s.fecha_instalacion).toLocaleDateString('es-MX') : '-';
+                
+                return `
+                    <tr class="table-row" onclick="ClienteDetalleView.verServicio(${s.id})">
+                        <td>
+                            <strong>${s.tarifa_nombre || 'Sin plan'}</strong>
+                            <div class="text-xs text-muted">${s.codigo || ''}</div>
+                        </td>
+                        <td>$${parseFloat(s.tarifa_monto || 0).toFixed(2)}</td>
+                        <td>${fechaAlta}</td>
+                        <td class="text-center">
+                            <span class="badge badge-${(s.estatus || 'activo').toLowerCase()}">${s.estatus || 'Activo'}</span>
+                        </td>
+                        <td class="text-right ${saldo > 0 ? 'text-danger' : 'text-success'}">
+                            $${saldo.toFixed(2)}
+                        </td>
+                        <td class="text-right">
+                            <div class="dropdown" onclick="event.stopPropagation()">
+                                <button class="btn-icon" onclick="this.nextElementSibling.classList.toggle('show')">
+                                    ${ICONS.moreVertical}
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" onclick="ClienteDetalleView.verServicio(${s.id})">
+                                        ${ICONS.eye} Ver Detalle
+                                    </a>
+                                    ${s.estatus === 'ACTIVO' ? `
+                                        <a class="dropdown-item text-warning" onclick="ClienteDetalleView.suspenderServicio(${s.id})">
+                                            ${ICONS.alertCircle} Suspender
+                                        </a>
+                                    ` : ''}
+                                    ${s.estatus === 'SUSPENDIDO' ? `
+                                        <a class="dropdown-item text-success" onclick="ClienteDetalleView.reactivarServicio(${s.id})">
+                                            ${ICONS.check} Reactivar
+                                        </a>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = `
                 <tr>
-                    <td><strong>${s.tarifa_nombre || 'Sin plan'}</strong></td>
-                    <td>$${s.tarifa_monto || '0.00'}</td>
-                    <td>${s.fecha_alta || '-'}</td>
-                    <td class="text-center">
-                        <span class="badge badge-${(s.estatus || 'activo').toLowerCase()}">${s.estatus || 'Activo'}</span>
-                    </td>
-                    <td class="text-right">
-                        <button class="btn-icon">${ICONS.moreVertical}</button>
+                    <td colspan="6" class="table-empty">
+                        <div class="empty-state small">
+                            ${ICONS.wifi}
+                            <p>Sin servicios registrados</p>
+                        </div>
                     </td>
                 </tr>
-            `).join('');
+            `;
         }
     },
+
+    // ============================================
+    // CARGAR ESTADO DE CUENTA
+    // ============================================
+
+    async cargarEstadoCuenta() {
+        const container = $('#lista-pagos');
+        if (!container || !this.cliente) return;
+
+        const cargos = this.cliente.cargos || [];
+        const pagos = this.cliente.pagos || [];
+
+        if (cargos.length === 0 && pagos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state small" style="padding: 2rem;">
+                    ${ICONS.fileText}
+                    <p>Sin movimientos registrados</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Combinar cargos y pagos, ordenar por fecha
+        const movimientos = [
+            ...cargos.map(c => ({
+                tipo: 'cargo',
+                fecha: c.fecha_vencimiento,
+                concepto: c.concepto || c.descripcion || 'Cargo',
+                descripcion: c.descripcion,
+                monto: parseFloat(c.monto),
+                saldo: parseFloat(c.saldo_pendiente),
+                estatus: c.estatus,
+                servicio: c.servicio_codigo
+            })),
+            ...pagos.map(p => ({
+                tipo: 'pago',
+                fecha: p.fecha_pago,
+                concepto: `Pago - ${p.metodo_pago || 'Efectivo'}`,
+                monto: parseFloat(p.monto_total),
+                recibo: p.numero_recibo,
+                estatus: p.estatus,
+                servicio: p.servicio_codigo
+            }))
+        ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+        container.innerHTML = `
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Concepto</th>
+                        <th>Servicio</th>
+                        <th class="text-center">Estatus</th>
+                        <th class="text-right">Cargo</th>
+                        <th class="text-right">Abono</th>
+                        <th class="text-right">Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${movimientos.map(m => `
+                        <tr>
+                            <td>${new Date(m.fecha).toLocaleDateString('es-MX')}</td>
+                            <td>
+                                <div class="d-flex align-center gap-2">
+                                    <span class="${m.tipo === 'cargo' ? 'text-danger' : 'text-success'}" style="width:16px;height:16px;">
+                                        ${m.tipo === 'cargo' ? ICONS.fileText : ICONS.dollarSign}
+                                    </span>
+                                    <div>
+                                        ${m.concepto}
+                                        ${m.descripcion && m.descripcion !== m.concepto ? `<div class="text-xs text-muted">${m.descripcion}</div>` : ''}
+                                        ${m.recibo ? `<div class="text-xs text-muted">${m.recibo}</div>` : ''}
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="text-xs text-muted">${m.servicio || '-'}</span></td>
+                            <td class="text-center">
+                                <span class="badge badge-${m.estatus === 'PAGADO' || m.estatus === 'APLICADO' ? 'success' : m.estatus === 'PENDIENTE' ? 'warning' : m.estatus === 'PARCIAL' ? 'info' : 'danger'}">
+                                    ${m.estatus}
+                                </span>
+                            </td>
+                            <td class="text-right ${m.tipo === 'cargo' ? 'text-danger' : ''}">
+                                ${m.tipo === 'cargo' ? '$' + m.monto.toFixed(2) : '-'}
+                            </td>
+                            <td class="text-right ${m.tipo === 'pago' ? 'text-success' : ''}">
+                                ${m.tipo === 'pago' ? '$' + m.monto.toFixed(2) : '-'}
+                            </td>
+                            <td class="text-right">
+                                ${m.tipo === 'cargo' && m.saldo > 0 ? '<span class="text-danger">$' + m.saldo.toFixed(2) + '</span>' : '-'}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    // ============================================
+    // CARGAR NOTAS
+    // ============================================
 
     async cargarNotas() {
         const container = $('#lista-notas');
@@ -649,308 +807,350 @@ const ClienteDetalleView = {
             const res = await API.get(`/clientes/${this.cliente.id}/notas`);
             if (res.success && res.data.length) {
                 container.innerHTML = res.data.map(nota => `
-                    <div class="nota-item">
-                        <div class="nota-header">
-                            <span class="nota-autor">${nota.usuario || 'Sistema'}</span>
-                            <span class="nota-fecha">${new Date(nota.created_at).toLocaleDateString('es-MX')}</span>
+                    <div class="nota-item" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                        <div class="nota-header" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span class="nota-autor" style="font-weight: 600;">${nota.creado_por || 'Sistema'}</span>
+                            <span class="nota-fecha text-muted" style="font-size: 0.75rem;">${new Date(nota.created_at).toLocaleDateString('es-MX')}</span>
                         </div>
-                        <p class="nota-texto">${nota.nota}</p>
+                        <p class="nota-texto" style="margin: 0; color: var(--text-secondary);">${nota.nota}</p>
                     </div>
                 `).join('');
             } else {
                 container.innerHTML = `
-                    <div class="empty-state small">
+                    <div class="empty-state small" style="padding: 2rem;">
                         ${ICONS.fileText}
                         <p>No hay notas registradas</p>
                     </div>
                 `;
             }
         } catch (error) {
-            container.innerHTML = '<p class="text-muted text-center">Error al cargar notas</p>';
+            container.innerHTML = '<p class="text-muted text-center" style="padding: 2rem;">Error al cargar notas</p>';
         }
     },
+
+    // ============================================
+    // ACCIONES SERVICIO
+    // ============================================
+
+    verServicio(servicioId) {
+        window.location.hash = `#/servicio/${servicioId}`;
+    },
+
+    async suspenderServicio(servicioId) {
+        if (!confirm('¿Suspender este servicio?')) return;
+        
+        try {
+            const res = await API.post(`/servicios/${servicioId}/suspender`, {});
+            if (res.success) {
+                Components.toast.success('Servicio suspendido');
+                await this.cargarCliente();
+            } else {
+                Components.toast.error(res.message);
+            }
+        } catch (error) {
+            Components.toast.error(error.message);
+        }
+    },
+
+    async reactivarServicio(servicioId) {
+        if (!confirm('¿Reactivar este servicio?')) return;
+        
+        try {
+            const res = await API.post(`/servicios/${servicioId}/reactivar`, {});
+            if (res.success) {
+                Components.toast.success('Servicio reactivado');
+                await this.cargarCliente();
+            } else {
+                Components.toast.error(res.message);
+            }
+        } catch (error) {
+            Components.toast.error(error.message);
+        }
+    },
+
+    // ============================================
+    // PAGO
+    // ============================================
 
     registrarPago() {
         Components.toast.info('Función de pago en desarrollo');
     },
 
-// ============================================
-// FUNCIONES DE SERVICIO
-// ============================================
+    // ============================================
+    // NUEVO SERVICIO
+    // ============================================
 
-async nuevoServicio() {
-    if (!this.cliente) return;
+    async nuevoServicio() {
+        if (!this.cliente) return;
 
-    // Cargar catálogos necesarios
-    await Promise.all([
-        State.getCatalogo('tarifas'),
-        State.getCatalogo('tipoEquipo'),
-        State.getCatalogo('marcasEquipo')
-    ]);
+        await Promise.all([
+            State.getCatalogo('tarifas'),
+            State.getCatalogo('tipoEquipo'),
+            State.getCatalogo('marcasEquipo')
+        ]);
 
-    const tarifas = State.catalogos.tarifas || [];
-    const tiposEquipo = State.catalogos.tipoEquipo || [];
+        const tarifas = State.catalogos.tarifas || [];
+        const tiposEquipo = State.catalogos.tipoEquipo || [];
 
-    const modalHTML = `
-        <div class="modal-backdrop" id="modal-servicio">
-            <div class="modal modal-lg">
-                <div class="modal-header">
-                    <h2>Nuevo Servicio</h2>
-                    <button class="btn-icon" onclick="ClienteDetalleView.cerrarModalServicio()">
-                        ${ICONS.x}
-                    </button>
+        const modalHTML = `
+            <div class="modal-backdrop" id="modal-servicio">
+                <div class="modal modal-lg">
+                    <div class="modal-header">
+                        <h2>Nuevo Servicio</h2>
+                        <button class="btn-icon" onclick="ClienteDetalleView.cerrarModalServicio()">
+                            ${ICONS.x}
+                        </button>
+                    </div>
+                    <form id="form-servicio" onsubmit="ClienteDetalleView.guardarServicio(event)">
+                        <div class="modal-body">
+                            <!-- Datos del Servicio -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">Datos del Servicio</h3>
+                                <div class="form-grid cols-2">
+                                    <div class="form-group">
+                                        <label class="form-label required">Tarifa / Plan</label>
+                                        <select name="tarifa_id" class="form-input" required onchange="ClienteDetalleView.calcularProrrateo()">
+                                            <option value="">Seleccionar tarifa...</option>
+                                            ${tarifas.map(t => `
+                                                <option value="${t.id}" data-monto="${t.monto}">
+                                                    ${t.nombre} - $${t.monto}/mes (${t.velocidad_mbps || '?'} Mbps)
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label required">Fecha de Instalación</label>
+                                        <input type="date" name="fecha_instalacion" class="form-input" 
+                                               value="${new Date().toISOString().split('T')[0]}" 
+                                               required onchange="ClienteDetalleView.calcularProrrateo()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Día de Corte</label>
+                                        <select name="dia_corte" class="form-input" onchange="ClienteDetalleView.calcularProrrateo()">
+                                            ${[1,5,10,15,20,25].map(d => `
+                                                <option value="${d}" ${d === 10 ? 'selected' : ''}>Día ${d} de cada mes</option>
+                                            `).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Costo de Instalación</label>
+                                        <input type="number" name="costo_instalacion" class="form-input" 
+                                               value="0" min="0" step="0.01" onchange="ClienteDetalleView.calcularProrrateo()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resumen de Cargos -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">Resumen de Cargos Iniciales</h3>
+                                <div class="cargos-preview" id="cargos-preview">
+                                    <p class="text-muted">Seleccione una tarifa para ver el desglose</p>
+                                </div>
+                            </div>
+
+                            <!-- Equipo (Opcional) -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">Equipo a Instalar (Opcional)</h3>
+                                <div class="form-grid cols-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Tipo de Equipo</label>
+                                        <select name="tipo_equipo_id" class="form-input" id="select-tipo-equipo">
+                                            <option value="">Sin equipo</option>
+                                            ${tiposEquipo.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">MAC Address</label>
+                                        <input type="text" name="mac" class="form-input" placeholder="AA:BB:CC:DD:EE:FF">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">IP</label>
+                                        <input type="text" name="ip" class="form-input" placeholder="192.168.1.100">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Serie</label>
+                                        <input type="text" name="serie" class="form-input" placeholder="Número de serie">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">SSID (WiFi)</label>
+                                        <input type="text" name="ssid" class="form-input" placeholder="Nombre de la red">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Password WiFi</label>
+                                        <input type="text" name="password_equipo" class="form-input" placeholder="Contraseña">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline" onclick="ClienteDetalleView.cerrarModalServicio()">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                ${ICONS.save} Crear Servicio
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <form id="form-servicio" onsubmit="ClienteDetalleView.guardarServicio(event)">
-                    <div class="modal-body">
-                        <!-- Datos del Servicio -->
-                        <div class="form-section">
-                            <h3 class="form-section-title">Datos del Servicio</h3>
-                            <div class="form-grid cols-2">
-                                <div class="form-group">
-                                    <label class="form-label required">Tarifa / Plan</label>
-                                    <select name="tarifa_id" class="form-input" required onchange="ClienteDetalleView.calcularProrrateo()">
-                                        <option value="">Seleccionar tarifa...</option>
-                                        ${tarifas.map(t => `
-                                            <option value="${t.id}" data-monto="${t.monto}">
-                                                ${t.nombre} - $${t.monto}/mes (${t.velocidad_mbps || '?'} Mbps)
-                                            </option>
-                                        `).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label required">Fecha de Instalación</label>
-                                    <input type="date" name="fecha_instalacion" class="form-input" 
-                                           value="${new Date().toISOString().split('T')[0]}" 
-                                           required onchange="ClienteDetalleView.calcularProrrateo()">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Día de Corte</label>
-                                    <select name="dia_corte" class="form-input" onchange="ClienteDetalleView.calcularProrrateo()">
-                                        ${[1,5,10,15,20,25].map(d => `
-                                            <option value="${d}" ${d === 10 ? 'selected' : ''}>Día ${d} de cada mes</option>
-                                        `).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Costo de Instalación</label>
-                                    <input type="number" name="costo_instalacion" class="form-input" 
-                                           value="0" min="0" step="0.01" onchange="ClienteDetalleView.calcularProrrateo()">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Resumen de Cargos -->
-                        <div class="form-section">
-                            <h3 class="form-section-title">Resumen de Cargos Iniciales</h3>
-                            <div class="cargos-preview" id="cargos-preview">
-                                <p class="text-muted">Seleccione una tarifa para ver el desglose</p>
-                            </div>
-                        </div>
-
-                        <!-- Equipo (Opcional) -->
-                        <div class="form-section">
-                            <h3 class="form-section-title">Equipo a Instalar (Opcional)</h3>
-                            <div class="form-grid cols-2">
-                                <div class="form-group">
-                                    <label class="form-label">Tipo de Equipo</label>
-                                    <select name="tipo_equipo_id" class="form-input" id="select-tipo-equipo">
-                                        <option value="">Sin equipo</option>
-                                        ${tiposEquipo.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">MAC Address</label>
-                                    <input type="text" name="mac" class="form-input" placeholder="AA:BB:CC:DD:EE:FF">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">IP</label>
-                                    <input type="text" name="ip" class="form-input" placeholder="192.168.1.100">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Serie</label>
-                                    <input type="text" name="serie" class="form-input" placeholder="Número de serie">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">SSID (WiFi)</label>
-                                    <input type="text" name="ssid" class="form-input" placeholder="Nombre de la red">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Password WiFi</label>
-                                    <input type="text" name="password_equipo" class="form-input" placeholder="Contraseña">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline" onclick="ClienteDetalleView.cerrarModalServicio()">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            ${ICONS.save} Crear Servicio
-                        </button>
-                    </div>
-                </form>
             </div>
-        </div>
-    `;
+        `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    this.calcularProrrateo();
-},
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        this.calcularProrrateo();
+    },
 
-calcularProrrateo() {
-    const form = $('#form-servicio');
-    if (!form) return;
+    calcularProrrateo() {
+        const form = $('#form-servicio');
+        if (!form) return;
 
-    const tarifaSelect = form.querySelector('[name="tarifa_id"]');
-    const fechaInput = form.querySelector('[name="fecha_instalacion"]');
-    const diaCorteSelect = form.querySelector('[name="dia_corte"]');
-    const instalacionInput = form.querySelector('[name="costo_instalacion"]');
-    const preview = $('#cargos-preview');
+        const tarifaSelect = form.querySelector('[name="tarifa_id"]');
+        const fechaInput = form.querySelector('[name="fecha_instalacion"]');
+        const diaCorteSelect = form.querySelector('[name="dia_corte"]');
+        const instalacionInput = form.querySelector('[name="costo_instalacion"]');
+        const preview = $('#cargos-preview');
 
-    const tarifaOption = tarifaSelect.selectedOptions[0];
-    const tarifaMonto = parseFloat(tarifaOption?.dataset?.monto) || 0;
-    const fechaInstalacion = fechaInput.value;
-    const diaCorte = parseInt(diaCorteSelect.value) || 10;
-    const costoInstalacion = parseFloat(instalacionInput.value) || 0;
+        const tarifaOption = tarifaSelect.selectedOptions[0];
+        const tarifaMonto = parseFloat(tarifaOption?.dataset?.monto) || 0;
+        const fechaInstalacion = fechaInput.value;
+        const diaCorte = parseInt(diaCorteSelect.value) || 10;
+        const costoInstalacion = parseFloat(instalacionInput.value) || 0;
 
-    if (!tarifaMonto || !fechaInstalacion) {
-        preview.innerHTML = '<p class="text-muted">Seleccione una tarifa para ver el desglose</p>';
-        return;
-    }
-
-    // Calcular prorrateo
-    const fecha = new Date(fechaInstalacion + 'T12:00:00');
-    const dia = fecha.getDate();
-    let diasProrrateo = 0;
-    let prorrateo = 0;
-
-    if (dia !== diaCorte) {
-        if (dia < diaCorte) {
-            diasProrrateo = diaCorte - dia;
-        } else {
-            const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
-            diasProrrateo = (ultimoDiaMes - dia) + diaCorte;
+        if (!tarifaMonto || !fechaInstalacion) {
+            preview.innerHTML = '<p class="text-muted">Seleccione una tarifa para ver el desglose</p>';
+            return;
         }
-        const tarifaDiaria = tarifaMonto / 30;
-        prorrateo = Math.round(tarifaDiaria * diasProrrateo * 100) / 100;
-    }
 
-    // Calcular fecha primer vencimiento
-    let fechaVencimiento;
-    if (dia <= diaCorte) {
-        fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth(), diaCorte);
-    } else {
-        fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth() + 1, diaCorte);
-    }
+        const fecha = new Date(fechaInstalacion + 'T12:00:00');
+        const dia = fecha.getDate();
+        let diasProrrateo = 0;
+        let prorrateo = 0;
 
-    // Calcular total
-    let total = costoInstalacion;
-    if (prorrateo > 0) {
-        total += prorrateo;
-    } else {
-        total += tarifaMonto;
-    }
+        if (dia !== diaCorte) {
+            if (dia < diaCorte) {
+                diasProrrateo = diaCorte - dia;
+            } else {
+                const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+                diasProrrateo = (ultimoDiaMes - dia) + diaCorte;
+            }
+            const tarifaDiaria = tarifaMonto / 30;
+            prorrateo = Math.round(tarifaDiaria * diasProrrateo * 100) / 100;
+        }
 
-    // Renderizar preview
-    preview.innerHTML = `
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Concepto</th>
-                    <th class="text-right">Monto</th>
-                    <th>Vencimiento</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${costoInstalacion > 0 ? `
-                <tr>
-                    <td>Instalación</td>
-                    <td class="text-right">$${costoInstalacion.toFixed(2)}</td>
-                    <td>${fecha.toLocaleDateString('es-MX')}</td>
-                </tr>
-                ` : ''}
-                ${prorrateo > 0 ? `
-                <tr>
-                    <td>Prorrateo (${diasProrrateo} días)</td>
-                    <td class="text-right">$${prorrateo.toFixed(2)}</td>
-                    <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
-                </tr>
-                ` : `
-                <tr>
-                    <td>Primera Mensualidad</td>
-                    <td class="text-right">$${tarifaMonto.toFixed(2)}</td>
-                    <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
-                </tr>
-                `}
-            </tbody>
-            <tfoot>
-                <tr class="font-bold">
-                    <td>Total a Pagar</td>
-                    <td class="text-right text-primary">$${total.toFixed(2)}</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-        <p class="text-sm text-muted mt-2">
-            * Día de corte: ${diaCorte} de cada mes. 
-            Siguiente mensualidad: $${tarifaMonto.toFixed(2)}
-        </p>
-    `;
-},
+        let fechaVencimiento;
+        if (dia <= diaCorte) {
+            fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth(), diaCorte);
+        } else {
+            fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth() + 1, diaCorte);
+        }
 
-async guardarServicio(e) {
-    e.preventDefault();
-    const form = $('#form-servicio');
-    const formData = new FormData(form);
-    
-    const data = {
-        cliente_id: this.cliente.id,
-        tarifa_id: formData.get('tarifa_id'),
-        fecha_instalacion: formData.get('fecha_instalacion'),
-        dia_corte: parseInt(formData.get('dia_corte')),
-        costo_instalacion: parseFloat(formData.get('costo_instalacion')) || 0
-    };
+        let total = costoInstalacion;
+        if (prorrateo > 0) {
+            total += prorrateo;
+        } else {
+            total += tarifaMonto;
+        }
 
-    // Agregar equipo si se seleccionó tipo
-    const tipoEquipo = formData.get('tipo_equipo_id');
-    if (tipoEquipo) {
-        data.equipos = [{
-            tipo_equipo_id: tipoEquipo,
-            mac: formData.get('mac') || null,
-            ip: formData.get('ip') || null,
-            serie: formData.get('serie') || null,
-            ssid: formData.get('ssid') || null,
-            password_equipo: formData.get('password_equipo') || null
-        }];
-    }
+        preview.innerHTML = `
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th class="text-right">Monto</th>
+                        <th>Vencimiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${costoInstalacion > 0 ? `
+                    <tr>
+                        <td>Instalación</td>
+                        <td class="text-right">$${costoInstalacion.toFixed(2)}</td>
+                        <td>${fecha.toLocaleDateString('es-MX')}</td>
+                    </tr>
+                    ` : ''}
+                    ${prorrateo > 0 ? `
+                    <tr>
+                        <td>Prorrateo (${diasProrrateo} días)</td>
+                        <td class="text-right">$${prorrateo.toFixed(2)}</td>
+                        <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
+                    </tr>
+                    ` : `
+                    <tr>
+                        <td>Primera Mensualidad</td>
+                        <td class="text-right">$${tarifaMonto.toFixed(2)}</td>
+                        <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
+                    </tr>
+                    `}
+                </tbody>
+                <tfoot>
+                    <tr class="font-bold">
+                        <td>Total a Pagar</td>
+                        <td class="text-right text-primary">$${total.toFixed(2)}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p class="text-sm text-muted mt-2">
+                * Día de corte: ${diaCorte} de cada mes. 
+                Siguiente mensualidad: $${tarifaMonto.toFixed(2)}
+            </p>
+        `;
+    },
 
-    const btn = form.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner-sm"></div> Creando...';
-
-    try {
-        const res = await API.post('/servicios', data);
+    async guardarServicio(e) {
+        e.preventDefault();
+        const form = $('#form-servicio');
+        const formData = new FormData(form);
         
-        if (res.success) {
-            Components.toast.success(`Servicio ${res.data.codigo} creado`);
-            this.cerrarModalServicio();
-            await this.cargarCliente(); // Recargar datos
-        } else {
-            Components.toast.error(res.message || 'Error al crear servicio');
-        }
-    } catch (error) {
-        Components.toast.error(error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `${ICONS.save} Crear Servicio`;
-    }
-},
+        const data = {
+            cliente_id: this.cliente.id,
+            tarifa_id: formData.get('tarifa_id'),
+            fecha_instalacion: formData.get('fecha_instalacion'),
+            dia_corte: parseInt(formData.get('dia_corte')),
+            costo_instalacion: parseFloat(formData.get('costo_instalacion')) || 0
+        };
 
-cerrarModalServicio() {
-    const modal = $('#modal-servicio');
-    if (modal) modal.remove();
-},
+        const tipoEquipo = formData.get('tipo_equipo_id');
+        if (tipoEquipo) {
+            data.equipos = [{
+                tipo_equipo_id: tipoEquipo,
+                mac: formData.get('mac') || null,
+                ip: formData.get('ip') || null,
+                serie: formData.get('serie') || null,
+                ssid: formData.get('ssid') || null,
+                password_equipo: formData.get('password_equipo') || null
+            }];
+        }
+
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner-sm"></div> Creando...';
+
+        try {
+            const res = await API.post('/servicios', data);
+            
+            if (res.success) {
+                Components.toast.success(`Servicio ${res.data.codigo} creado`);
+                this.cerrarModalServicio();
+                await this.cargarCliente();
+            } else {
+                Components.toast.error(res.message || 'Error al crear servicio');
+            }
+        } catch (error) {
+            Components.toast.error(error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `${ICONS.save} Crear Servicio`;
+        }
+    },
+
+    cerrarModalServicio() {
+        const modal = $('#modal-servicio');
+        if (modal) modal.remove();
+    },
+
+    // ============================================
+    // NOTAS
+    // ============================================
 
     async nuevaNota() {
         if (!this.cliente) return;
@@ -969,11 +1169,47 @@ cerrarModalServicio() {
         }
     },
 
+    // ============================================
+    // INE
+    // ============================================
+
     subirINE(tipo) {
-        Components.toast.info(`Subir INE ${tipo} - En desarrollo`);
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('archivo', file);
+            formData.append('tipo', tipo);
+
+            try {
+                Components.toast.info('Subiendo imagen...');
+                const res = await API.upload(`/clientes/${this.cliente.id}/ine`, formData);
+                if (res.success) {
+                    Components.toast.success('INE subida correctamente');
+                    await this.cargarCliente();
+                } else {
+                    Components.toast.error(res.message);
+                }
+            } catch (error) {
+                Components.toast.error(error.message);
+            }
+        };
+        input.click();
     },
 
     descargarINE() {
-        Components.toast.info('Descarga en desarrollo');
+        if (this.cliente?.ine_frente) {
+            window.open(this.cliente.ine_frente, '_blank');
+        }
+        if (this.cliente?.ine_reverso) {
+            window.open(this.cliente.ine_reverso, '_blank');
+        }
+        if (!this.cliente?.ine_frente && !this.cliente?.ine_reverso) {
+            Components.toast.info('No hay documentos INE registrados');
+        }
     }
 };
