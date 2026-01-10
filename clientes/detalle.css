@@ -3,34 +3,12 @@
    ======================================== */
 
 /* ========================================
-   LAYOUT
+   CONTENT
    ======================================== */
 .content {
-  padding: 20px;
+  padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.breadcrumb a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.breadcrumb a:hover {
-  color: var(--accent-primary);
-}
-
-.breadcrumb .material-symbols-outlined {
-  font-size: 16px;
 }
 
 /* ========================================
@@ -171,7 +149,7 @@
 }
 
 /* ========================================
-   TABS
+   TABS (override para detalle)
    ======================================== */
 .tabs {
   display: flex;
@@ -180,6 +158,7 @@
   background: var(--bg-secondary);
   padding: 4px;
   border-radius: var(--radius-lg);
+  width: 100%;
   overflow-x: auto;
 }
 
@@ -234,6 +213,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  min-height: 300px;
 }
 
 .panel__header {
@@ -280,40 +260,10 @@
 }
 
 /* ========================================
-   TABLE
+   TABLE WRAPPER
    ======================================== */
 .table-wrapper {
   overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.table th,
-.table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.table th {
-  background: var(--bg-secondary);
-  font-weight: 600;
-  font-size: 11px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.table tbody tr:hover {
-  background: var(--bg-hover);
-}
-
-.table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .table .empty {
@@ -328,34 +278,6 @@
   background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 4px;
-}
-
-.table__actions {
-  display: flex;
-  gap: 4px;
-}
-
-.table__actions button {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: var(--bg-secondary);
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  transition: all 0.2s;
-}
-
-.table__actions button:hover {
-  color: var(--accent-primary);
-  background: var(--bg-hover);
-}
-
-.table__actions button .material-symbols-outlined {
-  font-size: 18px;
 }
 
 /* ========================================
@@ -383,250 +305,6 @@
 
 .line-through {
   text-decoration: line-through;
-}
-
-/* ========================================
-   BADGES
-   ======================================== */
-.badge {
-  display: inline-flex;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: var(--bg-secondary);
-  color: var(--text-muted);
-}
-
-.badge--activo { background: rgba(16,185,129,0.15); color: #10b981; }
-.badge--pagado { background: rgba(16,185,129,0.15); color: #10b981; }
-.badge--suspendido { background: rgba(245,158,11,0.15); color: #f59e0b; }
-.badge--parcial { background: rgba(245,158,11,0.15); color: #f59e0b; }
-.badge--cancelado { background: rgba(239,68,68,0.15); color: #ef4444; }
-.badge--pendiente { background: rgba(239,68,68,0.15); color: #ef4444; }
-.badge--vencido { background: rgba(239,68,68,0.15); color: #ef4444; }
-.badge--mensualidad { background: rgba(59,130,246,0.15); color: #3b82f6; }
-.badge--instalacion { background: rgba(139,92,246,0.15); color: #8b5cf6; }
-
-/* ========================================
-   BUTTONS
-   ======================================== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn .material-symbols-outlined {
-  font-size: 18px;
-}
-
-.btn--primary { background: var(--accent-primary); color: white; }
-.btn--secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); }
-.btn--success { background: var(--success); color: white; }
-.btn--danger { background: var(--danger); color: white; }
-
-.btn--sm {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.btn--sm .material-symbols-outlined {
-  font-size: 16px;
-}
-
-.btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ========================================
-   INPUTS
-   ======================================== */
-.input,
-.select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font-size: 13px;
-  transition: border-color 0.2s;
-}
-
-.input:focus,
-.select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-}
-
-.input--sm,
-.select--sm {
-  padding: 6px 10px;
-  font-size: 12px;
-  min-width: 120px;
-}
-
-.input--big {
-  font-size: 20px;
-  font-weight: 700;
-  padding: 12px 16px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-/* ========================================
-   FORMS
-   ======================================== */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.form-group--large {
-  flex: 2;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.form-section {
-  margin-bottom: 24px;
-}
-
-.form-section h4 {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-secondary);
-}
-
-/* ========================================
-   MODALS
-   ======================================== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-overlay.active {
-  display: flex;
-}
-
-.modal {
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.modal--lg { max-width: 700px; }
-.modal--sm { max-width: 400px; }
-
-.modal__header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.modal__header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.modal__header h3 .material-symbols-outlined {
-  font-size: 20px;
-  color: var(--text-muted);
-}
-
-.modal__close {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.modal__close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.modal__body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal__footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
 }
 
 /* ========================================
@@ -750,12 +428,38 @@
 }
 
 /* ========================================
-   TEXT HELPERS
+   FORM SECTION
    ======================================== */
-.text-success { color: var(--success) !important; }
-.text-danger { color: var(--danger) !important; }
-.text-muted { color: var(--text-muted) !important; }
-.text-center { text-align: center; }
+.form-section {
+  margin-bottom: 24px;
+}
+
+.form-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.form-group--large {
+  flex: 2;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
 
 /* ========================================
    RESPONSIVE
@@ -826,24 +530,7 @@
   .panel__filters .input--sm,
   .panel__filters .select--sm {
     flex: 1;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .table {
-    font-size: 12px;
-  }
-  
-  .table th,
-  .table td {
-    padding: 10px 12px;
-  }
-  
-  .modal {
-    margin: 10px;
-    max-height: calc(100vh - 20px);
+    min-width: 0;
   }
 }
 
