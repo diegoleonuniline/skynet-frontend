@@ -297,15 +297,14 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Tipo de Equipo *</label>
-            <select class="form-select" id="equipoTipo" required>
-              <option value="">Seleccionar...</option>
-              <option value="router">Router</option>
-              <option value="ont">ONT</option>
-              <option value="onu">ONU</option>
-              <option value="antena">Antena</option>
-              <option value="switch">Switch</option>
-              <option value="otro">Otro</option>
-            </select>
+            <div style="display: flex; gap: 8px;">
+              <select class="form-select" id="equipoTipo" required style="flex: 1;">
+                <option value="">Cargando...</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalTipoEquipo()" title="Agregar tipo">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Marca</label>
@@ -338,12 +337,14 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Estado *</label>
-            <select class="form-select" id="equipoEstado" required>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-              <option value="en_reparacion">En Reparación</option>
-              <option value="dado_de_baja">Dado de Baja</option>
-            </select>
+            <div style="display: flex; gap: 8px;">
+              <select class="form-select" id="equipoEstado" required style="flex: 1;">
+                <option value="">Cargando...</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalEstadoEquipo()" title="Agregar estado">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Fecha de Instalación</label>
@@ -385,6 +386,63 @@
       <button type="button" class="btn btn-danger" id="btnConfirmarEliminar" onclick="confirmarEliminarEquipo()">
         <span class="material-symbols-outlined">delete</span>Eliminar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar Tipo de Equipo -->
+<div class="modal-overlay" id="modalTipoEquipo">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal__header">
+      <h3 class="modal__title">Agregar Tipo de Equipo</h3>
+      <button class="modal__close" onclick="cerrarModalTipoEquipo()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label">Nombre del Tipo *</label>
+        <input type="text" class="form-input" id="nuevoTipoNombre" placeholder="Ej. Router, ONT, Antena">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input type="text" class="form-input" id="nuevoTipoDescripcion" placeholder="Descripción opcional">
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalTipoEquipo()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnGuardarTipoEquipo" onclick="guardarTipoEquipo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar Estado de Equipo -->
+<div class="modal-overlay" id="modalEstadoEquipo">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal__header">
+      <h3 class="modal__title">Agregar Estado de Equipo</h3>
+      <button class="modal__close" onclick="cerrarModalEstadoEquipo()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label">Nombre del Estado *</label>
+        <input type="text" class="form-input" id="nuevoEstadoNombre" placeholder="Ej. Activo, En Reparación">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Color</label>
+          <input type="color" class="form-input" id="nuevoEstadoColor" value="#64748b" style="height: 44px; padding: 4px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Es Operativo?</label>
+          <select class="form-select" id="nuevoEstadoOperativo">
+            <option value="1">Sí - Equipo funcionando</option>
+            <option value="0">No - Equipo no funciona</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalEstadoEquipo()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnGuardarEstadoEquipo" onclick="guardarEstadoEquipo()">Guardar</button>
     </div>
   </div>
 </div>

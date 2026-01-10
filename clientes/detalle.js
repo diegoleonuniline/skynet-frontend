@@ -1,9 +1,11 @@
 // ========================================
 // SKYNET - DETALLE CLIENTE JS
+// Todo dinámico por catálogos
 // ========================================
 
 let clienteActual = null;
 let ciudades = [], colonias = [], planes = [];
+let tiposEquipo = [], estadosEquipo = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   verificarSesion();
@@ -19,21 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   
-  cargarCatalogosEdicion();
+  cargarTodosCatalogos();
   cargarCliente(clienteId);
   
-  // Evento submit del formulario de edición
   document.getElementById('formEdicion').addEventListener('submit', async (e) => {
     e.preventDefault();
     await guardarEdicion();
   });
   
-  // Evento cambio de ciudad en edición
   document.getElementById('editCiudad').addEventListener('change', (e) => {
     cargarColoniasPorCiudadEdicion(e.target.value);
   });
   
-  // Evento cambio de plan en edición
   document.getElementById('editPlan').addEventListener('change', (e) => {
     const plan = planes.find(p => p.id === e.target.value);
     if (plan) document.getElementById('editCuota').value = plan.precio_mensual;
@@ -51,12 +50,17 @@ function inicializarTabs() {
   });
 }
 
-// Catálogos para edición
-async function cargarCatalogosEdicion() {
+// ========================================
+// CARGAR TODOS LOS CATÁLOGOS
+// ========================================
+
+async function cargarTodosCatalogos() {
   try {
-    const [rCiudades, rPlanes] = await Promise.all([
+    const [rCiudades, rPlanes, rTipos, rEstados] = await Promise.all([
       fetchGet('/api/catalogos/ciudades'),
-      fetchGet('/api/catalogos/planes')
+      fetchGet('/api/catalogos/planes'),
+      fetchGet('/api/equipos/tipos'),
+      fetchGet('/api/equipos/estados')
     ]);
     
     if (rCiudades.ok) {
@@ -67,6 +71,16 @@ async function cargarCatalogosEdicion() {
     if (rPlanes.ok) {
       planes = rPlanes.planes;
       llenarSelect('editPlan', planes);
+    }
+    
+    if (rTipos.ok) {
+      tiposEquipo = rTipos.tipos;
+      llenarSelect('equipoTipo', tiposEquipo);
+    }
+    
+    if (rEstados.ok) {
+      estadosEquipo = rEstados.estados;
+      llenarSelect('equipoEstado', estadosEquipo);
     }
   } catch (err) {
     console.error('Error cargando catálogos:', err);
@@ -95,7 +109,10 @@ async function cargarColoniasPorCiudadEdicion(ciudadId, seleccionarId = null) {
   } catch (err) { console.error('Error:', err); }
 }
 
-// Cargar cliente
+// ========================================
+// CARGAR CLIENTE
+// ========================================
+
 async function cargarCliente(id) {
   try {
     const data = await fetchGet(`/api/clientes/${id}`);
@@ -118,33 +135,25 @@ async function cargarCliente(id) {
 }
 
 function renderizarCliente(c) {
-  // Avatar
   document.getElementById('clienteAvatar').textContent = obtenerIniciales(c.nombre, c.apellido_paterno);
-  
-  // Nombre con ID
   document.getElementById('clienteNombre').textContent = `${c.nombre} ${c.apellido_paterno || ''} ${c.apellido_materno || ''} - ID: #${c.numero_cliente || 'SKY-0000'}`.trim();
   
-  // Badge Estado
   const badge = document.getElementById('clienteEstado');
   badge.textContent = (c.estado || 'activo').toUpperCase();
   badge.className = 'profile-card__badge ' + (c.estado || 'activo');
   
-  // Email y dirección
   document.getElementById('clienteEmail').innerHTML = `<span class="material-symbols-outlined">mail</span> ${c.email || 'Sin email'}`;
   document.getElementById('clienteDireccion').innerHTML = `<span class="material-symbols-outlined">location_on</span> ${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
   
-  // Stats
   document.getElementById('cuotaMensual').innerHTML = `${formatoMoneda(c.cuota_mensual)} <small>/mes</small>`;
   document.getElementById('planNombre').textContent = `Plan: ${c.plan_nombre || 'Sin plan'}`;
   
-  // Saldo
   const saldo = c.saldo_pendiente || 0;
   document.getElementById('saldoActual').textContent = formatoMoneda(saldo);
   const estadoCuenta = document.getElementById('estadoCuenta');
   estadoCuenta.textContent = saldo > 0 ? 'Saldo pendiente' : 'Cuenta al corriente';
   estadoCuenta.className = 'detail-stat__sub ' + (saldo > 0 ? 'danger' : 'success');
   
-  // Próximo corte
   const hoy = new Date();
   let proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth(), c.dia_corte || 10);
   if (proximoCorte < hoy) proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth() + 1, c.dia_corte || 10);
@@ -153,28 +162,24 @@ function renderizarCliente(c) {
   document.getElementById('proximoCorte').textContent = proximoCorte.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
   document.getElementById('diasRestantes').textContent = `En ${diasRestantes} días`;
   
-  // Contacto
   document.getElementById('clienteTelefono').textContent = c.telefono || '--';
   document.getElementById('clienteTelefono2').textContent = c.telefono_secundario || '--';
   
-  // WhatsApp
   document.getElementById('btnWhatsApp').onclick = () => {
     const tel = c.telefono?.replace(/\D/g, '');
     if (tel) window.open(`https://wa.me/52${tel}`, '_blank');
   };
   
-  // INE
   renderizarINE(c);
 }
 
 // ========================================
-// MODO EDICIÓN
+// MODO EDICIÓN CLIENTE
 // ========================================
 
 async function activarModoEdicion() {
   if (!clienteActual) return;
   
-  // Llenar formulario con datos actuales
   document.getElementById('editNombre').value = clienteActual.nombre || '';
   document.getElementById('editApellido').value = clienteActual.apellido_paterno || '';
   document.getElementById('editTelefono').value = clienteActual.telefono || '';
@@ -185,16 +190,13 @@ async function activarModoEdicion() {
   document.getElementById('editDiaCorte').value = clienteActual.dia_corte || 10;
   document.getElementById('editEstado').value = clienteActual.estado || 'activo';
   
-  // Seleccionar ciudad y cargar colonias
   document.getElementById('editCiudad').value = clienteActual.ciudad_id || '';
   if (clienteActual.ciudad_id) {
     await cargarColoniasPorCiudadEdicion(clienteActual.ciudad_id, clienteActual.colonia_id);
   }
   
-  // Seleccionar plan
   document.getElementById('editPlan').value = clienteActual.plan_id || '';
   
-  // Mostrar modo edición
   document.getElementById('perfilVista').classList.add('hidden');
   document.getElementById('perfilEdicion').classList.remove('hidden');
 }
@@ -236,7 +238,7 @@ async function guardarEdicion() {
     if (data.ok) {
       toastExito('Cliente actualizado correctamente');
       cancelarEdicion();
-      cargarCliente(clienteActual.id); // Recargar datos
+      cargarCliente(clienteActual.id);
     } else {
       toastError(data.mensaje || 'Error al guardar');
     }
@@ -327,7 +329,7 @@ function convertirABase64(archivo) {
 }
 
 // ========================================
-// EQUIPOS Y PAGOS
+// EQUIPOS - LISTADO DINÁMICO
 // ========================================
 
 async function cargarEquipos(clienteId) {
@@ -338,13 +340,16 @@ async function cargarEquipos(clienteId) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">router</span><p>Sin equipos registrados</p><button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()" style="margin-top: 12px;"><span class="material-symbols-outlined">add</span>Agregar Primer Equipo</button></div></td></tr>`;
       return;
     }
-    tbody.innerHTML = data.equipos.map(e => `
+    tbody.innerHTML = data.equipos.map(e => {
+      const esOperativo = e.es_operativo == 1;
+      const colorEstado = e.estado_color || '#64748b';
+      return `
       <tr>
-        <td><span class="badge badge--${e.tipo || 'otro'}">${formatoTipoEquipo(e.tipo)}</span></td>
+        <td><span class="badge" style="background: ${colorEstado}20; color: ${colorEstado};">${e.tipo_nombre || 'Sin tipo'}</span></td>
         <td><strong>${e.marca || '-'}</strong> ${e.modelo || ''}</td>
         <td><code style="font-size: 12px; color: var(--text-muted);">${e.mac || '--'}</code></td>
-        <td>${e.serial || '--'}</td>
-        <td><span class="equipment-status ${e.estado === 'activo' ? 'online' : 'offline'}">${formatoEstadoEquipo(e.estado)}</span></td>
+        <td>${e.serie || '--'}</td>
+        <td><span class="equipment-status ${esOperativo ? 'online' : 'offline'}" style="color: ${colorEstado};">${e.estado_nombre || 'Sin estado'}</span></td>
         <td>
           <div class="table__actions">
             <button class="table__action-btn" onclick="editarEquipo('${e.id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
@@ -352,18 +357,11 @@ async function cargarEquipos(clienteId) {
           </div>
         </td>
       </tr>
-    `).join('');
-  } catch (err) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; }
-}
-
-function formatoTipoEquipo(tipo) {
-  const tipos = { router: 'Router', ont: 'ONT', onu: 'ONU', antena: 'Antena', switch: 'Switch', otro: 'Otro' };
-  return tipos[tipo] || tipo || 'Equipo';
-}
-
-function formatoEstadoEquipo(estado) {
-  const estados = { activo: 'Activo', inactivo: 'Inactivo', en_reparacion: 'En Reparación', dado_de_baja: 'Dado de Baja' };
-  return estados[estado] || estado || 'Desconocido';
+    `}).join('');
+  } catch (err) { 
+    console.error('Error:', err);
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; 
+  }
 }
 
 // ========================================
@@ -372,16 +370,42 @@ function formatoEstadoEquipo(estado) {
 
 let equipoAEliminar = null;
 
-function abrirModalEquipo() {
+async function abrirModalEquipo() {
   document.getElementById('modalEquipoTitulo').textContent = 'Agregar Equipo';
   document.getElementById('formEquipo').reset();
   document.getElementById('equipoId').value = '';
   document.getElementById('equipoFechaInstalacion').value = new Date().toISOString().split('T')[0];
+  
+  await cargarCatalogosEquipos();
+  
   document.getElementById('modalEquipo').classList.add('active');
+}
+
+async function cargarCatalogosEquipos() {
+  try {
+    const [rTipos, rEstados] = await Promise.all([
+      fetchGet('/api/equipos/tipos'),
+      fetchGet('/api/equipos/estados')
+    ]);
+    
+    if (rTipos.ok) {
+      tiposEquipo = rTipos.tipos;
+      llenarSelect('equipoTipo', tiposEquipo);
+    }
+    
+    if (rEstados.ok) {
+      estadosEquipo = rEstados.estados;
+      llenarSelect('equipoEstado', estadosEquipo);
+    }
+  } catch (err) {
+    console.error('Error cargando catálogos equipos:', err);
+  }
 }
 
 async function editarEquipo(id) {
   try {
+    await cargarCatalogosEquipos();
+    
     const data = await fetchGet(`/api/equipos/${id}`);
     if (!data.ok) { toastError('Error al cargar equipo'); return; }
     
@@ -391,10 +415,10 @@ async function editarEquipo(id) {
     document.getElementById('equipoTipo').value = e.tipo || '';
     document.getElementById('equipoMarca').value = e.marca || '';
     document.getElementById('equipoModelo').value = e.modelo || '';
-    document.getElementById('equipoSerial').value = e.serial || '';
+    document.getElementById('equipoSerial').value = e.serie || '';
     document.getElementById('equipoMac').value = e.mac || '';
     document.getElementById('equipoIp').value = e.ip || '';
-    document.getElementById('equipoEstado').value = e.estado || 'activo';
+    document.getElementById('equipoEstado').value = e.estado || '';
     document.getElementById('equipoFechaInstalacion').value = e.fecha_instalacion?.split('T')[0] || '';
     document.getElementById('equipoNotas').value = e.notas || '';
     
@@ -418,16 +442,21 @@ async function guardarEquipo() {
     tipo: document.getElementById('equipoTipo').value,
     marca: document.getElementById('equipoMarca').value,
     modelo: document.getElementById('equipoModelo').value,
-    serial: document.getElementById('equipoSerial').value,
+    serie: document.getElementById('equipoSerial').value,
     mac: document.getElementById('equipoMac').value.toUpperCase(),
     ip: document.getElementById('equipoIp').value,
     estado: document.getElementById('equipoEstado').value,
-    fecha_instalacion: document.getElementById('equipoFechaInstalacion').value,
+    fecha_instalacion: document.getElementById('equipoFechaInstalacion').value || null,
     notas: document.getElementById('equipoNotas').value
   };
   
   if (!datos.tipo) {
     toastAdvertencia('Selecciona el tipo de equipo');
+    return;
+  }
+  
+  if (!datos.estado) {
+    toastAdvertencia('Selecciona el estado del equipo');
     return;
   }
   
@@ -487,6 +516,106 @@ async function confirmarEliminarEquipo() {
     toastError('Error al eliminar equipo');
   }
 }
+
+// ========================================
+// CATÁLOGOS - TIPOS DE EQUIPO
+// ========================================
+
+function abrirModalTipoEquipo() {
+  document.getElementById('nuevoTipoNombre').value = '';
+  document.getElementById('nuevoTipoDescripcion').value = '';
+  document.getElementById('modalTipoEquipo').classList.add('active');
+}
+
+function cerrarModalTipoEquipo() {
+  document.getElementById('modalTipoEquipo').classList.remove('active');
+}
+
+async function guardarTipoEquipo() {
+  const nombre = document.getElementById('nuevoTipoNombre').value.trim();
+  const descripcion = document.getElementById('nuevoTipoDescripcion').value.trim();
+  const btn = document.getElementById('btnGuardarTipoEquipo');
+  
+  if (!nombre) {
+    toastAdvertencia('El nombre es requerido');
+    return;
+  }
+  
+  btnLoading(btn, true);
+  
+  try {
+    const data = await fetchPost('/api/equipos/tipos', { nombre, descripcion });
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalTipoEquipo();
+      await cargarCatalogosEquipos();
+      if (data.tipo?.id) {
+        document.getElementById('equipoTipo').value = data.tipo.id;
+      }
+      toastExito('Tipo de equipo creado');
+    } else {
+      toastError(data.mensaje || 'Error al crear');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al crear tipo');
+  }
+}
+
+// ========================================
+// CATÁLOGOS - ESTADOS DE EQUIPO
+// ========================================
+
+function abrirModalEstadoEquipo() {
+  document.getElementById('nuevoEstadoNombre').value = '';
+  document.getElementById('nuevoEstadoColor').value = '#64748b';
+  document.getElementById('nuevoEstadoOperativo').value = '0';
+  document.getElementById('modalEstadoEquipo').classList.add('active');
+}
+
+function cerrarModalEstadoEquipo() {
+  document.getElementById('modalEstadoEquipo').classList.remove('active');
+}
+
+async function guardarEstadoEquipo() {
+  const nombre = document.getElementById('nuevoEstadoNombre').value.trim();
+  const color = document.getElementById('nuevoEstadoColor').value;
+  const es_operativo = parseInt(document.getElementById('nuevoEstadoOperativo').value);
+  const btn = document.getElementById('btnGuardarEstadoEquipo');
+  
+  if (!nombre) {
+    toastAdvertencia('El nombre es requerido');
+    return;
+  }
+  
+  btnLoading(btn, true);
+  
+  try {
+    const data = await fetchPost('/api/equipos/estados', { nombre, color, es_operativo });
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalEstadoEquipo();
+      await cargarCatalogosEquipos();
+      if (data.estado?.id) {
+        document.getElementById('equipoEstado').value = data.estado.id;
+      }
+      toastExito('Estado de equipo creado');
+    } else {
+      toastError(data.mensaje || 'Error al crear');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al crear estado');
+  }
+}
+
+// ========================================
+// PAGOS
+// ========================================
 
 async function cargarPagos(clienteId) {
   const container = document.getElementById('listaPagos');
