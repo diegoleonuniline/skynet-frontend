@@ -94,7 +94,7 @@
           </div>
         </div>
         <div class="profile-card__actions">
-          <button class="btn btn-primary" onclick="registrarPago()">
+          <button class="btn btn-primary" onclick="abrirModalPago()">
             <span class="material-symbols-outlined">payments</span>Registrar Pago
           </button>
           <button class="btn btn-secondary" onclick="activarModoEdicion()">
@@ -142,10 +142,10 @@
               <h4><span class="material-symbols-outlined">router</span> Servicio</h4>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Plan *</label><select class="form-select" id="editPlan" required></select></div>
-                <div class="form-group"><label class="form-label">Cuota Mensual</label><input type="number" class="form-input" id="editCuota" step="0.01"></div>
+                <div class="form-group"><label class="form-label">Tarifa Mensual</label><input type="number" class="form-input" id="editTarifa" step="0.01"></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Día de Corte</label><input type="number" class="form-input" id="editDiaCorte" min="1" max="28"></div>
+                <div class="form-group"><label class="form-label">Día de Corte</label><input type="number" class="form-input" id="editDiaCorte" min="1" max="28" value="10"></div>
                 <div class="form-group">
                   <label class="form-label">Estado</label>
                   <select class="form-select" id="editEstado">
@@ -164,19 +164,27 @@
       <div class="detail-stats">
         <div class="detail-stat">
           <div class="detail-stat__header">
-            <span class="detail-stat__label">Cuota Mensual</span>
+            <span class="detail-stat__label">Tarifa Mensual</span>
             <div class="detail-stat__icon detail-stat__icon--blue"><span class="material-symbols-outlined">price_check</span></div>
           </div>
-          <p class="detail-stat__value" id="cuotaMensual">$0.00 <small>/mes</small></p>
+          <p class="detail-stat__value" id="tarifaMensual">$0.00 <small>/mes</small></p>
           <p class="detail-stat__sub" id="planNombre">Plan: --</p>
         </div>
         <div class="detail-stat">
           <div class="detail-stat__header">
-            <span class="detail-stat__label">Saldo Actual</span>
-            <div class="detail-stat__icon detail-stat__icon--green"><span class="material-symbols-outlined">account_balance_wallet</span></div>
+            <span class="detail-stat__label">Adeudo Total</span>
+            <div class="detail-stat__icon detail-stat__icon--red"><span class="material-symbols-outlined">warning</span></div>
           </div>
-          <p class="detail-stat__value" id="saldoActual">$0.00</p>
+          <p class="detail-stat__value" id="adeudoTotal">$0.00</p>
           <p class="detail-stat__sub" id="estadoCuenta">Cuenta al corriente</p>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat__header">
+            <span class="detail-stat__label">Saldo a Favor</span>
+            <div class="detail-stat__icon detail-stat__icon--green"><span class="material-symbols-outlined">savings</span></div>
+          </div>
+          <p class="detail-stat__value" id="saldoFavor">$0.00</p>
+          <p class="detail-stat__sub">Disponible</p>
         </div>
         <div class="detail-stat">
           <div class="detail-stat__header">
@@ -190,15 +198,37 @@
 
       <!-- Tabs -->
       <div class="detail-tabs">
-        <button class="detail-tabs__btn active" data-tab="equipos">Equipos</button>
-        <button class="detail-tabs__btn" data-tab="historial">Estado de Cuenta</button>
+        <button class="detail-tabs__btn active" data-tab="cuenta">Estado de Cuenta</button>
+        <button class="detail-tabs__btn" data-tab="equipos">Equipos</button>
         <button class="detail-tabs__btn" data-tab="documentos">Documentos</button>
       </div>
 
       <!-- Content Grid -->
       <div class="detail-grid">
         <div class="detail-grid__main">
-          <div class="card detail-panel active" id="panel-equipos">
+          <!-- Panel Estado de Cuenta -->
+          <div class="card detail-panel active" id="panel-cuenta">
+            <div class="card__header">
+              <div class="card__title"><span class="material-symbols-outlined">receipt_long</span>Cargos Pendientes</div>
+              <button class="btn btn-sm btn-primary" onclick="abrirModalPago()">
+                <span class="material-symbols-outlined">add</span>Registrar Pago
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="table">
+                <thead><tr><th>Concepto</th><th>Vencimiento</th><th>Monto</th><th>Pagado</th><th>Pendiente</th><th>Estado</th></tr></thead>
+                <tbody id="tablaCargos"><tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr></tbody>
+              </table>
+            </div>
+            
+            <div class="card__header" style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+              <div class="card__title"><span class="material-symbols-outlined">history</span>Historial de Pagos</div>
+            </div>
+            <div class="card__body" id="listaPagos"><p class="text-center text-muted">Cargando...</p></div>
+          </div>
+
+          <!-- Panel Equipos -->
+          <div class="card detail-panel" id="panel-equipos">
             <div class="card__header">
               <div class="card__title"><span class="material-symbols-outlined">router</span>Equipos Instalados</div>
               <button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()">
@@ -213,14 +243,7 @@
             </div>
           </div>
 
-          <div class="card detail-panel" id="panel-historial">
-            <div class="card__header">
-              <div class="card__title"><span class="material-symbols-outlined">receipt_long</span>Historial de Transacciones</div>
-              <button class="btn btn-sm btn-secondary">Ver Estado Completo</button>
-            </div>
-            <div class="card__body" id="listaPagos"><p class="text-center text-muted">Cargando...</p></div>
-          </div>
-
+          <!-- Panel Documentos -->
           <div class="card detail-panel" id="panel-documentos">
             <div class="card__header">
               <div class="card__title"><span class="material-symbols-outlined">folder</span>Documentos</div>
@@ -283,6 +306,119 @@
   </main>
 </div>
 
+<!-- Modal Registrar Pago -->
+<div class="modal-overlay" id="modalPago">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal__header">
+      <h3 class="modal__title"><span class="material-symbols-outlined">payments</span> Registrar Pago</h3>
+      <button class="modal__close" onclick="cerrarModalPago()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <!-- Resumen de adeudo -->
+      <div class="pago-resumen">
+        <div class="pago-resumen__item">
+          <span>Adeudo Total:</span>
+          <strong id="pagoAdeudoTotal">$0.00</strong>
+        </div>
+        <div class="pago-resumen__item">
+          <span>Saldo a Favor:</span>
+          <strong id="pagoSaldoFavor" style="color: var(--success);">$0.00</strong>
+        </div>
+      </div>
+      
+      <form id="formPago">
+        <div class="form-row">
+          <div class="form-group" style="flex: 2;">
+            <label class="form-label">Monto a Pagar *</label>
+            <input type="number" class="form-input" id="pagoMonto" step="0.01" min="0.01" required placeholder="0.00" style="font-size: 24px; font-weight: 700; text-align: center;">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Método *</label>
+            <div style="display: flex; gap: 8px;">
+              <select class="form-select" id="pagoMetodo" required style="flex: 1;">
+                <option value="">Seleccionar...</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalMetodoPago()" title="Agregar método">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Referencia / Folio</label>
+            <input type="text" class="form-input" id="pagoReferencia" placeholder="Número de operación">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Banco</label>
+            <input type="text" class="form-input" id="pagoBanco" placeholder="Nombre del banco">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">¿Quién Paga?</label>
+            <input type="text" class="form-input" id="pagoQuienPaga" placeholder="Nombre de quien realiza el pago">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-input" id="pagoTelQuienPaga" placeholder="Teléfono de contacto">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Comprobante de Pago</label>
+          <div class="comprobante-upload" id="comprobanteUpload" onclick="seleccionarComprobante()">
+            <span class="material-symbols-outlined">cloud_upload</span>
+            <span>Clic para subir comprobante</span>
+            <small>PNG, JPG, PDF hasta 5MB</small>
+          </div>
+          <input type="file" id="comprobanteInput" accept="image/*,.pdf" style="display: none;">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Observaciones</label>
+          <textarea class="form-input" id="pagoObservaciones" rows="2" placeholder="Notas adicionales..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalPago()">Cancelar</button>
+      <button type="button" class="btn btn-success" id="btnGuardarPago" onclick="guardarPago()">
+        <span class="material-symbols-outlined">check</span>Registrar Pago
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar Método de Pago -->
+<div class="modal-overlay" id="modalMetodoPago">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal__header">
+      <h3 class="modal__title">Agregar Método de Pago</h3>
+      <button class="modal__close" onclick="cerrarModalMetodoPago()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <label class="form-label">Nombre del Método *</label>
+        <input type="text" class="form-input" id="nuevoMetodoNombre" placeholder="Ej. Efectivo, Transferencia, OXXO">
+      </div>
+      <div class="form-group">
+        <label class="form-label">¿Requiere Referencia?</label>
+        <select class="form-select" id="nuevoMetodoReferencia">
+          <option value="0">No</option>
+          <option value="1">Sí</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalMetodoPago()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnGuardarMetodoPago" onclick="guardarMetodoPago()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Agregar/Editar Equipo -->
 <div class="modal-overlay" id="modalEquipo">
   <div class="modal" style="max-width: 600px;">
@@ -298,12 +434,8 @@
           <div class="form-group">
             <label class="form-label">Tipo de Equipo *</label>
             <div style="display: flex; gap: 8px;">
-              <select class="form-select" id="equipoTipo" required style="flex: 1;">
-                <option value="">Cargando...</option>
-              </select>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalTipoEquipo()" title="Agregar tipo">
-                <span class="material-symbols-outlined">add</span>
-              </button>
+              <select class="form-select" id="equipoTipo" required style="flex: 1;"><option value="">Cargando...</option></select>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalTipoEquipo()" title="Agregar tipo"><span class="material-symbols-outlined">add</span></button>
             </div>
           </div>
           <div class="form-group">
@@ -313,56 +445,32 @@
         </div>
         
         <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Modelo</label>
-            <input type="text" class="form-input" id="equipoModelo" placeholder="Ej. HG8145V5">
-          </div>
-          <div class="form-group">
-            <label class="form-label">No. de Serie</label>
-            <input type="text" class="form-input" id="equipoSerial" placeholder="Número de serie">
-          </div>
+          <div class="form-group"><label class="form-label">Modelo</label><input type="text" class="form-input" id="equipoModelo" placeholder="Ej. HG8145V5"></div>
+          <div class="form-group"><label class="form-label">No. de Serie</label><input type="text" class="form-input" id="equipoSerial" placeholder="Número de serie"></div>
         </div>
         
         <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">MAC Address</label>
-            <input type="text" class="form-input" id="equipoMac" placeholder="XX:XX:XX:XX:XX:XX" style="text-transform: uppercase;">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Dirección IP</label>
-            <input type="text" class="form-input" id="equipoIp" placeholder="192.168.1.1">
-          </div>
+          <div class="form-group"><label class="form-label">MAC Address</label><input type="text" class="form-input" id="equipoMac" placeholder="XX:XX:XX:XX:XX:XX" style="text-transform: uppercase;"></div>
+          <div class="form-group"><label class="form-label">Dirección IP</label><input type="text" class="form-input" id="equipoIp" placeholder="192.168.1.1"></div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Estado *</label>
             <div style="display: flex; gap: 8px;">
-              <select class="form-select" id="equipoEstado" required style="flex: 1;">
-                <option value="">Cargando...</option>
-              </select>
-              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalEstadoEquipo()" title="Agregar estado">
-                <span class="material-symbols-outlined">add</span>
-              </button>
+              <select class="form-select" id="equipoEstado" required style="flex: 1;"><option value="">Cargando...</option></select>
+              <button type="button" class="btn btn-secondary btn-icon" onclick="abrirModalEstadoEquipo()" title="Agregar estado"><span class="material-symbols-outlined">add</span></button>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Fecha de Instalación</label>
-            <input type="date" class="form-input" id="equipoFechaInstalacion">
-          </div>
+          <div class="form-group"><label class="form-label">Fecha Instalación</label><input type="date" class="form-input" id="equipoFechaInstalacion"></div>
         </div>
         
-        <div class="form-group">
-          <label class="form-label">Ubicación / Notas</label>
-          <input type="text" class="form-input" id="equipoNotas" placeholder="Ej. Instalado en sala, poste #45">
-        </div>
+        <div class="form-group"><label class="form-label">Ubicación / Notas</label><input type="text" class="form-input" id="equipoNotas" placeholder="Ej. Instalado en sala, poste #45"></div>
       </form>
     </div>
     <div class="modal__footer">
       <button type="button" class="btn btn-secondary" onclick="cerrarModalEquipo()">Cancelar</button>
-      <button type="button" class="btn btn-primary" id="btnGuardarEquipo" onclick="guardarEquipo()">
-        <span class="material-symbols-outlined">save</span>Guardar Equipo
-      </button>
+      <button type="button" class="btn btn-primary" id="btnGuardarEquipo" onclick="guardarEquipo()"><span class="material-symbols-outlined">save</span>Guardar Equipo</button>
     </div>
   </div>
 </div>
@@ -383,9 +491,7 @@
     </div>
     <div class="modal__footer">
       <button type="button" class="btn btn-secondary" onclick="cerrarModalConfirmar()">Cancelar</button>
-      <button type="button" class="btn btn-danger" id="btnConfirmarEliminar" onclick="confirmarEliminarEquipo()">
-        <span class="material-symbols-outlined">delete</span>Eliminar
-      </button>
+      <button type="button" class="btn btn-danger" id="btnConfirmarEliminar" onclick="confirmarEliminarEquipo()"><span class="material-symbols-outlined">delete</span>Eliminar</button>
     </div>
   </div>
 </div>
@@ -398,14 +504,8 @@
       <button class="modal__close" onclick="cerrarModalTipoEquipo()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div class="form-group">
-        <label class="form-label">Nombre del Tipo *</label>
-        <input type="text" class="form-input" id="nuevoTipoNombre" placeholder="Ej. Router, ONT, Antena">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Descripción</label>
-        <input type="text" class="form-input" id="nuevoTipoDescripcion" placeholder="Descripción opcional">
-      </div>
+      <div class="form-group"><label class="form-label">Nombre del Tipo *</label><input type="text" class="form-input" id="nuevoTipoNombre" placeholder="Ej. Router, ONT, Antena"></div>
+      <div class="form-group"><label class="form-label">Descripción</label><input type="text" class="form-input" id="nuevoTipoDescripcion" placeholder="Descripción opcional"></div>
     </div>
     <div class="modal__footer">
       <button type="button" class="btn btn-secondary" onclick="cerrarModalTipoEquipo()">Cancelar</button>
@@ -422,22 +522,10 @@
       <button class="modal__close" onclick="cerrarModalEstadoEquipo()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal__body">
-      <div class="form-group">
-        <label class="form-label">Nombre del Estado *</label>
-        <input type="text" class="form-input" id="nuevoEstadoNombre" placeholder="Ej. Activo, En Reparación">
-      </div>
+      <div class="form-group"><label class="form-label">Nombre del Estado *</label><input type="text" class="form-input" id="nuevoEstadoNombre" placeholder="Ej. Activo, En Reparación"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Color</label>
-          <input type="color" class="form-input" id="nuevoEstadoColor" value="#64748b" style="height: 44px; padding: 4px;">
-        </div>
-        <div class="form-group">
-          <label class="form-label">¿Es Operativo?</label>
-          <select class="form-select" id="nuevoEstadoOperativo">
-            <option value="1">Sí - Equipo funcionando</option>
-            <option value="0">No - Equipo no funciona</option>
-          </select>
-        </div>
+        <div class="form-group"><label class="form-label">Color</label><input type="color" class="form-input" id="nuevoEstadoColor" value="#64748b" style="height: 44px; padding: 4px;"></div>
+        <div class="form-group"><label class="form-label">¿Es Operativo?</label><select class="form-select" id="nuevoEstadoOperativo"><option value="1">Sí</option><option value="0">No</option></select></div>
       </div>
     </div>
     <div class="modal__footer">

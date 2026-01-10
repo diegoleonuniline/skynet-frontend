@@ -1,11 +1,13 @@
 // ========================================
 // SKYNET - DETALLE CLIENTE JS
-// Todo dinámico por catálogos
+// Sistema completo de cargos y pagos
 // ========================================
 
 let clienteActual = null;
 let ciudades = [], colonias = [], planes = [];
 let tiposEquipo = [], estadosEquipo = [];
+let metodosPago = [];
+let comprobanteBase64 = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   verificarSesion();
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarTodosCatalogos();
   cargarCliente(clienteId);
   
+  // Eventos
   document.getElementById('formEdicion').addEventListener('submit', async (e) => {
     e.preventDefault();
     await guardarEdicion();
@@ -35,8 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('editPlan').addEventListener('change', (e) => {
     const plan = planes.find(p => p.id === e.target.value);
-    if (plan) document.getElementById('editCuota').value = plan.precio_mensual;
+    if (plan) document.getElementById('editTarifa').value = plan.precio_mensual;
   });
+  
+  // Evento comprobante
+  document.getElementById('comprobanteInput').addEventListener('change', handleComprobanteChange);
 });
 
 function inicializarTabs() {
@@ -51,37 +57,24 @@ function inicializarTabs() {
 }
 
 // ========================================
-// CARGAR TODOS LOS CATÁLOGOS
+// CARGAR CATÁLOGOS
 // ========================================
 
 async function cargarTodosCatalogos() {
   try {
-    const [rCiudades, rPlanes, rTipos, rEstados] = await Promise.all([
+    const [rCiudades, rPlanes, rTipos, rEstados, rMetodos] = await Promise.all([
       fetchGet('/api/catalogos/ciudades'),
       fetchGet('/api/catalogos/planes'),
       fetchGet('/api/equipos/tipos'),
-      fetchGet('/api/equipos/estados')
+      fetchGet('/api/equipos/estados'),
+      fetchGet('/api/pagos/metodos')
     ]);
     
-    if (rCiudades.ok) {
-      ciudades = rCiudades.ciudades;
-      llenarSelect('editCiudad', ciudades);
-    }
-    
-    if (rPlanes.ok) {
-      planes = rPlanes.planes;
-      llenarSelect('editPlan', planes);
-    }
-    
-    if (rTipos.ok) {
-      tiposEquipo = rTipos.tipos;
-      llenarSelect('equipoTipo', tiposEquipo);
-    }
-    
-    if (rEstados.ok) {
-      estadosEquipo = rEstados.estados;
-      llenarSelect('equipoEstado', estadosEquipo);
-    }
+    if (rCiudades.ok) { ciudades = rCiudades.ciudades; llenarSelect('editCiudad', ciudades); }
+    if (rPlanes.ok) { planes = rPlanes.planes; llenarSelect('editPlan', planes); }
+    if (rTipos.ok) { tiposEquipo = rTipos.tipos; llenarSelect('equipoTipo', tiposEquipo); }
+    if (rEstados.ok) { estadosEquipo = rEstados.estados; llenarSelect('equipoEstado', estadosEquipo); }
+    if (rMetodos.ok) { metodosPago = rMetodos.metodos; llenarSelect('pagoMetodo', metodosPago); }
   } catch (err) {
     console.error('Error cargando catálogos:', err);
   }
@@ -124,8 +117,9 @@ async function cargarCliente(id) {
 
     clienteActual = data.cliente;
     renderizarCliente(clienteActual);
+    cargarCargos(id);
+    cargarHistorialPagos(id);
     cargarEquipos(id);
-    cargarPagos(id);
     inicializarSubidaINE();
     
   } catch (err) {
@@ -136,7 +130,7 @@ async function cargarCliente(id) {
 
 function renderizarCliente(c) {
   document.getElementById('clienteAvatar').textContent = obtenerIniciales(c.nombre, c.apellido_paterno);
-  document.getElementById('clienteNombre').textContent = `${c.nombre} ${c.apellido_paterno || ''} ${c.apellido_materno || ''} - ID: #${c.numero_cliente || 'SKY-0000'}`.trim();
+  document.getElementById('clienteNombre').textContent = `${c.nombre} ${c.apellido_paterno || ''} - ID: #${c.numero_cliente || 'SKY-0000'}`.trim();
   
   const badge = document.getElementById('clienteEstado');
   badge.textContent = (c.estado || 'activo').toUpperCase();
@@ -145,15 +139,27 @@ function renderizarCliente(c) {
   document.getElementById('clienteEmail').innerHTML = `<span class="material-symbols-outlined">mail</span> ${c.email || 'Sin email'}`;
   document.getElementById('clienteDireccion').innerHTML = `<span class="material-symbols-outlined">location_on</span> ${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
   
-  document.getElementById('cuotaMensual').innerHTML = `${formatoMoneda(c.cuota_mensual)} <small>/mes</small>`;
+  // Stats
+  document.getElementById('tarifaMensual').innerHTML = `${formatoMoneda(c.tarifa_mensual)} <small>/mes</small>`;
   document.getElementById('planNombre').textContent = `Plan: ${c.plan_nombre || 'Sin plan'}`;
   
-  const saldo = c.saldo_pendiente || 0;
-  document.getElementById('saldoActual').textContent = formatoMoneda(saldo);
+  // Adeudo
+  const adeudo = parseFloat(c.saldo_pendiente) || 0;
+  document.getElementById('adeudoTotal').textContent = formatoMoneda(adeudo);
   const estadoCuenta = document.getElementById('estadoCuenta');
-  estadoCuenta.textContent = saldo > 0 ? 'Saldo pendiente' : 'Cuenta al corriente';
-  estadoCuenta.className = 'detail-stat__sub ' + (saldo > 0 ? 'danger' : 'success');
+  if (adeudo > 0) {
+    estadoCuenta.textContent = 'Tiene adeudo pendiente';
+    estadoCuenta.className = 'detail-stat__sub danger';
+  } else {
+    estadoCuenta.textContent = 'Cuenta al corriente';
+    estadoCuenta.className = 'detail-stat__sub success';
+  }
   
+  // Saldo a favor
+  const saldoFavor = parseFloat(c.saldo_favor) || 0;
+  document.getElementById('saldoFavor').textContent = formatoMoneda(saldoFavor);
+  
+  // Próximo corte
   const hoy = new Date();
   let proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth(), c.dia_corte || 10);
   if (proximoCorte < hoy) proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth() + 1, c.dia_corte || 10);
@@ -162,15 +168,274 @@ function renderizarCliente(c) {
   document.getElementById('proximoCorte').textContent = proximoCorte.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
   document.getElementById('diasRestantes').textContent = `En ${diasRestantes} días`;
   
+  // Contacto
   document.getElementById('clienteTelefono').textContent = c.telefono || '--';
   document.getElementById('clienteTelefono2').textContent = c.telefono_secundario || '--';
   
+  // WhatsApp
   document.getElementById('btnWhatsApp').onclick = () => {
     const tel = c.telefono?.replace(/\D/g, '');
     if (tel) window.open(`https://wa.me/52${tel}`, '_blank');
   };
   
   renderizarINE(c);
+}
+
+// ========================================
+// CARGOS
+// ========================================
+
+async function cargarCargos(clienteId) {
+  const tbody = document.getElementById('tablaCargos');
+  try {
+    const data = await fetchGet(`/api/cargos?cliente_id=${clienteId}`);
+    if (!data.ok || !data.cargos?.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">check_circle</span><p>Sin cargos pendientes</p></div></td></tr>`;
+      return;
+    }
+    
+    tbody.innerHTML = data.cargos.map(c => {
+      const estadoClass = c.estado === 'pagado' ? 'success' : c.estado === 'parcial' ? 'warning' : 'danger';
+      const estadoTexto = c.estado === 'pagado' ? 'Pagado' : c.estado === 'parcial' ? 'Parcial' : 'Pendiente';
+      return `
+      <tr>
+        <td><strong>${c.concepto}</strong><br><small class="text-muted">${c.descripcion || ''}</small></td>
+        <td>${formatoFecha(c.fecha_vencimiento)}</td>
+        <td>${formatoMoneda(c.monto)}</td>
+        <td>${formatoMoneda(c.monto_pagado)}</td>
+        <td><strong style="color: var(--${estadoClass})">${formatoMoneda(c.saldo_pendiente)}</strong></td>
+        <td><span class="badge badge--${estadoClass}">${estadoTexto}</span></td>
+      </tr>
+    `}).join('');
+  } catch (err) { 
+    console.error('Error:', err);
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; 
+  }
+}
+
+// ========================================
+// HISTORIAL DE PAGOS
+// ========================================
+
+async function cargarHistorialPagos(clienteId) {
+  const container = document.getElementById('listaPagos');
+  try {
+    const data = await fetchGet(`/api/pagos/historial/${clienteId}`);
+    if (!data.ok || !data.pagos?.length) {
+      container.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><p>Sin pagos registrados</p></div>`;
+      return;
+    }
+    container.innerHTML = data.pagos.map(p => `
+      <div class="transaction-item">
+        <div class="transaction-item__icon green"><span class="material-symbols-outlined">check</span></div>
+        <div class="transaction-item__info">
+          <p class="transaction-item__title">${p.metodo_nombre || 'Pago'}</p>
+          <p class="transaction-item__date">${formatoFecha(p.fecha_pago)} ${p.referencia ? '• Ref: ' + p.referencia : ''}</p>
+          ${p.aplicado_a ? `<p class="transaction-item__detail">${p.aplicado_a}</p>` : ''}
+        </div>
+        <p class="transaction-item__amount">${formatoMoneda(p.monto)}</p>
+        ${p.comprobante_url ? `<a href="${p.comprobante_url}" target="_blank" class="btn btn-sm btn-secondary" style="margin-left: 8px;"><span class="material-symbols-outlined">receipt</span></a>` : ''}
+      </div>
+    `).join('');
+  } catch (err) { 
+    console.error('Error:', err);
+    container.innerHTML = '<p class="text-center text-muted">Error al cargar</p>'; 
+  }
+}
+
+// ========================================
+// MODAL PAGO
+// ========================================
+
+async function abrirModalPago() {
+  document.getElementById('formPago').reset();
+  comprobanteBase64 = null;
+  document.getElementById('comprobanteUpload').innerHTML = `
+    <span class="material-symbols-outlined">cloud_upload</span>
+    <span>Clic para subir comprobante</span>
+    <small>PNG, JPG, PDF hasta 5MB</small>
+  `;
+  
+  // Recargar métodos
+  await cargarMetodosPago();
+  
+  // Mostrar resumen
+  const adeudo = parseFloat(clienteActual?.saldo_pendiente) || 0;
+  const saldoFavor = parseFloat(clienteActual?.saldo_favor) || 0;
+  document.getElementById('pagoAdeudoTotal').textContent = formatoMoneda(adeudo);
+  document.getElementById('pagoSaldoFavor').textContent = formatoMoneda(saldoFavor);
+  
+  document.getElementById('modalPago').classList.add('active');
+}
+
+function cerrarModalPago() {
+  document.getElementById('modalPago').classList.remove('active');
+}
+
+async function cargarMetodosPago() {
+  try {
+    const r = await fetchGet('/api/pagos/metodos');
+    if (r.ok) {
+      metodosPago = r.metodos;
+      llenarSelect('pagoMetodo', metodosPago);
+    }
+  } catch (err) {
+    console.error('Error:', err);
+  }
+}
+
+function seleccionarComprobante() {
+  document.getElementById('comprobanteInput').click();
+}
+
+async function handleComprobanteChange(e) {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+  
+  if (archivo.size > 5 * 1024 * 1024) {
+    toastError('El archivo no debe superar 5MB');
+    return;
+  }
+  
+  const upload = document.getElementById('comprobanteUpload');
+  upload.innerHTML = `<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span><span>Procesando...</span>`;
+  
+  try {
+    comprobanteBase64 = await convertirABase64(archivo);
+    upload.innerHTML = `
+      <span class="material-symbols-outlined" style="color: var(--success);">check_circle</span>
+      <span style="color: var(--success);">Comprobante cargado</span>
+      <small>${archivo.name}</small>
+    `;
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al procesar archivo');
+    upload.innerHTML = `
+      <span class="material-symbols-outlined">cloud_upload</span>
+      <span>Clic para subir comprobante</span>
+      <small>PNG, JPG, PDF hasta 5MB</small>
+    `;
+  }
+}
+
+async function guardarPago() {
+  const btn = document.getElementById('btnGuardarPago');
+  const monto = parseFloat(document.getElementById('pagoMonto').value);
+  const metodo = document.getElementById('pagoMetodo').value;
+  
+  if (!monto || monto <= 0) {
+    toastAdvertencia('Ingresa un monto válido');
+    return;
+  }
+  
+  if (!metodo) {
+    toastAdvertencia('Selecciona un método de pago');
+    return;
+  }
+  
+  btnLoading(btn, true);
+  
+  try {
+    // Subir comprobante a Cloudinary si existe
+    let comprobanteUrl = null;
+    if (comprobanteBase64) {
+      const uploadData = await fetchPost('/api/documentos/subir', {
+        cliente_id: clienteActual.id,
+        tipo: 'comprobante_pago',
+        imagen: comprobanteBase64
+      });
+      if (uploadData.ok) {
+        comprobanteUrl = uploadData.url;
+      }
+    }
+    
+    // Registrar pago
+    const datos = {
+      cliente_id: clienteActual.id,
+      monto: monto,
+      metodo_pago_id: metodo,
+      referencia: document.getElementById('pagoReferencia').value,
+      banco: document.getElementById('pagoBanco').value,
+      quien_paga: document.getElementById('pagoQuienPaga').value,
+      telefono_quien_paga: document.getElementById('pagoTelQuienPaga').value,
+      comprobante_url: comprobanteUrl,
+      observaciones: document.getElementById('pagoObservaciones').value
+    };
+    
+    const data = await fetchPost('/api/pagos', datos);
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalPago();
+      
+      // Mostrar resumen del pago
+      let mensaje = `Pago de ${formatoMoneda(monto)} registrado.`;
+      if (data.pago.cargos_aplicados > 0) {
+        mensaje += ` Se aplicó a ${data.pago.cargos_aplicados} cargo(s).`;
+      }
+      if (data.pago.nuevo_saldo_favor > 0) {
+        mensaje += ` Nuevo saldo a favor: ${formatoMoneda(data.pago.nuevo_saldo_favor)}`;
+      }
+      
+      toastExito(mensaje);
+      
+      // Recargar datos
+      cargarCliente(clienteActual.id);
+    } else {
+      toastError(data.mensaje || 'Error al registrar pago');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al registrar pago');
+  }
+}
+
+// ========================================
+// MODAL MÉTODO DE PAGO
+// ========================================
+
+function abrirModalMetodoPago() {
+  document.getElementById('nuevoMetodoNombre').value = '';
+  document.getElementById('nuevoMetodoReferencia').value = '0';
+  document.getElementById('modalMetodoPago').classList.add('active');
+}
+
+function cerrarModalMetodoPago() {
+  document.getElementById('modalMetodoPago').classList.remove('active');
+}
+
+async function guardarMetodoPago() {
+  const nombre = document.getElementById('nuevoMetodoNombre').value.trim();
+  const requiere_referencia = parseInt(document.getElementById('nuevoMetodoReferencia').value);
+  const btn = document.getElementById('btnGuardarMetodoPago');
+  
+  if (!nombre) {
+    toastAdvertencia('El nombre es requerido');
+    return;
+  }
+  
+  btnLoading(btn, true);
+  
+  try {
+    const data = await fetchPost('/api/pagos/metodos', { nombre, requiere_referencia });
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalMetodoPago();
+      await cargarMetodosPago();
+      if (data.metodo?.id) {
+        document.getElementById('pagoMetodo').value = data.metodo.id;
+      }
+      toastExito('Método de pago creado');
+    } else {
+      toastError(data.mensaje || 'Error al crear');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al crear método');
+  }
 }
 
 // ========================================
@@ -186,7 +451,7 @@ async function activarModoEdicion() {
   document.getElementById('editEmail').value = clienteActual.email || '';
   document.getElementById('editDireccion').value = clienteActual.direccion || '';
   document.getElementById('editReferencia').value = clienteActual.referencia || '';
-  document.getElementById('editCuota').value = clienteActual.cuota_mensual || '';
+  document.getElementById('editTarifa').value = clienteActual.tarifa_mensual || '';
   document.getElementById('editDiaCorte').value = clienteActual.dia_corte || 10;
   document.getElementById('editEstado').value = clienteActual.estado || 'activo';
   
@@ -219,13 +484,13 @@ async function guardarEdicion() {
     direccion: document.getElementById('editDireccion').value,
     referencia: document.getElementById('editReferencia').value,
     plan_id: document.getElementById('editPlan').value,
-    cuota_mensual: parseFloat(document.getElementById('editCuota').value) || 0,
+    tarifa_mensual: parseFloat(document.getElementById('editTarifa').value) || 0,
     dia_corte: parseInt(document.getElementById('editDiaCorte').value) || 10,
     estado: document.getElementById('editEstado').value
   };
   
-  if (!datos.nombre || !datos.telefono || !datos.ciudad_id || !datos.colonia_id || !datos.direccion || !datos.plan_id) {
-    toastAdvertencia('Por favor llena todos los campos requeridos');
+  if (!datos.nombre || !datos.telefono) {
+    toastAdvertencia('Nombre y teléfono son requeridos');
     return;
   }
   
@@ -236,7 +501,7 @@ async function guardarEdicion() {
     btnLoading(btn, false);
     
     if (data.ok) {
-      toastExito('Cliente actualizado correctamente');
+      toastExito('Cliente actualizado');
       cancelarEdicion();
       cargarCliente(clienteActual.id);
     } else {
@@ -245,7 +510,7 @@ async function guardarEdicion() {
   } catch (err) {
     console.error('Error:', err);
     btnLoading(btn, false);
-    toastError('Error al guardar cliente');
+    toastError('Error al guardar');
   }
 }
 
@@ -276,11 +541,11 @@ function renderizarINE(c) {
 }
 
 function inicializarSubidaINE() {
-  document.getElementById('ineFrente').onclick = () => seleccionarArchivo('ine_frente');
-  document.getElementById('ineReverso').onclick = () => seleccionarArchivo('ine_reverso');
+  document.getElementById('ineFrente').onclick = () => seleccionarArchivoINE('ine_frente');
+  document.getElementById('ineReverso').onclick = () => seleccionarArchivoINE('ine_reverso');
 }
 
-function seleccionarArchivo(tipo) {
+function seleccionarArchivoINE(tipo) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -305,7 +570,7 @@ async function subirINE(archivo, tipo) {
     const data = await fetchPost('/api/documentos/subir', { cliente_id: clienteActual.id, tipo: tipo, imagen: base64 });
     
     if (data.ok) {
-      toastExito('Documento subido correctamente');
+      toastExito('Documento subido');
       clienteActual[tipo] = data.url;
       renderizarINE(clienteActual);
     } else {
@@ -329,7 +594,7 @@ function convertirABase64(archivo) {
 }
 
 // ========================================
-// EQUIPOS - LISTADO DINÁMICO
+// EQUIPOS
 // ========================================
 
 async function cargarEquipos(clienteId) {
@@ -337,7 +602,7 @@ async function cargarEquipos(clienteId) {
   try {
     const data = await fetchGet(`/api/equipos?cliente_id=${clienteId}`);
     if (!data.ok || !data.equipos?.length) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">router</span><p>Sin equipos registrados</p><button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()" style="margin-top: 12px;"><span class="material-symbols-outlined">add</span>Agregar Primer Equipo</button></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">router</span><p>Sin equipos registrados</p><button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()" style="margin-top: 12px;"><span class="material-symbols-outlined">add</span>Agregar Equipo</button></div></td></tr>`;
       return;
     }
     tbody.innerHTML = data.equipos.map(e => {
@@ -364,10 +629,6 @@ async function cargarEquipos(clienteId) {
   }
 }
 
-// ========================================
-// CRUD EQUIPOS
-// ========================================
-
 let equipoAEliminar = null;
 
 async function abrirModalEquipo() {
@@ -375,9 +636,7 @@ async function abrirModalEquipo() {
   document.getElementById('formEquipo').reset();
   document.getElementById('equipoId').value = '';
   document.getElementById('equipoFechaInstalacion').value = new Date().toISOString().split('T')[0];
-  
   await cargarCatalogosEquipos();
-  
   document.getElementById('modalEquipo').classList.add('active');
 }
 
@@ -387,25 +646,14 @@ async function cargarCatalogosEquipos() {
       fetchGet('/api/equipos/tipos'),
       fetchGet('/api/equipos/estados')
     ]);
-    
-    if (rTipos.ok) {
-      tiposEquipo = rTipos.tipos;
-      llenarSelect('equipoTipo', tiposEquipo);
-    }
-    
-    if (rEstados.ok) {
-      estadosEquipo = rEstados.estados;
-      llenarSelect('equipoEstado', estadosEquipo);
-    }
-  } catch (err) {
-    console.error('Error cargando catálogos equipos:', err);
-  }
+    if (rTipos.ok) { tiposEquipo = rTipos.tipos; llenarSelect('equipoTipo', tiposEquipo); }
+    if (rEstados.ok) { estadosEquipo = rEstados.estados; llenarSelect('equipoEstado', estadosEquipo); }
+  } catch (err) { console.error('Error:', err); }
 }
 
 async function editarEquipo(id) {
+  await cargarCatalogosEquipos();
   try {
-    await cargarCatalogosEquipos();
-    
     const data = await fetchGet(`/api/equipos/${id}`);
     if (!data.ok) { toastError('Error al cargar equipo'); return; }
     
@@ -421,7 +669,6 @@ async function editarEquipo(id) {
     document.getElementById('equipoEstado').value = e.estado || '';
     document.getElementById('equipoFechaInstalacion').value = e.fecha_instalacion?.split('T')[0] || '';
     document.getElementById('equipoNotas').value = e.notas || '';
-    
     document.getElementById('modalEquipo').classList.add('active');
   } catch (err) {
     console.error('Error:', err);
@@ -429,9 +676,7 @@ async function editarEquipo(id) {
   }
 }
 
-function cerrarModalEquipo() {
-  document.getElementById('modalEquipo').classList.remove('active');
-}
+function cerrarModalEquipo() { document.getElementById('modalEquipo').classList.remove('active'); }
 
 async function guardarEquipo() {
   const id = document.getElementById('equipoId').value;
@@ -450,29 +695,21 @@ async function guardarEquipo() {
     notas: document.getElementById('equipoNotas').value
   };
   
-  if (!datos.tipo) {
-    toastAdvertencia('Selecciona el tipo de equipo');
-    return;
-  }
-  
-  if (!datos.estado) {
-    toastAdvertencia('Selecciona el estado del equipo');
+  if (!datos.tipo || !datos.estado) {
+    toastAdvertencia('Tipo y estado son requeridos');
     return;
   }
   
   btnLoading(btn, true);
   
   try {
-    const data = id 
-      ? await fetchPut(`/api/equipos/${id}`, datos) 
-      : await fetchPost('/api/equipos', datos);
-    
+    const data = id ? await fetchPut(`/api/equipos/${id}`, datos) : await fetchPost('/api/equipos', datos);
     btnLoading(btn, false);
     
     if (data.ok) {
       cerrarModalEquipo();
       cargarEquipos(clienteActual.id);
-      toastExito(id ? 'Equipo actualizado' : 'Equipo agregado correctamente');
+      toastExito(id ? 'Equipo actualizado' : 'Equipo agregado');
     } else {
       toastError(data.mensaje || 'Error al guardar');
     }
@@ -495,78 +732,47 @@ function cerrarModalConfirmar() {
 
 async function confirmarEliminarEquipo() {
   if (!equipoAEliminar) return;
-  
   const btn = document.getElementById('btnConfirmarEliminar');
   btnLoading(btn, true);
-  
   try {
     const data = await fetchDelete(`/api/equipos/${equipoAEliminar}`);
     btnLoading(btn, false);
-    
     if (data.ok) {
       cerrarModalConfirmar();
       cargarEquipos(clienteActual.id);
-      toastExito('Equipo eliminado correctamente');
-    } else {
-      toastError(data.mensaje || 'Error al eliminar');
-    }
+      toastExito('Equipo eliminado');
+    } else { toastError(data.mensaje || 'Error al eliminar'); }
   } catch (err) {
     console.error('Error:', err);
     btnLoading(btn, false);
-    toastError('Error al eliminar equipo');
+    toastError('Error al eliminar');
   }
 }
 
-// ========================================
-// CATÁLOGOS - TIPOS DE EQUIPO
-// ========================================
-
+// Catálogos equipos
 function abrirModalTipoEquipo() {
   document.getElementById('nuevoTipoNombre').value = '';
   document.getElementById('nuevoTipoDescripcion').value = '';
   document.getElementById('modalTipoEquipo').classList.add('active');
 }
-
-function cerrarModalTipoEquipo() {
-  document.getElementById('modalTipoEquipo').classList.remove('active');
-}
-
+function cerrarModalTipoEquipo() { document.getElementById('modalTipoEquipo').classList.remove('active'); }
 async function guardarTipoEquipo() {
   const nombre = document.getElementById('nuevoTipoNombre').value.trim();
   const descripcion = document.getElementById('nuevoTipoDescripcion').value.trim();
   const btn = document.getElementById('btnGuardarTipoEquipo');
-  
-  if (!nombre) {
-    toastAdvertencia('El nombre es requerido');
-    return;
-  }
-  
+  if (!nombre) { toastAdvertencia('Nombre requerido'); return; }
   btnLoading(btn, true);
-  
   try {
     const data = await fetchPost('/api/equipos/tipos', { nombre, descripcion });
     btnLoading(btn, false);
-    
     if (data.ok) {
       cerrarModalTipoEquipo();
       await cargarCatalogosEquipos();
-      if (data.tipo?.id) {
-        document.getElementById('equipoTipo').value = data.tipo.id;
-      }
-      toastExito('Tipo de equipo creado');
-    } else {
-      toastError(data.mensaje || 'Error al crear');
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    btnLoading(btn, false);
-    toastError('Error al crear tipo');
-  }
+      if (data.tipo?.id) document.getElementById('equipoTipo').value = data.tipo.id;
+      toastExito('Tipo creado');
+    } else { toastError(data.mensaje || 'Error'); }
+  } catch (err) { btnLoading(btn, false); toastError('Error'); }
 }
-
-// ========================================
-// CATÁLOGOS - ESTADOS DE EQUIPO
-// ========================================
 
 function abrirModalEstadoEquipo() {
   document.getElementById('nuevoEstadoNombre').value = '';
@@ -574,70 +780,22 @@ function abrirModalEstadoEquipo() {
   document.getElementById('nuevoEstadoOperativo').value = '0';
   document.getElementById('modalEstadoEquipo').classList.add('active');
 }
-
-function cerrarModalEstadoEquipo() {
-  document.getElementById('modalEstadoEquipo').classList.remove('active');
-}
-
+function cerrarModalEstadoEquipo() { document.getElementById('modalEstadoEquipo').classList.remove('active'); }
 async function guardarEstadoEquipo() {
   const nombre = document.getElementById('nuevoEstadoNombre').value.trim();
   const color = document.getElementById('nuevoEstadoColor').value;
   const es_operativo = parseInt(document.getElementById('nuevoEstadoOperativo').value);
   const btn = document.getElementById('btnGuardarEstadoEquipo');
-  
-  if (!nombre) {
-    toastAdvertencia('El nombre es requerido');
-    return;
-  }
-  
+  if (!nombre) { toastAdvertencia('Nombre requerido'); return; }
   btnLoading(btn, true);
-  
   try {
     const data = await fetchPost('/api/equipos/estados', { nombre, color, es_operativo });
     btnLoading(btn, false);
-    
     if (data.ok) {
       cerrarModalEstadoEquipo();
       await cargarCatalogosEquipos();
-      if (data.estado?.id) {
-        document.getElementById('equipoEstado').value = data.estado.id;
-      }
-      toastExito('Estado de equipo creado');
-    } else {
-      toastError(data.mensaje || 'Error al crear');
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    btnLoading(btn, false);
-    toastError('Error al crear estado');
-  }
-}
-
-// ========================================
-// PAGOS
-// ========================================
-
-async function cargarPagos(clienteId) {
-  const container = document.getElementById('listaPagos');
-  try {
-    const data = await fetchGet(`/api/pagos?cliente_id=${clienteId}&limite=10`);
-    if (!data.ok || !data.pagos?.length) {
-      container.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><p>Sin transacciones registradas</p></div>`;
-      return;
-    }
-    container.innerHTML = data.pagos.map(p => `
-      <div class="transaction-item">
-        <div class="transaction-item__icon green"><span class="material-symbols-outlined">add</span></div>
-        <div class="transaction-item__info">
-          <p class="transaction-item__title">Pago de Mensualidad</p>
-          <p class="transaction-item__date">${formatoFecha(p.fecha_pago)} • ${p.metodo_pago || 'Efectivo'}</p>
-        </div>
-        <p class="transaction-item__amount">-${formatoMoneda(p.monto)}</p>
-      </div>
-    `).join('');
-  } catch (err) { container.innerHTML = '<p class="text-center text-muted">Error al cargar</p>'; }
-}
-
-function registrarPago() {
-  toastInfo('Módulo de pagos próximamente');
+      if (data.estado?.id) document.getElementById('equipoEstado').value = data.estado.id;
+      toastExito('Estado creado');
+    } else { toastError(data.mensaje || 'Error'); }
+  } catch (err) { btnLoading(btn, false); toastError('Error'); }
 }
