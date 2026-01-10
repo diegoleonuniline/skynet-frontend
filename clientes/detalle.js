@@ -383,7 +383,7 @@ async function guardarPago() {
     btnLoading(btn, false);
     
     if (data.ok) {
-      cerrarModalPago();
+    document.getElementById('modalPago').classList.remove('active');
       
       // Mostrar resumen del pago
       let mensaje = `Pago de ${formatoMoneda(monto)} registrado.`;
