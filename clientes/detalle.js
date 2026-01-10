@@ -1,53 +1,39 @@
 // ========================================
 // SKYNET - DETALLE CLIENTE JS
-// Sistema completo de cargos y pagos
 // ========================================
 
 let clienteActual = null;
 let ciudades = [], colonias = [], planes = [];
-let tiposEquipo = [], estadosEquipo = [];
-let metodosPago = [];
-let comprobanteBase64 = null;
+let tiposEquipo = [], estadosEquipo = [], metodosPago = [];
+let equipoAEliminar = null;
+let pagoSeleccionado = null;
 
+// ========================================
+// INIT
+// ========================================
 document.addEventListener('DOMContentLoaded', () => {
   verificarSesion();
   cargarUsuarioHeader();
-  inicializarTabs();
   
   const params = new URLSearchParams(window.location.search);
   const clienteId = params.get('id');
   
   if (!clienteId) {
     toastError('Cliente no especificado');
-    setTimeout(() => window.location.href = '/skynet-frontend/clientes/', 2000);
+    setTimeout(() => window.location.href = '/skynet-frontend/clientes/', 1500);
     return;
   }
   
-  cargarTodosCatalogos();
+  inicializarTabs();
+  cargarCatalogos();
   cargarCliente(clienteId);
-  
-  document.getElementById('formEdicion').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    await guardarEdicion();
-  });
-  
-  document.getElementById('editCiudad').addEventListener('change', (e) => {
-    cargarColoniasPorCiudadEdicion(e.target.value);
-  });
-  
-  document.getElementById('editPlan').addEventListener('change', (e) => {
-    const plan = planes.find(p => p.id === e.target.value);
-    if (plan) document.getElementById('editTarifa').value = plan.precio_mensual;
-  });
-  
-  document.getElementById('comprobanteInput').addEventListener('change', handleComprobanteChange);
 });
 
 function inicializarTabs() {
-  document.querySelectorAll('.detail-tabs__btn').forEach(btn => {
+  document.querySelectorAll('.tabs__btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.detail-tabs__btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tabs__btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
     });
@@ -55,10 +41,9 @@ function inicializarTabs() {
 }
 
 // ========================================
-// CARGAR CATÁLOGOS
+// CATÁLOGOS
 // ========================================
-
-async function cargarTodosCatalogos() {
+async function cargarCatalogos() {
   try {
     const [rCiudades, rPlanes, rTipos, rEstados, rMetodos] = await Promise.all([
       fetchGet('/api/catalogos/ciudades'),
@@ -68,11 +53,11 @@ async function cargarTodosCatalogos() {
       fetchGet('/api/pagos/metodos')
     ]);
     
-    if (rCiudades.ok) { ciudades = rCiudades.ciudades; llenarSelect('editCiudad', ciudades); }
-    if (rPlanes.ok) { planes = rPlanes.planes; llenarSelect('editPlan', planes); }
-    if (rTipos.ok) { tiposEquipo = rTipos.tipos; llenarSelect('equipoTipo', tiposEquipo); }
-    if (rEstados.ok) { estadosEquipo = rEstados.estados; llenarSelect('equipoEstado', estadosEquipo); }
-    if (rMetodos.ok) { metodosPago = rMetodos.metodos; llenarSelect('pagoMetodo', metodosPago); }
+    if (rCiudades.ok) ciudades = rCiudades.ciudades;
+    if (rPlanes.ok) planes = rPlanes.planes;
+    if (rTipos.ok) tiposEquipo = rTipos.tipos;
+    if (rEstados.ok) estadosEquipo = rEstados.estados;
+    if (rMetodos.ok) metodosPago = rMetodos.metodos;
   } catch (err) {
     console.error('Error cargando catálogos:', err);
   }
@@ -81,300 +66,321 @@ async function cargarTodosCatalogos() {
 function llenarSelect(id, datos) {
   const select = document.getElementById(id);
   if (!select) return;
-  let html = '<option value="">Seleccionar...</option>';
-  datos.forEach(item => { html += `<option value="${item.id}">${item.nombre}</option>`; });
-  select.innerHTML = html;
+  select.innerHTML = '<option value="">Seleccionar...</option>' + 
+    datos.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
 }
 
-async function cargarColoniasPorCiudadEdicion(ciudadId, seleccionarId = null) {
-  const select = document.getElementById('editColonia');
+function llenarSelectMetodos(id, datos) {
+  const select = document.getElementById(id);
+  if (!select) return;
+  select.innerHTML = '<option value="">Seleccionar...</option>' + 
+    datos.map(d => `<option value="${d.id}">${d.nombre}</option>`).join('');
+}
+
+async function cargarColonias(ciudadId, selectId, valorSeleccionado = null) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
   if (!ciudadId) { select.innerHTML = '<option value="">Seleccionar...</option>'; return; }
   
   try {
     const r = await fetchGet(`/api/catalogos/colonias?ciudad_id=${ciudadId}`);
     if (r.ok) {
       colonias = r.colonias;
-      llenarSelect('editColonia', colonias);
-      if (seleccionarId) select.value = seleccionarId;
+      llenarSelect(selectId, colonias);
+      if (valorSeleccionado) select.value = valorSeleccionado;
     }
   } catch (err) { console.error('Error:', err); }
 }
 
 // ========================================
-// CARGAR CLIENTE
+// CLIENTE
 // ========================================
-
 async function cargarCliente(id) {
   try {
     const data = await fetchGet(`/api/clientes/${id}`);
+    if (!data.ok) { toastError('Error al cargar cliente'); return; }
     
-    if (!data.ok) {
-      toastError('Error al cargar cliente');
-      return;
-    }
-
     clienteActual = data.cliente;
-    renderizarCliente(clienteActual);
+    renderizarCliente();
+    cargarMensualidades(id);
     cargarCargos(id);
-    cargarHistorialPagos(id);
     cargarEquipos(id);
-    inicializarSubidaINE();
-    
+    cargarHistorialPagos(id);
+    verificarInstalacion();
   } catch (err) {
     console.error('Error:', err);
     toastError('Error al cargar cliente');
   }
 }
 
-function renderizarCliente(c) {
-  document.getElementById('clienteAvatar').textContent = obtenerIniciales(c.nombre, c.apellido_paterno);
-  document.getElementById('clienteNombre').textContent = `${c.nombre} ${c.apellido_paterno || ''} - ID: #${c.numero_cliente || 'SKY-0000'}`.trim();
+function renderizarCliente() {
+  const c = clienteActual;
+  
+  const avatar = document.getElementById('clienteAvatar');
+  if (avatar) avatar.textContent = obtenerIniciales(c.nombre, c.apellido_paterno);
+  
+  const nombre = document.getElementById('clienteNombre');
+  if (nombre) nombre.textContent = `${c.nombre} ${c.apellido_paterno || ''} #${c.numero_cliente || ''}`;
   
   const badge = document.getElementById('clienteEstado');
-  badge.textContent = (c.estado || 'activo').toUpperCase();
-  badge.className = 'profile-card__badge ' + (c.estado || 'activo');
+  if (badge) {
+    badge.textContent = (c.estado || 'activo').toUpperCase();
+    badge.className = 'badge badge--' + (c.estado || 'activo');
+  }
   
-  document.getElementById('clienteEmail').innerHTML = `<span class="material-symbols-outlined">mail</span> ${c.email || 'Sin email'}`;
-  document.getElementById('clienteDireccion').innerHTML = `<span class="material-symbols-outlined">location_on</span> ${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
+  const telefono = document.getElementById('clienteTelefono');
+  if (telefono) telefono.textContent = c.telefono || '--';
   
-  document.getElementById('tarifaMensual').innerHTML = `${formatoMoneda(c.tarifa_mensual)} <small>/mes</small>`;
-  document.getElementById('planNombre').textContent = `Plan: ${c.plan_nombre || 'Sin plan'}`;
+  const email = document.getElementById('clienteEmail');
+  if (email) email.textContent = c.email || '--';
   
-  const saldoFavor = parseFloat(c.saldo_favor) || 0;
-  document.getElementById('saldoFavor').textContent = formatoMoneda(saldoFavor);
+  const direccion = document.getElementById('clienteDireccion');
+  if (direccion) direccion.textContent = `${c.direccion || ''}, ${c.colonia_nombre || ''}, ${c.ciudad_nombre || ''}`;
   
+  const tarifa = document.getElementById('tarifaMensual');
+  if (tarifa) tarifa.textContent = formatoMoneda(c.tarifa_mensual || c.cuota_mensual);
+  
+  const plan = document.getElementById('planNombre');
+  if (plan) plan.textContent = c.plan_nombre || '--';
+  
+  const saldo = document.getElementById('saldoFavor');
+  if (saldo) saldo.textContent = formatoMoneda(c.saldo_favor);
+  
+  // Próximo corte
   const hoy = new Date();
   let proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth(), c.dia_corte || 10);
-  if (proximoCorte < hoy) proximoCorte = new Date(hoy.getFullYear(), hoy.getMonth() + 1, c.dia_corte || 10);
-  const diasRestantes = Math.ceil((proximoCorte - hoy) / (1000 * 60 * 60 * 24));
+  if (proximoCorte < hoy) proximoCorte.setMonth(proximoCorte.getMonth() + 1);
+  const dias = Math.ceil((proximoCorte - hoy) / (1000 * 60 * 60 * 24));
   
-  document.getElementById('proximoCorte').textContent = proximoCorte.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-  document.getElementById('diasRestantes').textContent = `En ${diasRestantes} días`;
+  const corte = document.getElementById('proximoCorte');
+  if (corte) corte.textContent = proximoCorte.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
   
-  document.getElementById('clienteTelefono').textContent = c.telefono || '--';
-  document.getElementById('clienteTelefono2').textContent = c.telefono_secundario || '--';
+  const diasEl = document.getElementById('diasRestantes');
+  if (diasEl) diasEl.textContent = `En ${dias} días`;
+}
+
+function verificarInstalacion() {
+  const btn = document.getElementById('btnInstalacion');
+  if (!btn || !clienteActual) return;
   
-  document.getElementById('btnWhatsApp').onclick = () => {
-    const tel = c.telefono?.replace(/\D/g, '');
-    if (tel) window.open(`https://wa.me/52${tel}`, '_blank');
-  };
+  const tieneInstalacion = clienteActual.fecha_instalacion && clienteActual.fecha_instalacion !== 'null';
+  btn.style.display = tieneInstalacion ? 'none' : 'inline-flex';
+}
+
+// ========================================
+// MENSUALIDADES
+// ========================================
+async function cargarMensualidades(clienteId) {
+  const tbody = document.getElementById('tablaMensualidades');
+  if (!tbody) return;
   
-  verificarInstalacion();
-  renderizarINE(c);
+  try {
+    const data = await fetchGet(`/api/cargos/mensualidades?cliente_id=${clienteId}`);
+    if (!data.ok || !data.mensualidades?.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin mensualidades</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = data.mensualidades.map(m => {
+      const estadoReal = m.estado_real || m.estado;
+      return `
+      <tr>
+        <td><strong>${m.periodo}</strong></td>
+        <td>${m.concepto || 'Mensualidad'}</td>
+        <td>${formatoFecha(m.fecha_vencimiento)}</td>
+        <td>${formatoMoneda(m.monto)}</td>
+        <td class="text-success">${formatoMoneda(m.monto_pagado)}</td>
+        <td class="text-danger">${formatoMoneda(m.pendiente)}</td>
+        <td><span class="badge badge--${estadoReal}">${estadoReal.toUpperCase()}</span></td>
+      </tr>
+    `}).join('');
+  } catch (err) {
+    console.error('Error:', err);
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
+  }
 }
 
 // ========================================
 // CARGOS
 // ========================================
-
 async function cargarCargos(clienteId) {
   const tbody = document.getElementById('tablaCargos');
+  if (!tbody) return;
+  
   try {
     const data = await fetchGet(`/api/cargos?cliente_id=${clienteId}`);
     if (!data.ok || !data.cargos?.length) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">check_circle</span><p>Sin cargos pendientes</p></div></td></tr>`;
-      document.getElementById('adeudoTotal').textContent = formatoMoneda(0);
-      document.getElementById('estadoCuenta').textContent = 'Cuenta al corriente';
-      document.getElementById('estadoCuenta').className = 'detail-stat__sub success';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin cargos</td></tr>';
+      actualizarResumenCargos(0, 0, 0);
       return;
     }
     
     tbody.innerHTML = data.cargos.map(c => {
-      const estadoClass = c.estado === 'pagado' ? 'success' : c.estado === 'parcial' ? 'warning' : 'danger';
-      const estadoTexto = c.estado === 'pagado' ? 'Pagado' : c.estado === 'parcial' ? 'Parcial' : 'Pendiente';
+      const estadoReal = c.estado_real || c.estado;
       return `
       <tr>
+        <td><span class="badge badge--${c.tipo}">${c.tipo.toUpperCase()}</span></td>
         <td><strong>${c.concepto}</strong><br><small class="text-muted">${c.descripcion || ''}</small></td>
         <td>${formatoFecha(c.fecha_vencimiento)}</td>
         <td>${formatoMoneda(c.monto)}</td>
-        <td>${formatoMoneda(c.monto_pagado)}</td>
-        <td><strong style="color: var(--${estadoClass})">${formatoMoneda(c.pendiente)}</strong></td>
-        <td><span class="badge badge--${estadoClass}">${estadoTexto}</span></td>
+        <td class="text-success">${formatoMoneda(c.monto_pagado)}</td>
+        <td class="text-danger">${formatoMoneda(c.pendiente)}</td>
+        <td><span class="badge badge--${estadoReal}">${estadoReal.toUpperCase()}</span></td>
       </tr>
     `}).join('');
-
-    const adeudoTotal = data.cargos.reduce((sum, c) => sum + (parseFloat(c.pendiente) || 0), 0);
-    document.getElementById('adeudoTotal').textContent = formatoMoneda(adeudoTotal);
     
-    const estadoCuenta = document.getElementById('estadoCuenta');
-    if (adeudoTotal > 0) {
-      estadoCuenta.textContent = 'Tiene adeudo pendiente';
-      estadoCuenta.className = 'detail-stat__sub danger';
-    } else {
-      estadoCuenta.textContent = 'Cuenta al corriente';
-      estadoCuenta.className = 'detail-stat__sub success';
+    actualizarResumenCargos(data.resumen.total_monto, data.resumen.total_pagado, data.resumen.total_pendiente);
+    
+    const adeudo = document.getElementById('adeudoTotal');
+    if (adeudo) adeudo.textContent = formatoMoneda(data.resumen.total_pendiente);
+    
+    const estado = document.getElementById('estadoCuenta');
+    if (estado) {
+      if (data.resumen.total_pendiente > 0) {
+        estado.textContent = 'Con adeudo';
+        estado.className = 'stat-card__sub text-danger';
+      } else {
+        estado.textContent = 'Al corriente';
+        estado.className = 'stat-card__sub text-success';
+      }
     }
-
-  } catch (err) { 
+  } catch (err) {
     console.error('Error:', err);
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; 
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
+  }
+}
+
+function actualizarResumenCargos(total, pagado, pendiente) {
+  const t = document.getElementById('cargosTotalMonto');
+  const p = document.getElementById('cargosTotalPagado');
+  const pe = document.getElementById('cargosTotalPendiente');
+  if (t) t.textContent = formatoMoneda(total);
+  if (p) p.textContent = formatoMoneda(pagado);
+  if (pe) pe.textContent = formatoMoneda(pendiente);
+}
+
+// ========================================
+// EQUIPOS
+// ========================================
+async function cargarEquipos(clienteId) {
+  const tbody = document.getElementById('tablaEquipos');
+  if (!tbody) return;
+  
+  try {
+    const data = await fetchGet(`/api/equipos?cliente_id=${clienteId}`);
+    if (!data.ok || !data.equipos?.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin equipos instalados</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = data.equipos.map(e => `
+      <tr>
+        <td><span class="badge">${e.tipo_nombre || '--'}</span></td>
+        <td><strong>${e.marca || '--'}</strong> ${e.modelo || ''}</td>
+        <td><code>${e.mac || '--'}</code></td>
+        <td>${e.serie || '--'}</td>
+        <td><span class="badge badge--${e.es_operativo == 1 ? 'activo' : 'suspendido'}">${e.estado_nombre || '--'}</span></td>
+        <td>
+          <div class="table__actions">
+            <button onclick="editarEquipo('${e.id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+            <button onclick="eliminarEquipo('${e.id}')" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Error:', err);
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Error al cargar</td></tr>';
   }
 }
 
 // ========================================
-// HISTORIAL DE PAGOS
+// HISTORIAL PAGOS
 // ========================================
-
 async function cargarHistorialPagos(clienteId) {
   const container = document.getElementById('listaPagos');
+  if (!container) return;
+  
   try {
     const data = await fetchGet(`/api/pagos/historial/${clienteId}`);
     if (!data.ok || !data.pagos?.length) {
-      container.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined">receipt_long</span><p>Sin pagos registrados</p></div>`;
+      container.innerHTML = '<p class="empty">Sin pagos registrados</p>';
       return;
     }
-    container.innerHTML = data.pagos.map(p => `
-      <div class="transaction-item">
-        <div class="transaction-item__icon green"><span class="material-symbols-outlined">check</span></div>
-        <div class="transaction-item__info">
-          <p class="transaction-item__title">${p.metodo_nombre || 'Pago'}</p>
-          <p class="transaction-item__date">${formatoFecha(p.fecha_pago)} ${p.referencia ? '• Ref: ' + p.referencia : ''}</p>
-          ${p.aplicado_a ? `<p class="transaction-item__detail">${p.aplicado_a}</p>` : ''}
+    
+    container.innerHTML = data.pagos.map(p => {
+      const esCancelado = p.estado === 'cancelado';
+      return `
+      <div class="pago-item ${esCancelado ? 'pago-item--cancelado' : ''}" onclick="verPago('${p.id}')">
+        <div class="pago-item__icon ${esCancelado ? 'pago-item__icon--cancelado' : ''}">
+          <span class="material-symbols-outlined">${esCancelado ? 'block' : 'check'}</span>
         </div>
-        <p class="transaction-item__amount">${formatoMoneda(p.monto)}</p>
-        ${p.comprobante_url ? `<a href="${p.comprobante_url}" target="_blank" class="btn btn-sm btn-secondary" style="margin-left: 8px;"><span class="material-symbols-outlined">receipt</span></a>` : ''}
+        <div class="pago-item__info">
+          <p class="pago-item__title">${p.metodo_nombre || 'Pago'} ${esCancelado ? '(CANCELADO)' : ''}</p>
+          <p class="pago-item__detail">${formatoFecha(p.fecha_pago)} ${p.referencia ? '• ' + p.referencia : ''} ${p.aplicado_a ? '• ' + p.aplicado_a : ''}</p>
+        </div>
+        <span class="pago-item__monto">${formatoMoneda(p.monto)}</span>
       </div>
-    `).join('');
-  } catch (err) { 
+    `}).join('');
+  } catch (err) {
     console.error('Error:', err);
-    container.innerHTML = '<p class="text-center text-muted">Error al cargar</p>'; 
+    container.innerHTML = '<p class="empty">Error al cargar</p>';
   }
 }
 
 // ========================================
 // MODAL PAGO
 // ========================================
-
-async function abrirModalPago() {
-  document.getElementById('formPago').reset();
-  comprobanteBase64 = null;
-  document.getElementById('comprobanteUpload').innerHTML = `
-    <span class="material-symbols-outlined">cloud_upload</span>
-    <span>Clic para subir comprobante</span>
-    <small>PNG, JPG, PDF hasta 5MB</small>
-  `;
+function abrirModalPago() {
+  const form = document.getElementById('formPago');
+  if (form) form.reset();
   
-  await cargarMetodosPago();
+  const adeudo = document.getElementById('pagoAdeudo');
+  const adeudoTotal = document.getElementById('adeudoTotal');
+  if (adeudo && adeudoTotal) adeudo.textContent = adeudoTotal.textContent;
   
-  const adeudoTexto = document.getElementById('adeudoTotal').textContent;
-  document.getElementById('pagoAdeudoTotal').textContent = adeudoTexto;
+  const saldoModal = document.getElementById('pagoSaldoFavor');
+  const saldoCard = document.getElementById('saldoFavor');
+  if (saldoModal && saldoCard) saldoModal.textContent = saldoCard.textContent;
   
-  const saldoFavor = parseFloat(clienteActual?.saldo_favor) || 0;
-  document.getElementById('pagoSaldoFavor').textContent = formatoMoneda(saldoFavor);
-  
-  document.getElementById('modalPago').classList.add('active');
-}
-
-function cerrarModalPago() {
-  document.getElementById('modalPago').classList.remove('active');
-}
-
-async function cargarMetodosPago() {
-  try {
-    const r = await fetchGet('/api/pagos/metodos');
-    if (r.ok) {
-      metodosPago = r.metodos;
-      llenarSelect('pagoMetodo', metodosPago);
-    }
-  } catch (err) {
-    console.error('Error:', err);
-  }
-}
-
-function seleccionarComprobante() {
-  document.getElementById('comprobanteInput').click();
-}
-
-async function handleComprobanteChange(e) {
-  const archivo = e.target.files[0];
-  if (!archivo) return;
-  
-  if (archivo.size > 5 * 1024 * 1024) {
-    toastError('El archivo no debe superar 5MB');
-    return;
-  }
-  
-  const upload = document.getElementById('comprobanteUpload');
-  upload.innerHTML = `<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span><span>Procesando...</span>`;
-  
-  try {
-    comprobanteBase64 = await convertirABase64(archivo);
-    upload.innerHTML = `
-      <span class="material-symbols-outlined" style="color: var(--success);">check_circle</span>
-      <span style="color: var(--success);">Comprobante cargado</span>
-      <small>${archivo.name}</small>
-    `;
-  } catch (err) {
-    console.error('Error:', err);
-    toastError('Error al procesar archivo');
-    upload.innerHTML = `
-      <span class="material-symbols-outlined">cloud_upload</span>
-      <span>Clic para subir comprobante</span>
-      <small>PNG, JPG, PDF hasta 5MB</small>
-    `;
-  }
+  llenarSelectMetodos('pagoMetodo', metodosPago);
+  abrirModal('modalPago');
 }
 
 async function guardarPago() {
   const btn = document.getElementById('btnGuardarPago');
-  const monto = parseFloat(document.getElementById('pagoMonto').value);
-  const metodo = document.getElementById('pagoMetodo').value;
+  const monto = parseFloat(document.getElementById('pagoMonto')?.value);
+  const metodo = document.getElementById('pagoMetodo')?.value;
   
-  if (!monto || monto <= 0) {
-    toastAdvertencia('Ingresa un monto válido');
-    return;
-  }
-  
-  if (!metodo) {
-    toastAdvertencia('Selecciona un método de pago');
-    return;
-  }
+  if (!monto || monto <= 0) { toastAdvertencia('Ingresa un monto válido'); return; }
+  if (!metodo) { toastAdvertencia('Selecciona un método'); return; }
   
   btnLoading(btn, true);
   
   try {
-    let comprobanteUrl = null;
-    if (comprobanteBase64) {
-      const uploadData = await fetchPost('/api/documentos/subir', {
-        cliente_id: clienteActual.id,
-        tipo: 'comprobante_pago',
-        imagen: comprobanteBase64
-      });
-      if (uploadData.ok) {
-        comprobanteUrl = uploadData.url;
-      }
-    }
-    
     const datos = {
       cliente_id: clienteActual.id,
-      monto: monto,
+      monto,
       metodo_pago_id: metodo,
-      referencia: document.getElementById('pagoReferencia').value,
-      banco: document.getElementById('pagoBanco').value,
-      quien_paga: document.getElementById('pagoQuienPaga').value,
-      telefono_quien_paga: document.getElementById('pagoTelQuienPaga').value,
-      comprobante_url: comprobanteUrl,
-      observaciones: document.getElementById('pagoObservaciones').value
+      referencia: document.getElementById('pagoReferencia')?.value || '',
+      banco: document.getElementById('pagoBanco')?.value || '',
+      quien_paga: document.getElementById('pagoQuienPaga')?.value || '',
+      telefono_quien_paga: document.getElementById('pagoTelefono')?.value || '',
+      observaciones: document.getElementById('pagoObservaciones')?.value || '',
+      usar_saldo_favor: document.getElementById('pagoUsarSaldo')?.checked || false
     };
     
     const data = await fetchPost('/api/pagos', datos);
     btnLoading(btn, false);
     
     if (data.ok) {
-      cerrarModalPago();
-      
-      let mensaje = `Pago de ${formatoMoneda(monto)} registrado.`;
-      if (data.pago?.cargos_aplicados > 0) {
-        mensaje += ` Se aplicó a ${data.pago.cargos_aplicados} cargo(s).`;
-      }
-      if (data.pago?.nuevo_saldo_favor > 0) {
-        mensaje += ` Nuevo saldo a favor: ${formatoMoneda(data.pago.nuevo_saldo_favor)}`;
-      }
-      
-      toastExito(mensaje);
+      cerrarModal('modalPago');
+      let msg = `Pago de ${formatoMoneda(monto)} registrado.`;
+      if (data.pago?.cargos_aplicados > 0) msg += ` Aplicado a ${data.pago.cargos_aplicados} cargo(s).`;
+      toastExito(msg);
       cargarCliente(clienteActual.id);
     } else {
-      toastError(data.mensaje || 'Error al registrar pago');
+      toastError(data.mensaje || 'Error al registrar');
     }
   } catch (err) {
     console.error('Error:', err);
@@ -384,699 +390,472 @@ async function guardarPago() {
 }
 
 // ========================================
-// MODAL MÉTODO DE PAGO
+// VER/EDITAR PAGO
 // ========================================
-
-function abrirModalMetodoPago() {
-  document.getElementById('nuevoMetodoNombre').value = '';
-  document.getElementById('nuevoMetodoReferencia').value = '0';
-  document.getElementById('modalMetodoPago').classList.add('active');
-}
-
-function cerrarModalMetodoPago() {
-  document.getElementById('modalMetodoPago').classList.remove('active');
-}
-
-async function guardarMetodoPago() {
-  const nombre = document.getElementById('nuevoMetodoNombre').value.trim();
-  const requiere_referencia = parseInt(document.getElementById('nuevoMetodoReferencia').value);
-  const btn = document.getElementById('btnGuardarMetodoPago');
-  
-  if (!nombre) {
-    toastAdvertencia('El nombre es requerido');
-    return;
+async function verPago(id) {
+  try {
+    const data = await fetchGet(`/api/pagos/${id}`);
+    if (!data.ok) { toastError('Error al cargar pago'); return; }
+    
+    const p = data.pago;
+    pagoSeleccionado = p;
+    
+    document.getElementById('verPagoId').value = p.id;
+    document.getElementById('verPagoMonto').textContent = formatoMoneda(p.monto);
+    document.getElementById('verPagoFecha').textContent = formatoFecha(p.fecha_pago);
+    document.getElementById('verPagoMetodo').textContent = p.metodo_pago || '--';
+    document.getElementById('verPagoEstado').textContent = (p.estado || 'activo').toUpperCase();
+    document.getElementById('verPagoAplicado').textContent = p.aplicado_a || '--';
+    
+    document.getElementById('editPagoReferencia').value = p.referencia || '';
+    document.getElementById('editPagoBanco').value = p.banco || '';
+    document.getElementById('editPagoQuienPaga').value = p.quien_paga || '';
+    document.getElementById('editPagoTelefono').value = p.telefono_quien_paga || '';
+    document.getElementById('editPagoObservaciones').value = p.observaciones || '';
+    
+    const esCancelado = p.estado === 'cancelado';
+    const btnCancelar = document.getElementById('btnCancelarPago');
+    const btnActualizar = document.getElementById('btnActualizarPago');
+    if (btnCancelar) btnCancelar.style.display = esCancelado ? 'none' : 'inline-flex';
+    if (btnActualizar) btnActualizar.style.display = esCancelado ? 'none' : 'inline-flex';
+    
+    abrirModal('modalVerPago');
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al cargar pago');
   }
+}
+
+async function actualizarPago() {
+  const id = document.getElementById('verPagoId')?.value;
+  const btn = document.getElementById('btnActualizarPago');
   
+  if (!id) return;
   btnLoading(btn, true);
   
   try {
-    const data = await fetchPost('/api/pagos/metodos', { nombre, requiere_referencia });
+    const datos = {
+      referencia: document.getElementById('editPagoReferencia')?.value || '',
+      banco: document.getElementById('editPagoBanco')?.value || '',
+      quien_paga: document.getElementById('editPagoQuienPaga')?.value || '',
+      telefono_quien_paga: document.getElementById('editPagoTelefono')?.value || '',
+      observaciones: document.getElementById('editPagoObservaciones')?.value || '',
+      metodo_pago: pagoSeleccionado?.metodo_pago || 'efectivo'
+    };
+    
+    const data = await fetchPut(`/api/pagos/${id}`, datos);
     btnLoading(btn, false);
     
     if (data.ok) {
-      cerrarModalMetodoPago();
-      await cargarMetodosPago();
-      if (data.metodo?.id) {
-        document.getElementById('pagoMetodo').value = data.metodo.id;
-      }
-      toastExito('Método de pago creado');
+      cerrarModal('modalVerPago');
+      toastExito('Pago actualizado');
+      cargarHistorialPagos(clienteActual.id);
+    } else {
+      toastError(data.mensaje || 'Error al actualizar');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al actualizar');
+  }
+}
+
+function cancelarPago() {
+  const motivo = document.getElementById('motivoCancelacion');
+  if (motivo) motivo.value = '';
+  abrirModal('modalCancelarPago');
+}
+
+async function confirmarCancelarPago() {
+  const id = document.getElementById('verPagoId')?.value;
+  const motivo = document.getElementById('motivoCancelacion')?.value || '';
+  
+  if (!id) return;
+  
+  try {
+    const data = await fetchPut(`/api/pagos/${id}/cancelar`, { motivo });
+    
+    if (data.ok) {
+      cerrarModal('modalCancelarPago');
+      cerrarModal('modalVerPago');
+      toastExito(data.mensaje || 'Pago cancelado');
+      cargarCliente(clienteActual.id);
+    } else {
+      toastError(data.mensaje || 'Error al cancelar');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al cancelar');
+  }
+}
+
+// ========================================
+// MODAL CARGO
+// ========================================
+function abrirModalCargo() {
+  const form = document.getElementById('formCargo');
+  if (form) form.reset();
+  
+  const fecha = document.getElementById('cargoFecha');
+  if (fecha) fecha.value = new Date().toISOString().split('T')[0];
+  
+  abrirModal('modalCargo');
+}
+
+async function guardarCargo() {
+  const concepto = document.getElementById('cargoConcepto')?.value;
+  const monto = parseFloat(document.getElementById('cargoMonto')?.value);
+  
+  if (!concepto || !monto) { toastAdvertencia('Completa los campos requeridos'); return; }
+  
+  try {
+    const datos = {
+      cliente_id: clienteActual.id,
+      concepto,
+      monto,
+      fecha_vencimiento: document.getElementById('cargoFecha')?.value || '',
+      descripcion: document.getElementById('cargoDescripcion')?.value || ''
+    };
+    
+    const data = await fetchPost('/api/cargos', datos);
+    
+    if (data.ok) {
+      cerrarModal('modalCargo');
+      toastExito('Cargo creado');
+      cargarMensualidades(clienteActual.id);
+      cargarCargos(clienteActual.id);
     } else {
       toastError(data.mensaje || 'Error al crear');
     }
   } catch (err) {
     console.error('Error:', err);
-    btnLoading(btn, false);
-    toastError('Error al crear método');
+    toastError('Error al crear cargo');
   }
 }
 
 // ========================================
-// MODO EDICIÓN CLIENTE
+// MODAL EQUIPO
 // ========================================
-
-async function activarModoEdicion() {
-  if (!clienteActual) return;
+function abrirModalEquipo() {
+  const titulo = document.getElementById('modalEquipoTitulo');
+  if (titulo) titulo.innerHTML = '<span class="material-symbols-outlined">router</span>Agregar Equipo';
   
-  document.getElementById('editNombre').value = clienteActual.nombre || '';
-  document.getElementById('editApellido').value = clienteActual.apellido_paterno || '';
-  document.getElementById('editTelefono').value = clienteActual.telefono || '';
-  document.getElementById('editEmail').value = clienteActual.email || '';
-  document.getElementById('editDireccion').value = clienteActual.direccion || '';
-  document.getElementById('editReferencia').value = clienteActual.referencia || '';
-  document.getElementById('editTarifa').value = clienteActual.tarifa_mensual || '';
-  document.getElementById('editDiaCorte').value = clienteActual.dia_corte || 10;
-  document.getElementById('editEstado').value = clienteActual.estado || 'activo';
+  const form = document.getElementById('formEquipo');
+  if (form) form.reset();
   
-  document.getElementById('editCiudad').value = clienteActual.ciudad_id || '';
-  if (clienteActual.ciudad_id) {
-    await cargarColoniasPorCiudadEdicion(clienteActual.ciudad_id, clienteActual.colonia_id);
-  }
+  const id = document.getElementById('equipoId');
+  if (id) id.value = '';
   
-  document.getElementById('editPlan').value = clienteActual.plan_id || '';
+  const fecha = document.getElementById('equipoFecha');
+  if (fecha) fecha.value = new Date().toISOString().split('T')[0];
   
-  document.getElementById('perfilVista').classList.add('hidden');
-  document.getElementById('perfilEdicion').classList.remove('hidden');
-}
-
-function cancelarEdicion() {
-  document.getElementById('perfilEdicion').classList.add('hidden');
-  document.getElementById('perfilVista').classList.remove('hidden');
-}
-
-async function guardarEdicion() {
-  const btn = document.getElementById('btnGuardarEdicion');
-  
-  const datos = {
-    nombre: document.getElementById('editNombre').value,
-    apellido_paterno: document.getElementById('editApellido').value,
-    telefono: document.getElementById('editTelefono').value,
-    email: document.getElementById('editEmail').value,
-    ciudad_id: document.getElementById('editCiudad').value,
-    colonia_id: document.getElementById('editColonia').value,
-    direccion: document.getElementById('editDireccion').value,
-    referencia: document.getElementById('editReferencia').value,
-    plan_id: document.getElementById('editPlan').value,
-    tarifa_mensual: parseFloat(document.getElementById('editTarifa').value) || 0,
-    dia_corte: parseInt(document.getElementById('editDiaCorte').value) || 10,
-    estado: document.getElementById('editEstado').value
-  };
-  
-  if (!datos.nombre || !datos.telefono) {
-    toastAdvertencia('Nombre y teléfono son requeridos');
-    return;
-  }
-  
-  btnLoading(btn, true);
-  
-  try {
-    const data = await fetchPut(`/api/clientes/${clienteActual.id}`, datos);
-    btnLoading(btn, false);
-    
-    if (data.ok) {
-      toastExito('Cliente actualizado');
-      cancelarEdicion();
-      cargarCliente(clienteActual.id);
-    } else {
-      toastError(data.mensaje || 'Error al guardar');
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    btnLoading(btn, false);
-    toastError('Error al guardar');
-  }
-}
-
-// ========================================
-// INE
-// ========================================
-
-function renderizarINE(c) {
-  const ineFrente = document.getElementById('ineFrente');
-  const ineReverso = document.getElementById('ineReverso');
-  
-  ineFrente.classList.remove('has-image');
-  ineReverso.classList.remove('has-image');
-  
-  if (c.ine_frente) {
-    ineFrente.classList.add('has-image');
-    ineFrente.innerHTML = `<img src="${c.ine_frente}" alt="INE Frente"><span class="check"><span class="material-symbols-outlined">check</span></span>`;
-  } else {
-    ineFrente.innerHTML = `<span class="material-symbols-outlined">cloud_upload</span><span>Clic para subir</span>`;
-  }
-  
-  if (c.ine_reverso) {
-    ineReverso.classList.add('has-image');
-    ineReverso.innerHTML = `<img src="${c.ine_reverso}" alt="INE Reverso"><span class="check"><span class="material-symbols-outlined">check</span></span>`;
-  } else {
-    ineReverso.innerHTML = `<span class="material-symbols-outlined">add_photo_alternate</span><span>Subir Reverso</span><small>PNG, JPG hasta 10MB</small>`;
-  }
-}
-
-function inicializarSubidaINE() {
-  document.getElementById('ineFrente').onclick = () => seleccionarArchivoINE('ine_frente');
-  document.getElementById('ineReverso').onclick = () => seleccionarArchivoINE('ine_reverso');
-}
-
-function seleccionarArchivoINE(tipo) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = (e) => {
-    const archivo = e.target.files[0];
-    if (archivo) {
-      if (archivo.size > 10 * 1024 * 1024) { toastError('El archivo no debe superar 10MB'); return; }
-      subirINE(archivo, tipo);
-    }
-  };
-  input.click();
-}
-
-async function subirINE(archivo, tipo) {
-  if (!clienteActual) return;
-  
-  const box = document.getElementById(tipo === 'ine_frente' ? 'ineFrente' : 'ineReverso');
-  box.innerHTML = `<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span><span>Subiendo...</span>`;
-  
-  try {
-    const base64 = await convertirABase64(archivo);
-    const data = await fetchPost('/api/documentos/subir', { cliente_id: clienteActual.id, tipo: tipo, imagen: base64 });
-    
-    if (data.ok) {
-      toastExito('Documento subido');
-      clienteActual[tipo] = data.url;
-      renderizarINE(clienteActual);
-    } else {
-      toastError(data.mensaje || 'Error al subir');
-      renderizarINE(clienteActual);
-    }
-  } catch (err) {
-    console.error('Error:', err);
-    toastError('Error al subir documento');
-    renderizarINE(clienteActual);
-  }
-}
-
-function convertirABase64(archivo) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(archivo);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
-}
-
-// ========================================
-// EQUIPOS
-// ========================================
-
-async function cargarEquipos(clienteId) {
-  const tbody = document.getElementById('tablaEquipos');
-  try {
-    const data = await fetchGet(`/api/equipos?cliente_id=${clienteId}`);
-    if (!data.ok || !data.equipos?.length) {
-      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">router</span><p>Sin equipos registrados</p><button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()" style="margin-top: 12px;"><span class="material-symbols-outlined">add</span>Agregar Equipo</button></div></td></tr>`;
-      return;
-    }
-    tbody.innerHTML = data.equipos.map(e => {
-      const esOperativo = e.es_operativo == 1;
-      const colorEstado = e.estado_color || '#64748b';
-      return `
-      <tr>
-        <td><span class="badge" style="background: ${colorEstado}20; color: ${colorEstado};">${e.tipo_nombre || 'Sin tipo'}</span></td>
-        <td><strong>${e.marca || '-'}</strong> ${e.modelo || ''}</td>
-        <td><code style="font-size: 12px; color: var(--text-muted);">${e.mac || '--'}</code></td>
-        <td>${e.serie || '--'}</td>
-        <td><span class="equipment-status ${esOperativo ? 'online' : 'offline'}" style="color: ${colorEstado};">${e.estado_nombre || 'Sin estado'}</span></td>
-        <td>
-          <div class="table__actions">
-            <button class="table__action-btn" onclick="editarEquipo('${e.id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
-            <button class="table__action-btn" onclick="eliminarEquipo('${e.id}')" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
-          </div>
-        </td>
-      </tr>
-    `}).join('');
-  } catch (err) { 
-    console.error('Error:', err);
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; 
-  }
-}
-
-let equipoAEliminar = null;
-
-async function abrirModalEquipo() {
-  document.getElementById('modalEquipoTitulo').textContent = 'Agregar Equipo';
-  document.getElementById('formEquipo').reset();
-  document.getElementById('equipoId').value = '';
-  document.getElementById('equipoFechaInstalacion').value = new Date().toISOString().split('T')[0];
-  await cargarCatalogosEquipos();
-  document.getElementById('modalEquipo').classList.add('active');
-}
-
-async function cargarCatalogosEquipos() {
-  try {
-    const [rTipos, rEstados] = await Promise.all([
-      fetchGet('/api/equipos/tipos'),
-      fetchGet('/api/equipos/estados')
-    ]);
-    if (rTipos.ok) { tiposEquipo = rTipos.tipos; llenarSelect('equipoTipo', tiposEquipo); }
-    if (rEstados.ok) { estadosEquipo = rEstados.estados; llenarSelect('equipoEstado', estadosEquipo); }
-  } catch (err) { console.error('Error:', err); }
+  llenarSelect('equipoTipo', tiposEquipo);
+  llenarSelect('equipoEstado', estadosEquipo);
+  abrirModal('modalEquipo');
 }
 
 async function editarEquipo(id) {
-  await cargarCatalogosEquipos();
   try {
     const data = await fetchGet(`/api/equipos/${id}`);
-    if (!data.ok) { toastError('Error al cargar equipo'); return; }
+    if (!data.ok) { toastError('Error al cargar'); return; }
     
     const e = data.equipo;
-    document.getElementById('modalEquipoTitulo').textContent = 'Editar Equipo';
+    const titulo = document.getElementById('modalEquipoTitulo');
+    if (titulo) titulo.innerHTML = '<span class="material-symbols-outlined">edit</span>Editar Equipo';
+    
+    llenarSelect('equipoTipo', tiposEquipo);
+    llenarSelect('equipoEstado', estadosEquipo);
+    
     document.getElementById('equipoId').value = e.id;
     document.getElementById('equipoTipo').value = e.tipo || '';
     document.getElementById('equipoMarca').value = e.marca || '';
     document.getElementById('equipoModelo').value = e.modelo || '';
-    document.getElementById('equipoSerial').value = e.serie || '';
+    document.getElementById('equipoSerie').value = e.serie || '';
     document.getElementById('equipoMac').value = e.mac || '';
     document.getElementById('equipoIp').value = e.ip || '';
     document.getElementById('equipoEstado').value = e.estado || '';
-    document.getElementById('equipoFechaInstalacion').value = e.fecha_instalacion?.split('T')[0] || '';
+    document.getElementById('equipoFecha').value = e.fecha_instalacion?.split('T')[0] || '';
     document.getElementById('equipoNotas').value = e.notas || '';
-    document.getElementById('modalEquipo').classList.add('active');
+    
+    abrirModal('modalEquipo');
   } catch (err) {
     console.error('Error:', err);
     toastError('Error al cargar equipo');
   }
 }
 
-function cerrarModalEquipo() { document.getElementById('modalEquipo').classList.remove('active'); }
-
 async function guardarEquipo() {
-  const id = document.getElementById('equipoId').value;
-  const btn = document.getElementById('btnGuardarEquipo');
-  
-  // Si es modo instalación
-  if (id && id.startsWith('inst_')) {
-    const idx = parseInt(id.replace('inst_', ''));
-    
-    equiposParaInstalar[idx] = {
-      tipo: document.getElementById('equipoTipo').value,
-      estado: document.getElementById('equipoEstado').value,
-      marca: document.getElementById('equipoMarca').value,
-      modelo: document.getElementById('equipoModelo').value,
-      serie: document.getElementById('equipoSerial').value,
-      mac: document.getElementById('equipoMac').value.toUpperCase(),
-      ip: document.getElementById('equipoIp').value,
-      notas: document.getElementById('equipoNotas').value
-    };
-    
-    cerrarModalEquipo();
-    renderizarEquiposInstalacion();
-    toastExito('Equipo agregado');
-    return;
-  }
+  const id = document.getElementById('equipoId')?.value;
   
   const datos = {
     cliente_id: clienteActual.id,
-    tipo: document.getElementById('equipoTipo').value,
-    marca: document.getElementById('equipoMarca').value,
-    modelo: document.getElementById('equipoModelo').value,
-    serie: document.getElementById('equipoSerial').value,
-    mac: document.getElementById('equipoMac').value.toUpperCase(),
-    ip: document.getElementById('equipoIp').value,
-    estado: document.getElementById('equipoEstado').value,
-    fecha_instalacion: document.getElementById('equipoFechaInstalacion').value || null,
-    notas: document.getElementById('equipoNotas').value
+    tipo: document.getElementById('equipoTipo')?.value || '',
+    marca: document.getElementById('equipoMarca')?.value || '',
+    modelo: document.getElementById('equipoModelo')?.value || '',
+    serie: document.getElementById('equipoSerie')?.value || '',
+    mac: (document.getElementById('equipoMac')?.value || '').toUpperCase(),
+    ip: document.getElementById('equipoIp')?.value || '',
+    estado: document.getElementById('equipoEstado')?.value || '',
+    fecha_instalacion: document.getElementById('equipoFecha')?.value || null,
+    notas: document.getElementById('equipoNotas')?.value || ''
   };
   
-  if (!datos.tipo || !datos.estado) {
-    toastAdvertencia('Tipo y estado son requeridos');
-    return;
-  }
-  
-  btnLoading(btn, true);
+  if (!datos.tipo || !datos.estado) { toastAdvertencia('Tipo y estado son requeridos'); return; }
   
   try {
     const data = id ? await fetchPut(`/api/equipos/${id}`, datos) : await fetchPost('/api/equipos', datos);
-    btnLoading(btn, false);
     
     if (data.ok) {
-      cerrarModalEquipo();
-      cargarEquipos(clienteActual.id);
+      cerrarModal('modalEquipo');
       toastExito(id ? 'Equipo actualizado' : 'Equipo agregado');
+      cargarEquipos(clienteActual.id);
     } else {
       toastError(data.mensaje || 'Error al guardar');
     }
   } catch (err) {
     console.error('Error:', err);
-    btnLoading(btn, false);
     toastError('Error al guardar equipo');
   }
 }
 
 function eliminarEquipo(id) {
   equipoAEliminar = id;
-  document.getElementById('modalConfirmarEliminar').classList.add('active');
-}
-
-function cerrarModalConfirmar() {
-  document.getElementById('modalConfirmarEliminar').classList.remove('active');
-  equipoAEliminar = null;
+  abrirModal('modalEliminar');
 }
 
 async function confirmarEliminarEquipo() {
   if (!equipoAEliminar) return;
-  const btn = document.getElementById('btnConfirmarEliminar');
-  btnLoading(btn, true);
+  
   try {
     const data = await fetchDelete(`/api/equipos/${equipoAEliminar}`);
-    btnLoading(btn, false);
+    
     if (data.ok) {
-      cerrarModalConfirmar();
-      cargarEquipos(clienteActual.id);
+      cerrarModal('modalEliminar');
       toastExito('Equipo eliminado');
-    } else { toastError(data.mensaje || 'Error al eliminar'); }
+      cargarEquipos(clienteActual.id);
+    } else {
+      toastError(data.mensaje || 'Error al eliminar');
+    }
   } catch (err) {
     console.error('Error:', err);
-    btnLoading(btn, false);
     toastError('Error al eliminar');
   }
-}
-
-function abrirModalTipoEquipo() {
-  document.getElementById('nuevoTipoNombre').value = '';
-  document.getElementById('nuevoTipoDescripcion').value = '';
-  document.getElementById('modalTipoEquipo').classList.add('active');
-}
-
-function cerrarModalTipoEquipo() { document.getElementById('modalTipoEquipo').classList.remove('active'); }
-
-async function guardarTipoEquipo() {
-  const nombre = document.getElementById('nuevoTipoNombre').value.trim();
-  const descripcion = document.getElementById('nuevoTipoDescripcion').value.trim();
-  const btn = document.getElementById('btnGuardarTipoEquipo');
-  if (!nombre) { toastAdvertencia('Nombre requerido'); return; }
-  btnLoading(btn, true);
-  try {
-    const data = await fetchPost('/api/equipos/tipos', { nombre, descripcion });
-    btnLoading(btn, false);
-    if (data.ok) {
-      cerrarModalTipoEquipo();
-      await cargarCatalogosEquipos();
-      if (data.tipo?.id) document.getElementById('equipoTipo').value = data.tipo.id;
-      toastExito('Tipo creado');
-    } else { toastError(data.mensaje || 'Error'); }
-  } catch (err) { btnLoading(btn, false); toastError('Error'); }
-}
-
-function abrirModalEstadoEquipo() {
-  document.getElementById('nuevoEstadoNombre').value = '';
-  document.getElementById('nuevoEstadoColor').value = '#64748b';
-  document.getElementById('nuevoEstadoOperativo').value = '0';
-  document.getElementById('modalEstadoEquipo').classList.add('active');
-}
-
-function cerrarModalEstadoEquipo() { document.getElementById('modalEstadoEquipo').classList.remove('active'); }
-
-async function guardarEstadoEquipo() {
-  const nombre = document.getElementById('nuevoEstadoNombre').value.trim();
-  const color = document.getElementById('nuevoEstadoColor').value;
-  const es_operativo = parseInt(document.getElementById('nuevoEstadoOperativo').value);
-  const btn = document.getElementById('btnGuardarEstadoEquipo');
-  if (!nombre) { toastAdvertencia('Nombre requerido'); return; }
-  btnLoading(btn, true);
-  try {
-    const data = await fetchPost('/api/equipos/estados', { nombre, color, es_operativo });
-    btnLoading(btn, false);
-    if (data.ok) {
-      cerrarModalEstadoEquipo();
-      await cargarCatalogosEquipos();
-      if (data.estado?.id) document.getElementById('equipoEstado').value = data.estado.id;
-      toastExito('Estado creado');
-    } else { toastError(data.mensaje || 'Error'); }
-  } catch (err) { btnLoading(btn, false); toastError('Error'); }
+  
+  equipoAEliminar = null;
 }
 
 // ========================================
-// INSTALACIÓN
+// MODAL INSTALACIÓN
 // ========================================
-
-let equiposParaInstalar = [];
-let cargosCalculados = null;
-
-function verificarInstalacion() {
-  const btn = document.getElementById('btnInstalacion');
-  if (!btn || !clienteActual) return;
-  
-  const tieneInstalacion = clienteActual.fecha_instalacion && 
-                           clienteActual.fecha_instalacion !== 'null' && 
-                           clienteActual.fecha_instalacion !== '';
-  
-  if (tieneInstalacion) {
-    btn.style.display = 'none';
-  } else {
-    btn.style.display = 'inline-flex';
-    
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('instalacion') === '1') {
-      window.history.replaceState({}, '', `detalle.html?id=${clienteActual.id}`);
-      setTimeout(() => abrirModalInstalacion(), 500);
-    }
-  }
-}
-
-async function abrirModalInstalacion() {
+function abrirModalInstalacion() {
   if (!clienteActual) return;
   
-  document.getElementById('formInstalacion').reset();
-  document.getElementById('instFechaInstalacion').value = new Date().toISOString().split('T')[0];
-  document.getElementById('instDiaCorte').value = clienteActual.dia_corte || 10;
-  document.getElementById('previewCargos').style.display = 'none';
-  equiposParaInstalar = [];
-  cargosCalculados = null;
+  const form = document.getElementById('formInstalacion');
+  if (form) form.reset();
   
-  if (planes.length === 0) {
-    try {
-      const r = await fetchGet('/api/catalogos/planes');
-      if (r.ok) planes = r.planes;
-    } catch (err) { console.error('Error cargando planes:', err); }
-  }
+  const fecha = document.getElementById('instFecha');
+  if (fecha) fecha.value = new Date().toISOString().split('T')[0];
+  
+  const diaCorte = document.getElementById('instDiaCorte');
+  if (diaCorte) diaCorte.value = clienteActual.dia_corte || 10;
+  
+  const preview = document.getElementById('instPreview');
+  if (preview) preview.style.display = 'none';
   
   llenarSelect('instPlan', planes);
-  if (clienteActual.plan_id) {
-    document.getElementById('instPlan').value = clienteActual.plan_id;
+  
+  const planSelect = document.getElementById('instPlan');
+  const tarifaInput = document.getElementById('instTarifa');
+  
+  if (clienteActual.plan_id && planSelect) {
+    planSelect.value = clienteActual.plan_id;
     const plan = planes.find(p => p.id === clienteActual.plan_id);
-    if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
-  } else if (clienteActual.cuota_mensual) {
-    document.getElementById('instTarifa').value = clienteActual.cuota_mensual;
+    if (plan && tarifaInput) tarifaInput.value = plan.precio_mensual;
   }
   
-  document.getElementById('instPlan').onchange = (e) => {
-    const plan = planes.find(p => p.id === e.target.value);
-    if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
-  };
-  
-  if (tiposEquipo.length === 0 || estadosEquipo.length === 0) {
-    await cargarCatalogosEquipos();
+  if (planSelect) {
+    planSelect.onchange = (e) => {
+      const plan = planes.find(p => p.id === e.target.value);
+      if (plan && tarifaInput) tarifaInput.value = plan.precio_mensual;
+    };
   }
   
-  renderizarEquiposInstalacion();
-  document.getElementById('modalInstalacion').classList.add('active');
+  abrirModal('modalInstalacion');
 }
 
-function cerrarModalInstalacion() {
-  document.getElementById('modalInstalacion').classList.remove('active');
-}
-
-function renderizarEquiposInstalacion() {
-  const container = document.getElementById('equiposInstalacion');
+function calcularCargosInstalacion() {
+  const fecha = document.getElementById('instFecha')?.value;
+  const diaCorte = parseInt(document.getElementById('instDiaCorte')?.value) || 10;
+  const tarifa = parseFloat(document.getElementById('instTarifa')?.value) || 0;
+  const costoInst = parseFloat(document.getElementById('instCosto')?.value) || 0;
   
-  if (equiposParaInstalar.length === 0) {
-    container.innerHTML = `<p class="text-muted" style="text-align: center; padding: 12px;">Sin equipos agregados</p>`;
-    return;
-  }
+  if (!fecha || !tarifa) { toastAdvertencia('Completa fecha y tarifa'); return; }
   
-  container.innerHTML = equiposParaInstalar.map((eq, idx) => {
-    const tipo = tiposEquipo.find(t => t.id === eq.tipo);
-    return `
-    <div style="display: flex; gap: 8px; align-items: center; padding: 8px; background: var(--bg-input); border-radius: var(--radius-sm); margin-bottom: 8px;">
-      <span class="badge" style="background: var(--accent-primary)20; color: var(--accent-primary);">${tipo?.nombre || 'Equipo'}</span>
-      <span style="flex: 1; font-size: 13px;">${eq.marca || ''} ${eq.modelo || ''} ${eq.serie ? '- S/N: ' + eq.serie : ''}</span>
-      <button type="button" class="btn btn-sm" onclick="quitarEquipoInstalacion(${idx})" style="padding: 4px 8px;">
-        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--danger);">close</span>
-      </button>
-    </div>
-  `}).join('');
-}
-
-function agregarEquipoInstalacion() {
-  const tipoId = tiposEquipo.length > 0 ? tiposEquipo[0].id : null;
-  const estadoId = estadosEquipo.length > 0 ? estadosEquipo[0].id : null;
-  
-  equiposParaInstalar.push({
-    tipo: tipoId,
-    estado: estadoId,
-    marca: '',
-    modelo: '',
-    serie: '',
-    mac: ''
-  });
-  
-  editarEquipoInstalacion(equiposParaInstalar.length - 1);
-}
-
-function editarEquipoInstalacion(idx) {
-  const eq = equiposParaInstalar[idx];
-  
-  document.getElementById('modalEquipoTitulo').textContent = 'Agregar Equipo de Instalación';
-  document.getElementById('formEquipo').reset();
-  document.getElementById('equipoId').value = 'inst_' + idx;
-  
-  if (eq) {
-    document.getElementById('equipoTipo').value = eq.tipo || '';
-    document.getElementById('equipoMarca').value = eq.marca || '';
-    document.getElementById('equipoModelo').value = eq.modelo || '';
-    document.getElementById('equipoSerial').value = eq.serie || '';
-    document.getElementById('equipoMac').value = eq.mac || '';
-    document.getElementById('equipoEstado').value = eq.estado || '';
-  }
-  
-  document.getElementById('equipoFechaInstalacion').value = document.getElementById('instFechaInstalacion').value;
-  document.getElementById('modalEquipo').classList.add('active');
-}
-
-function quitarEquipoInstalacion(idx) {
-  equiposParaInstalar.splice(idx, 1);
-  renderizarEquiposInstalacion();
-}
-
-async function calcularCargosInstalacion() {
-  const fechaInstalacion = document.getElementById('instFechaInstalacion').value;
-  const diaCorte = parseInt(document.getElementById('instDiaCorte').value) || 10;
-  const tarifa = parseFloat(document.getElementById('instTarifa').value);
-  const costoInstalacion = parseFloat(document.getElementById('instCostoInstalacion').value) || 0;
-  
-  if (!fechaInstalacion || !tarifa) {
-    toastAdvertencia('Completa fecha y tarifa');
-    return;
-  }
-  
-  const fechaInst = new Date(fechaInstalacion + 'T12:00:00');
-  const diaInstalacion = fechaInst.getDate();
+  const fechaInst = new Date(fecha + 'T12:00:00');
+  const diaInst = fechaInst.getDate();
   const cargos = [];
   
-  if (diaInstalacion < diaCorte) {
-    const diasProrrateo = diaCorte - diaInstalacion;
-    const montoProrrateo = (tarifa / 30) * diasProrrateo;
-    cargos.push({
-      concepto: 'Prorrateo',
-      descripcion: `${diasProrrateo} días (del ${diaInstalacion} al ${diaCorte})`,
-      monto: montoProrrateo
-    });
-  } else if (diaInstalacion > diaCorte) {
-    const diasProrrateo = (30 - diaInstalacion) + diaCorte;
-    const montoProrrateo = (tarifa / 30) * diasProrrateo;
-    cargos.push({
-      concepto: 'Prorrateo',
-      descripcion: `${diasProrrateo} días hasta próximo corte`,
-      monto: montoProrrateo
-    });
+  // Prorrateo
+  if (diaInst !== diaCorte) {
+    let dias = diaInst < diaCorte ? diaCorte - diaInst : (30 - diaInst) + diaCorte;
+    if (dias > 0) {
+      cargos.push({ concepto: 'Prorrateo', descripcion: `${dias} días`, monto: (tarifa / 30) * dias });
+    }
   }
   
-  if (costoInstalacion > 0) {
-    cargos.push({
-      concepto: 'Instalación',
-      descripcion: 'Costo único de instalación',
-      monto: costoInstalacion
-    });
+  // Instalación
+  if (costoInst > 0) {
+    cargos.push({ concepto: 'Instalación', descripcion: 'Costo único', monto: costoInst });
   }
   
-  cargos.push({
-    concepto: 'Mensualidad',
-    descripcion: 'Primera mensualidad completa',
-    monto: tarifa
-  });
+  // Mensualidad
+  cargos.push({ concepto: 'Mensualidad', descripcion: 'Primera mensualidad', monto: tarifa });
   
-  cargosCalculados = cargos;
-  mostrarPreviewCargos(cargos);
-}
-
-function mostrarPreviewCargos(cargos) {
-  const container = document.getElementById('listaCargosPreview');
-  const preview = document.getElementById('previewCargos');
+  // Mostrar preview
+  const lista = document.getElementById('instCargosLista');
+  const preview = document.getElementById('instPreview');
+  const totalEl = document.getElementById('instCargosTotal');
   
-  if (!cargos || cargos.length === 0) {
-    preview.style.display = 'none';
-    return;
+  if (lista && preview && totalEl) {
+    let total = 0;
+    lista.innerHTML = cargos.map(c => {
+      total += c.monto;
+      return `<div class="preview-cargos__item"><span>${c.concepto} <small class="text-muted">${c.descripcion}</small></span><strong>${formatoMoneda(c.monto)}</strong></div>`;
+    }).join('');
+    
+    totalEl.textContent = formatoMoneda(total);
+    preview.style.display = 'block';
   }
-  
-  let total = 0;
-  container.innerHTML = cargos.map(c => {
-    total += parseFloat(c.monto);
-    return `
-    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
-      <div>
-        <strong style="font-size: 13px;">${c.concepto}</strong>
-        <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">${c.descripcion || ''}</p>
-      </div>
-      <strong style="color: var(--text-primary);">${formatoMoneda(c.monto)}</strong>
-    </div>
-  `}).join('');
-  
-  document.getElementById('totalCargosPreview').textContent = formatoMoneda(total);
-  preview.style.display = 'block';
 }
 
 async function confirmarInstalacion() {
-  const btn = document.getElementById('btnConfirmarInstalacion');
+  const datos = {
+    fecha_instalacion: document.getElementById('instFecha')?.value,
+    dia_corte: parseInt(document.getElementById('instDiaCorte')?.value),
+    plan_id: document.getElementById('instPlan')?.value,
+    tarifa_mensual: parseFloat(document.getElementById('instTarifa')?.value),
+    costo_instalacion: parseFloat(document.getElementById('instCosto')?.value) || 0,
+    tecnico_instalador: document.getElementById('instTecnico')?.value || '',
+    notas_instalacion: document.getElementById('instNotas')?.value || ''
+  };
   
-  const fechaInstalacion = document.getElementById('instFechaInstalacion').value;
-  const diaCorte = parseInt(document.getElementById('instDiaCorte').value);
-  const planId = document.getElementById('instPlan').value;
-  const tarifa = parseFloat(document.getElementById('instTarifa').value);
-  const costoInstalacion = parseFloat(document.getElementById('instCostoInstalacion').value) || 0;
-  const tecnico = document.getElementById('instTecnico').value;
-  const notas = document.getElementById('instNotas').value;
-  
-  if (!fechaInstalacion || !tarifa || !planId) {
+  if (!datos.fecha_instalacion || !datos.tarifa_mensual || !datos.plan_id) {
     toastAdvertencia('Completa los campos requeridos');
     return;
   }
   
-  btnLoading(btn, true);
-  
   try {
-    const data = await fetchPost(`/api/clientes/${clienteActual.id}/instalacion`, {
-      fecha_instalacion: fechaInstalacion,
-      dia_corte: diaCorte,
-      plan_id: planId,
-      tarifa_mensual: tarifa,
-      costo_instalacion: costoInstalacion,
-      tecnico_instalador: tecnico,
-      notas_instalacion: notas,
-      equipos: equiposParaInstalar
-    });
-    
-    btnLoading(btn, false);
+    const data = await fetchPost(`/api/clientes/${clienteActual.id}/instalacion`, datos);
     
     if (data.ok) {
-      cerrarModalInstalacion();
-      
-      let mensaje = '¡Instalación registrada!';
-      if (data.cargos_generados) {
-        mensaje += ` Se generaron ${data.cargos_generados} cargos.`;
-      }
-      if (data.equipos_registrados) {
-        mensaje += ` ${data.equipos_registrados} equipos instalados.`;
-      }
-      
-      toastExito(mensaje);
+      cerrarModal('modalInstalacion');
+      let msg = '¡Instalación registrada!';
+      if (data.cargos_generados) msg += ` ${data.cargos_generados} cargos generados.`;
+      toastExito(msg);
       cargarCliente(clienteActual.id);
     } else {
-      toastError(data.mensaje || 'Error al registrar instalación');
+      toastError(data.mensaje || 'Error al registrar');
     }
   } catch (err) {
     console.error('Error:', err);
-    btnLoading(btn, false);
     toastError('Error al registrar instalación');
   }
+}
+
+// ========================================
+// MODAL EDITAR CLIENTE
+// ========================================
+async function activarModoEdicion() {
+  if (!clienteActual) return;
+  
+  const c = clienteActual;
+  
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+  
+  setVal('editNombre', c.nombre);
+  setVal('editApellido', c.apellido_paterno);
+  setVal('editTelefono', c.telefono);
+  setVal('editEmail', c.email);
+  setVal('editDireccion', c.direccion);
+  setVal('editReferencia', c.referencia);
+  setVal('editTarifa', c.tarifa_mensual);
+  setVal('editDiaCorte', c.dia_corte || 10);
+  setVal('editEstado', c.estado || 'activo');
+  
+  llenarSelect('editCiudad', ciudades);
+  llenarSelect('editPlan', planes);
+  
+  setVal('editCiudad', c.ciudad_id);
+  setVal('editPlan', c.plan_id);
+  
+  if (c.ciudad_id) {
+    await cargarColonias(c.ciudad_id, 'editColonia', c.colonia_id);
+  }
+  
+  const ciudadSelect = document.getElementById('editCiudad');
+  if (ciudadSelect) {
+    ciudadSelect.onchange = (e) => cargarColonias(e.target.value, 'editColonia');
+  }
+  
+  const planSelect = document.getElementById('editPlan');
+  if (planSelect) {
+    planSelect.onchange = (e) => {
+      const plan = planes.find(p => p.id === e.target.value);
+      if (plan) setVal('editTarifa', plan.precio_mensual);
+    };
+  }
+  
+  abrirModal('modalEditar');
+}
+
+async function guardarEdicion() {
+  const getVal = (id) => document.getElementById(id)?.value || '';
+  
+  const datos = {
+    nombre: getVal('editNombre'),
+    apellido_paterno: getVal('editApellido'),
+    telefono: getVal('editTelefono'),
+    email: getVal('editEmail'),
+    ciudad_id: getVal('editCiudad'),
+    colonia_id: getVal('editColonia'),
+    direccion: getVal('editDireccion'),
+    referencia: getVal('editReferencia'),
+    plan_id: getVal('editPlan'),
+    cuota_mensual: parseFloat(getVal('editTarifa')) || 0,
+    dia_corte: parseInt(getVal('editDiaCorte')) || 10,
+    estado: getVal('editEstado')
+  };
+  
+  if (!datos.nombre || !datos.telefono) { toastAdvertencia('Nombre y teléfono son requeridos'); return; }
+  
+  try {
+    const data = await fetchPut(`/api/clientes/${clienteActual.id}`, datos);
+    
+    if (data.ok) {
+      cerrarModal('modalEditar');
+      toastExito('Cliente actualizado');
+      cargarCliente(clienteActual.id);
+    } else {
+      toastError(data.mensaje || 'Error al guardar');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al guardar');
+  }
+}
+
+// ========================================
+// UTILS
+// ========================================
+function abrirModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.add('active');
+}
+
+function cerrarModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.remove('active');
 }
