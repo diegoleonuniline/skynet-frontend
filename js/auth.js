@@ -308,3 +308,113 @@ function btnLoading(btn, loading = true) {
     btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
   }
 }
+
+// ========================================
+// ANIMACIÓN DE ÉXITO CON CONFETTI
+// ========================================
+
+function mostrarExitoCreacion(opciones = {}) {
+  const {
+    titulo = '¡Creado exitosamente!',
+    mensaje = 'El registro se ha guardado correctamente',
+    detalle = '',
+    textoBoton = 'Continuar',
+    onClose = () => {}
+  } = opciones;
+
+  // Crear confetti
+  crearConfetti();
+
+  // Crear overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'success-overlay';
+  overlay.id = 'success-overlay';
+  
+  overlay.innerHTML = `
+    <div class="success-card">
+      <div class="success-icon-wrapper">
+        <div class="success-rings">
+          <div class="success-ring"></div>
+          <div class="success-ring"></div>
+          <div class="success-ring"></div>
+        </div>
+        <div class="success-circle">
+          <span class="material-symbols-outlined">check</span>
+        </div>
+      </div>
+      <h2 class="success-title">${titulo}</h2>
+      <p class="success-message">${mensaje}</p>
+      ${detalle ? `<p class="success-detail">${detalle}</p>` : ''}
+      <button class="success-btn" onclick="cerrarExitoCreacion()">${textoBoton}</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  
+  // Guardar callback
+  overlay.dataset.onClose = 'true';
+  window._successCallback = onClose;
+
+  // Mostrar con animación
+  requestAnimationFrame(() => {
+    overlay.classList.add('active');
+  });
+
+  // Auto cerrar después de 5 segundos
+  setTimeout(() => {
+    cerrarExitoCreacion();
+  }, 5000);
+}
+
+function cerrarExitoCreacion() {
+  const overlay = document.getElementById('success-overlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('active');
+  
+  setTimeout(() => {
+    overlay.remove();
+    // Limpiar confetti
+    document.querySelectorAll('.confetti-container').forEach(c => c.remove());
+    // Ejecutar callback
+    if (window._successCallback) {
+      window._successCallback();
+      window._successCallback = null;
+    }
+  }, 300);
+}
+
+function crearConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  
+  const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
+  const shapes = ['square', 'circle'];
+  
+  for (let i = 0; i < 100; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    if (shapes[Math.floor(Math.random() * shapes.length)] === 'circle') {
+      confetti.style.borderRadius = '50%';
+    } else {
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+    }
+    
+    confetti.style.width = (Math.random() * 10 + 5) + 'px';
+    confetti.style.height = (Math.random() * 10 + 5) + 'px';
+    
+    container.appendChild(confetti);
+  }
+  
+  document.body.appendChild(container);
+  
+  // Limpiar después de la animación
+  setTimeout(() => {
+    container.remove();
+  }, 4000);
+}

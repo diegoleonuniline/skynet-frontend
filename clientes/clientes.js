@@ -150,6 +150,9 @@ async function cargarClientes() {
         <td class="font-semibold">${formatoMoneda(c.cuota_mensual)}</td>
         <td>
           <div class="table-actions">
+            <button class="btn btn-secondary" onclick="verCliente('${c.id}')" title="Ver detalle">
+              <span class="material-symbols-outlined">visibility</span>
+            </button>
             <button class="btn btn-secondary" onclick="editarCliente('${c.id}')" title="Editar">
               <span class="material-symbols-outlined">edit</span>
             </button>
@@ -313,8 +316,23 @@ async function guardarCliente() {
 
     if (data.ok) {
       cerrarModal();
-      cargarClientes();
-      toastExito(id ? 'Cliente actualizado correctamente' : 'Cliente creado correctamente');
+      
+      if (id) {
+        // Edición - toast normal
+        cargarClientes();
+        toastExito('Cliente actualizado correctamente');
+      } else {
+        // Creación - animación especial
+        mostrarExitoCreacion({
+          titulo: '¡Cliente Creado!',
+          mensaje: 'El nuevo cliente se ha registrado exitosamente en el sistema',
+          detalle: `${datos.nombre} ${datos.apellido_paterno || ''}`.trim(),
+          textoBoton: 'Ver Clientes',
+          onClose: () => {
+            cargarClientes();
+          }
+        });
+      }
     } else {
       toastError(data.mensaje || 'Error al guardar');
     }
@@ -502,4 +520,198 @@ async function guardarPlan() {
 async function exportarCSV() {
   toastInfo('Preparando exportación...');
   // Implementar exportación
+}
+
+// ========================================
+// VER DETALLE CLIENTE
+// ========================================
+
+async function verCliente(id) {
+  try {
+    const data = await fetchGet(`/api/clientes/${id}`);
+    
+    if (!data.ok) {
+      toastError('Error al cargar información del cliente');
+      return;
+    }
+
+    const c = data.cliente;
+    
+    // Determinar clase del estado
+    let statusClass = '';
+    if (c.estado === 'suspendido') statusClass = 'suspendido';
+    if (c.estado === 'deudor' || c.saldo_pendiente > 0) statusClass = 'deudor';
+
+    // Crear modal de detalle
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'modalDetalle';
+    
+    overlay.innerHTML = `
+      <div class="modal detail-modal">
+        <div class="modal__header">
+          <h3 class="modal__title">Detalle del Cliente</h3>
+          <button class="modal__close" onclick="cerrarModalDetalle()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="modal__body">
+          <div class="detail-header">
+            <div class="detail-avatar">
+              ${obtenerIniciales(c.nombre, c.apellido_paterno)}
+            </div>
+            <div class="detail-info">
+              <h2 class="detail-name">${c.nombre} ${c.apellido_paterno || ''} ${c.apellido_materno || ''}</h2>
+              <span class="detail-id">${c.numero_cliente || 'Sin número'}</span>
+              <div class="detail-badges">
+                <span class="detail-badge detail-badge--plan">
+                  <span class="material-symbols-outlined">wifi</span>
+                  ${c.plan_nombre || 'Sin plan'}
+                </span>
+                <span class="detail-badge detail-badge--status ${statusClass}">
+                  <span class="material-symbols-outlined">${c.estado === 'activo' ? 'check_circle' : 'warning'}</span>
+                  ${c.estado?.toUpperCase() || 'ACTIVO'}
+                </span>
+              </div>
+            </div>
+            <div class="detail-actions">
+              <button class="btn btn-primary btn-sm" onclick="cerrarModalDetalle(); editarCliente('${c.id}')">
+                <span class="material-symbols-outlined">edit</span>
+                Editar
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="registrarPago('${c.id}')">
+                <span class="material-symbols-outlined">payments</span>
+                Registrar Pago
+              </button>
+            </div>
+          </div>
+
+          <div class="detail-sections">
+            <div class="detail-section">
+              <h4 class="detail-section__title">
+                <span class="material-symbols-outlined">person</span>
+                Información de Contacto
+              </h4>
+              <div class="detail-row">
+                <span class="detail-label">Teléfono Principal</span>
+                <span class="detail-value">${c.telefono || '-'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Teléfono Secundario</span>
+                <span class="detail-value">${c.telefono_secundario || '-'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">${c.email || '-'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Fecha de Alta</span>
+                <span class="detail-value">${formatoFecha(c.fecha_instalacion || c.creado_en)}</span>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h4 class="detail-section__title">
+                <span class="material-symbols-outlined">location_on</span>
+                Dirección
+              </h4>
+              <p class="detail-address">
+                ${c.direccion || 'Sin dirección'}<br>
+                <strong>${c.colonia_nombre || ''}</strong><br>
+                ${c.ciudad_nombre || ''}
+                ${c.referencia ? `<br><br><em>Referencia: ${c.referencia}</em>` : ''}
+              </p>
+            </div>
+
+            <div class="detail-section">
+              <h4 class="detail-section__title">
+                <span class="material-symbols-outlined">router</span>
+                Plan de Servicio
+              </h4>
+              <div class="detail-row">
+                <span class="detail-label">Plan Actual</span>
+                <span class="detail-value">${c.plan_nombre || '-'}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Cuota Mensual</span>
+                <span class="detail-value detail-value--highlight">${formatoMoneda(c.cuota_mensual)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Día de Corte</span>
+                <span class="detail-value">Día ${c.dia_corte || 10}</span>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <h4 class="detail-section__title">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                Estado de Cuenta
+              </h4>
+              <div class="detail-row">
+                <span class="detail-label">Saldo a Favor</span>
+                <span class="detail-value" style="color: var(--green-600)">${formatoMoneda(c.saldo_favor || 0)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Saldo Pendiente</span>
+                <span class="detail-value" style="color: var(--red-600)">${formatoMoneda(c.saldo_pendiente || 0)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-stats">
+            <div class="detail-stat">
+              <p class="detail-stat__value">${calcularMesesCliente(c.fecha_instalacion || c.creado_en)}</p>
+              <p class="detail-stat__label">Meses como cliente</p>
+            </div>
+            <div class="detail-stat">
+              <p class="detail-stat__value">${formatoMoneda(c.cuota_mensual * 12)}</p>
+              <p class="detail-stat__label">Valor anual</p>
+            </div>
+            <div class="detail-stat">
+              <p class="detail-stat__value">-</p>
+              <p class="detail-stat__label">Pagos realizados</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button class="btn btn-secondary" onclick="cerrarModalDetalle()">Cerrar</button>
+          <button class="btn btn-primary" onclick="window.open('https://wa.me/52${c.telefono?.replace(/\D/g, '')}', '_blank')">
+            <span class="material-symbols-outlined">chat</span>
+            WhatsApp
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    
+    requestAnimationFrame(() => {
+      overlay.classList.add('active');
+    });
+
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al cargar cliente');
+  }
+}
+
+function cerrarModalDetalle() {
+  const modal = document.getElementById('modalDetalle');
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 200);
+  }
+}
+
+function calcularMesesCliente(fecha) {
+  if (!fecha) return '0';
+  const inicio = new Date(fecha);
+  const hoy = new Date();
+  const meses = (hoy.getFullYear() - inicio.getFullYear()) * 12 + (hoy.getMonth() - inicio.getMonth());
+  return Math.max(0, meses);
+}
+
+function registrarPago(clienteId) {
+  toastInfo('Módulo de pagos en desarrollo');
+  // Implementar o redirigir a módulo de pagos
 }
