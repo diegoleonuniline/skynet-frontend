@@ -17,7 +17,7 @@ const ClienteDetalleView = {
     renderFormulario(cliente = null) {
         const estados = State.catalogos.estados || [];
         const zonas = State.catalogos.zonas || [];
-        const estatusCliente = State.catalogos.estatus_cliente || [];
+        const estatusCliente = State.catalogos.estatusCliente || [];
         const isEdit = !!cliente;
 
         return `
@@ -434,6 +434,11 @@ const ClienteDetalleView = {
         const isNew = hash.includes('nuevo');
         const isEdit = hash.includes('editar');
         
+        // Precargar catálogos siempre
+        if (!State.catalogos.estatusCliente || !State.catalogos.estados) {
+            await State.preloadCatalogos();
+        }
+        
         if (isNew) {
             this.initFormulario();
         } else if (isEdit) {
@@ -501,15 +506,14 @@ const ClienteDetalleView = {
 
     async cargarClienteParaEditar() {
         const parts = window.location.hash.split('/');
-        const id = parts[parts.indexOf('editar') - 1] || parts[2];
+        const id = parts[2];
         
         try {
             const res = await API.get(`/clientes/${id}`);
             
             if (res.success) {
                 this.cliente = res.data;
-                // Re-renderizar con formulario de edición
-                const container = $('.page-content')?.parentElement || $('#app');
+                const container = $('#view-container');
                 container.innerHTML = this.renderFormulario(res.data);
                 this.initFormulario();
             }
@@ -557,10 +561,8 @@ const ClienteDetalleView = {
         try {
             let res;
             if (id) {
-                // Actualizar
                 res = await API.put(`/clientes/${id}`, data);
             } else {
-                // Crear nuevo
                 res = await API.post('/clientes', data);
             }
             
@@ -581,8 +583,8 @@ const ClienteDetalleView = {
     async cambiarEstatus(nuevoEstatus) {
         if (!this.cliente) return;
 
-        const estatusList = State.catalogos.estatus_cliente || [];
-        const estatusObj = estatusList.find(e => e.nombre.toUpperCase() === nuevoEstatus);
+        const estatusList = State.catalogos.estatusCliente || [];
+        const estatusObj = estatusList.find(e => e.nombre.toUpperCase() === nuevoEstatus || e.clave === nuevoEstatus);
         
         if (!estatusObj) {
             Components.toast.error('Estatus no encontrado');
@@ -601,12 +603,12 @@ const ClienteDetalleView = {
 
         try {
             const res = await API.put(`/clientes/${this.cliente.id}`, {
-                estatus_cliente_id: estatusObj.id
+                estatus_id: estatusObj.id
             });
 
             if (res.success) {
                 Components.toast.success(`Cliente ${nuevoEstatus.toLowerCase()}`);
-                await this.cargarCliente(); // Recargar
+                await this.cargarCliente();
             } else {
                 Components.toast.error(res.message || 'Error al cambiar estatus');
             }
