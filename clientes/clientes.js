@@ -65,10 +65,9 @@ async function cargarColoniasPorCiudad(ciudadId) {
   } catch (err) { console.error('Error:', err); }
 }
 
-// Clientes
 async function cargarClientes() {
   const tbody = document.getElementById('tablaClientes');
-  tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Cargando...</td></tr>';
 
   try {
     const busqueda = document.getElementById('buscadorGlobal')?.value || '';
@@ -79,13 +78,19 @@ async function cargarClientes() {
     const data = await fetchGet(url);
 
     if (!data.ok || !data.clientes?.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No se encontraron clientes</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No se encontraron clientes</td></tr>';
       actualizarPaginacion(0, 0, 0);
       return;
     }
 
     const colores = ['blue', 'purple', 'green', 'orange', 'pink'];
-    tbody.innerHTML = data.clientes.map((c, i) => `
+    tbody.innerHTML = data.clientes.map((c, i) => {
+      const tarifa = parseFloat(c.tarifa || c.tarifa_mensual || c.cuota_mensual || c.tarifa_plan || 0);
+      const totalPagado = parseFloat(c.total_pagado || 0);
+      const saldoPendiente = parseFloat(c.saldo_pendiente || 0);
+      const proximoCorte = c.proximo_corte ? new Date(c.proximo_corte + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short' }) : '--';
+      
+      return `
       <tr onclick="verCliente('${c.id}')" style="cursor: pointer;">
         <td>
           <div class="table__user">
@@ -95,9 +100,12 @@ async function cargarClientes() {
         </td>
         <td>${c.telefono || '-'}</td>
         <td>${c.ciudad_nombre || '-'}</td>
-        <td>${c.colonia_nombre || '-'}</td>
+        <td><span class="badge">${c.plan_nombre || '-'}</span></td>
+        <td class="font-semibold">${formatoMoneda(tarifa)}</td>
+        <td style="color: var(--success);">${formatoMoneda(totalPagado)}</td>
+        <td style="color: ${saldoPendiente > 0 ? 'var(--danger)' : 'var(--text-muted)'};">${formatoMoneda(saldoPendiente)}</td>
+        <td>${proximoCorte}</td>
         <td><span class="badge badge--${c.estado || 'activo'}">${(c.estado || 'activo').toUpperCase()}</span></td>
-        <td class="font-semibold">${formatoMoneda(c.cuota_mensual)}</td>
         <td>
           <div class="table__actions" onclick="event.stopPropagation();">
             <button class="table__action-btn" onclick="verCliente('${c.id}')" title="Ver detalle"><span class="material-symbols-outlined">visibility</span></button>
@@ -105,14 +113,14 @@ async function cargarClientes() {
           </div>
         </td>
       </tr>
-    `).join('');
+    `}).join('');
 
     document.getElementById('totalClientes').textContent = data.total || data.clientes.length;
     actualizarPaginacion(data.paginaActual || paginaActual, porPagina, data.total || data.clientes.length);
     generarBotonesPaginacion(data.totalPaginas || 1, data.paginaActual || paginaActual);
   } catch (err) {
     console.error('Error:', err);
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Error al cargar</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Error al cargar</td></tr>';
   }
 }
 
