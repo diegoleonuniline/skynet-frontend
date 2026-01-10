@@ -814,11 +814,19 @@ function verificarInstalacion() {
   const btn = document.getElementById('btnInstalacion');
   if (!btn || !clienteActual) return;
   
-  // Mostrar botón si NO tiene instalación (fecha_instalacion es null)
-  if (!clienteActual.fecha_instalacion) {
-    btn.style.display = 'inline-flex';
-  } else {
+  // Ocultar botón si YA tiene instalación
+  if (clienteActual.fecha_instalacion) {
     btn.style.display = 'none';
+  } else {
+    btn.style.display = 'inline-flex';
+    
+    // Si viene con parámetro instalacion=1, abrir modal automáticamente
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('instalacion') === '1') {
+      // Quitar parámetro de URL para que no se abra de nuevo al recargar
+      window.history.replaceState({}, '', `detalle.html?id=${clienteActual.id}`);
+      setTimeout(() => abrirModalInstalacion(), 500);
+    }
   }
 }
 

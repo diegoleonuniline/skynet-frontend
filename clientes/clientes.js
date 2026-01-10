@@ -142,7 +142,6 @@ function abrirModalNuevo() {
   document.getElementById('modalTitulo').textContent = 'Registrar Nuevo Cliente';
   document.getElementById('formCliente').reset();
   document.getElementById('clienteId').value = '';
-  document.getElementById('fechaInstalacion').value = new Date().toISOString().split('T')[0];
   document.getElementById('coloniaId').innerHTML = '<option value="">Primero selecciona ciudad...</option>';
   document.getElementById('modalCliente').classList.add('active');
 }
@@ -164,7 +163,6 @@ async function editarClienteLista(id) {
     document.getElementById('referencia').value = c.referencia || '';
     document.getElementById('planId').value = c.plan_id || '';
     document.getElementById('cuotaMensual').value = c.cuota_mensual || '';
-    document.getElementById('fechaInstalacion').value = c.fecha_instalacion?.split('T')[0] || '';
     document.getElementById('modalCliente').classList.add('active');
   } catch (err) { console.error('Error:', err); toastError('Error al cargar cliente'); }
 }
@@ -184,8 +182,7 @@ async function guardarCliente() {
     direccion: document.getElementById('direccion').value,
     referencia: document.getElementById('referencia').value,
     plan_id: document.getElementById('planId').value,
-    cuota_mensual: parseFloat(document.getElementById('cuotaMensual').value) || 0,
-    fecha_instalacion: document.getElementById('fechaInstalacion').value
+    cuota_mensual: parseFloat(document.getElementById('cuotaMensual').value) || 0
   };
 
   if (!datos.nombre || !datos.telefono || !datos.ciudad_id || !datos.colonia_id || !datos.direccion || !datos.plan_id) {
@@ -197,7 +194,20 @@ async function guardarCliente() {
   try {
     const data = id ? await fetchPut(`/api/clientes/${id}`, datos) : await fetchPost('/api/clientes', datos);
     btnLoading(btn, false);
-    if (data.ok) { cerrarModal(); cargarClientes(); toastExito(id ? 'Cliente actualizado' : 'Cliente creado exitosamente'); }
+    if (data.ok) {
+      cerrarModal();
+      if (id) {
+        // Edición: recargar lista
+        cargarClientes();
+        toastExito('Cliente actualizado');
+      } else {
+        // Nuevo cliente: ir al detalle para instalar
+        toastExito('Cliente creado. Registra la instalación...');
+        setTimeout(() => {
+          window.location.href = `detalle.html?id=${data.cliente.id}&instalacion=1`;
+        }, 1000);
+      }
+    }
     else { toastError(data.mensaje || 'Error al guardar'); }
   } catch (err) { btnLoading(btn, false); toastError('Error al guardar cliente'); }
 }
