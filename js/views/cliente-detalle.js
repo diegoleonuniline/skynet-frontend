@@ -674,9 +674,283 @@ const ClienteDetalleView = {
         Components.toast.info('Función de pago en desarrollo');
     },
 
-    nuevoServicio() {
-        Components.toast.info('Función en desarrollo');
-    },
+// ============================================
+// FUNCIONES DE SERVICIO
+// ============================================
+
+async nuevoServicio() {
+    if (!this.cliente) return;
+
+    // Cargar catálogos necesarios
+    await Promise.all([
+        State.getCatalogo('tarifas'),
+        State.getCatalogo('tipoEquipo'),
+        State.getCatalogo('marcasEquipo')
+    ]);
+
+    const tarifas = State.catalogos.tarifas || [];
+    const tiposEquipo = State.catalogos.tipoEquipo || [];
+
+    const modalHTML = `
+        <div class="modal-backdrop" id="modal-servicio">
+            <div class="modal modal-lg">
+                <div class="modal-header">
+                    <h2>Nuevo Servicio</h2>
+                    <button class="btn-icon" onclick="ClienteDetalleView.cerrarModalServicio()">
+                        ${ICONS.x}
+                    </button>
+                </div>
+                <form id="form-servicio" onsubmit="ClienteDetalleView.guardarServicio(event)">
+                    <div class="modal-body">
+                        <!-- Datos del Servicio -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Datos del Servicio</h3>
+                            <div class="form-grid cols-2">
+                                <div class="form-group">
+                                    <label class="form-label required">Tarifa / Plan</label>
+                                    <select name="tarifa_id" class="form-input" required onchange="ClienteDetalleView.calcularProrrateo()">
+                                        <option value="">Seleccionar tarifa...</option>
+                                        ${tarifas.map(t => `
+                                            <option value="${t.id}" data-monto="${t.monto}">
+                                                ${t.nombre} - $${t.monto}/mes (${t.velocidad_mbps || '?'} Mbps)
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label required">Fecha de Instalación</label>
+                                    <input type="date" name="fecha_instalacion" class="form-input" 
+                                           value="${new Date().toISOString().split('T')[0]}" 
+                                           required onchange="ClienteDetalleView.calcularProrrateo()">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Día de Corte</label>
+                                    <select name="dia_corte" class="form-input" onchange="ClienteDetalleView.calcularProrrateo()">
+                                        ${[1,5,10,15,20,25].map(d => `
+                                            <option value="${d}" ${d === 10 ? 'selected' : ''}>Día ${d} de cada mes</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Costo de Instalación</label>
+                                    <input type="number" name="costo_instalacion" class="form-input" 
+                                           value="0" min="0" step="0.01" onchange="ClienteDetalleView.calcularProrrateo()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen de Cargos -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Resumen de Cargos Iniciales</h3>
+                            <div class="cargos-preview" id="cargos-preview">
+                                <p class="text-muted">Seleccione una tarifa para ver el desglose</p>
+                            </div>
+                        </div>
+
+                        <!-- Equipo (Opcional) -->
+                        <div class="form-section">
+                            <h3 class="form-section-title">Equipo a Instalar (Opcional)</h3>
+                            <div class="form-grid cols-2">
+                                <div class="form-group">
+                                    <label class="form-label">Tipo de Equipo</label>
+                                    <select name="tipo_equipo_id" class="form-input" id="select-tipo-equipo">
+                                        <option value="">Sin equipo</option>
+                                        ${tiposEquipo.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">MAC Address</label>
+                                    <input type="text" name="mac" class="form-input" placeholder="AA:BB:CC:DD:EE:FF">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">IP</label>
+                                    <input type="text" name="ip" class="form-input" placeholder="192.168.1.100">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Serie</label>
+                                    <input type="text" name="serie" class="form-input" placeholder="Número de serie">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">SSID (WiFi)</label>
+                                    <input type="text" name="ssid" class="form-input" placeholder="Nombre de la red">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Password WiFi</label>
+                                    <input type="text" name="password_equipo" class="form-input" placeholder="Contraseña">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="ClienteDetalleView.cerrarModalServicio()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            ${ICONS.save} Crear Servicio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    this.calcularProrrateo();
+},
+
+calcularProrrateo() {
+    const form = $('#form-servicio');
+    if (!form) return;
+
+    const tarifaSelect = form.querySelector('[name="tarifa_id"]');
+    const fechaInput = form.querySelector('[name="fecha_instalacion"]');
+    const diaCorteSelect = form.querySelector('[name="dia_corte"]');
+    const instalacionInput = form.querySelector('[name="costo_instalacion"]');
+    const preview = $('#cargos-preview');
+
+    const tarifaOption = tarifaSelect.selectedOptions[0];
+    const tarifaMonto = parseFloat(tarifaOption?.dataset?.monto) || 0;
+    const fechaInstalacion = fechaInput.value;
+    const diaCorte = parseInt(diaCorteSelect.value) || 10;
+    const costoInstalacion = parseFloat(instalacionInput.value) || 0;
+
+    if (!tarifaMonto || !fechaInstalacion) {
+        preview.innerHTML = '<p class="text-muted">Seleccione una tarifa para ver el desglose</p>';
+        return;
+    }
+
+    // Calcular prorrateo
+    const fecha = new Date(fechaInstalacion + 'T12:00:00');
+    const dia = fecha.getDate();
+    let diasProrrateo = 0;
+    let prorrateo = 0;
+
+    if (dia !== diaCorte) {
+        if (dia < diaCorte) {
+            diasProrrateo = diaCorte - dia;
+        } else {
+            const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+            diasProrrateo = (ultimoDiaMes - dia) + diaCorte;
+        }
+        const tarifaDiaria = tarifaMonto / 30;
+        prorrateo = Math.round(tarifaDiaria * diasProrrateo * 100) / 100;
+    }
+
+    // Calcular fecha primer vencimiento
+    let fechaVencimiento;
+    if (dia <= diaCorte) {
+        fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth(), diaCorte);
+    } else {
+        fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth() + 1, diaCorte);
+    }
+
+    // Calcular total
+    let total = costoInstalacion;
+    if (prorrateo > 0) {
+        total += prorrateo;
+    } else {
+        total += tarifaMonto;
+    }
+
+    // Renderizar preview
+    preview.innerHTML = `
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th class="text-right">Monto</th>
+                    <th>Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${costoInstalacion > 0 ? `
+                <tr>
+                    <td>Instalación</td>
+                    <td class="text-right">$${costoInstalacion.toFixed(2)}</td>
+                    <td>${fecha.toLocaleDateString('es-MX')}</td>
+                </tr>
+                ` : ''}
+                ${prorrateo > 0 ? `
+                <tr>
+                    <td>Prorrateo (${diasProrrateo} días)</td>
+                    <td class="text-right">$${prorrateo.toFixed(2)}</td>
+                    <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
+                </tr>
+                ` : `
+                <tr>
+                    <td>Primera Mensualidad</td>
+                    <td class="text-right">$${tarifaMonto.toFixed(2)}</td>
+                    <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
+                </tr>
+                `}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold">
+                    <td>Total a Pagar</td>
+                    <td class="text-right text-primary">$${total.toFixed(2)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <p class="text-sm text-muted mt-2">
+            * Día de corte: ${diaCorte} de cada mes. 
+            Siguiente mensualidad: $${tarifaMonto.toFixed(2)}
+        </p>
+    `;
+},
+
+async guardarServicio(e) {
+    e.preventDefault();
+    const form = $('#form-servicio');
+    const formData = new FormData(form);
+    
+    const data = {
+        cliente_id: this.cliente.id,
+        tarifa_id: formData.get('tarifa_id'),
+        fecha_instalacion: formData.get('fecha_instalacion'),
+        dia_corte: parseInt(formData.get('dia_corte')),
+        costo_instalacion: parseFloat(formData.get('costo_instalacion')) || 0
+    };
+
+    // Agregar equipo si se seleccionó tipo
+    const tipoEquipo = formData.get('tipo_equipo_id');
+    if (tipoEquipo) {
+        data.equipos = [{
+            tipo_equipo_id: tipoEquipo,
+            mac: formData.get('mac') || null,
+            ip: formData.get('ip') || null,
+            serie: formData.get('serie') || null,
+            ssid: formData.get('ssid') || null,
+            password_equipo: formData.get('password_equipo') || null
+        }];
+    }
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-sm"></div> Creando...';
+
+    try {
+        const res = await API.post('/servicios', data);
+        
+        if (res.success) {
+            Components.toast.success(`Servicio ${res.data.codigo} creado`);
+            this.cerrarModalServicio();
+            await this.cargarCliente(); // Recargar datos
+        } else {
+            Components.toast.error(res.message || 'Error al crear servicio');
+        }
+    } catch (error) {
+        Components.toast.error(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${ICONS.save} Crear Servicio`;
+    }
+},
+
+cerrarModalServicio() {
+    const modal = $('#modal-servicio');
+    if (modal) modal.remove();
+},
 
     async nuevaNota() {
         if (!this.cliente) return;
