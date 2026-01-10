@@ -924,14 +924,12 @@ const ClienteDetalleView = {
                                                value="${new Date().toISOString().split('T')[0]}" 
                                                required onchange="ClienteDetalleView.calcularProrrateo()">
                                     </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Día de Corte</label>
-                                        <select name="dia_corte" class="form-input" onchange="ClienteDetalleView.calcularProrrateo()">
-                                            ${[1,5,10,15,20,25].map(d => `
-                                                <option value="${d}" ${d === 10 ? 'selected' : ''}>Día ${d} de cada mes</option>
-                                            `).join('')}
-                                        </select>
-                                    </div>
+                                  <div class="form-group">
+    <label class="form-label">Día de Corte</label>
+    <input type="number" name="dia_corte" class="form-input" 
+           value="10" min="1" max="28" 
+           onchange="ClienteDetalleView.calcularProrrateo()">
+</div>
                                     <div class="form-group">
                                         <label class="form-label">Costo de Instalación</label>
                                         <input type="number" name="costo_instalacion" class="form-input" 
@@ -999,102 +997,122 @@ const ClienteDetalleView = {
         this.calcularProrrateo();
     },
 
-    calcularProrrateo() {
-        const form = $('#form-servicio');
-        if (!form) return;
+   calcularProrrateo() {
+    const form = $('#form-servicio');
+    if (!form) return;
 
-        const tarifaSelect = form.querySelector('[name="tarifa_id"]');
-        const fechaInput = form.querySelector('[name="fecha_instalacion"]');
-        const diaCorteSelect = form.querySelector('[name="dia_corte"]');
-        const instalacionInput = form.querySelector('[name="costo_instalacion"]');
-        const preview = $('#cargos-preview');
+    const tarifaSelect = form.querySelector('[name="tarifa_id"]');
+    const fechaInput = form.querySelector('[name="fecha_instalacion"]');
+    const diaCorteInput = form.querySelector('[name="dia_corte"]');
+    const instalacionInput = form.querySelector('[name="costo_instalacion"]');
+    const preview = $('#cargos-preview');
 
-        const tarifaOption = tarifaSelect.selectedOptions[0];
-        const tarifaMonto = parseFloat(tarifaOption?.dataset?.monto) || 0;
-        const fechaInstalacion = fechaInput.value;
-        const diaCorte = parseInt(diaCorteSelect.value) || 10;
-        const costoInstalacion = parseFloat(instalacionInput.value) || 0;
+    const tarifaOption = tarifaSelect.selectedOptions[0];
+    const tarifaMonto = parseFloat(tarifaOption?.dataset?.monto) || 0;
+    const fechaInstalacion = fechaInput.value;
+    const diaCorte = parseInt(diaCorteInput.value) || 10;
+    const costoInstalacion = parseFloat(instalacionInput.value) || 0;
 
-        if (!tarifaMonto || !fechaInstalacion) {
-            preview.innerHTML = '<p class="text-muted">Seleccione una tarifa para ver el desglose</p>';
-            return;
-        }
+    if (!tarifaMonto || !fechaInstalacion) {
+        preview.innerHTML = '<p class="text-muted">Seleccione una tarifa para ver el desglose</p>';
+        return;
+    }
 
-        const fecha = new Date(fechaInstalacion + 'T12:00:00');
-        const dia = fecha.getDate();
-        let diasProrrateo = 0;
-        let prorrateo = 0;
+    const fecha = new Date(fechaInstalacion + 'T12:00:00');
+    const dia = fecha.getDate();
+    let diasProrrateo = 0;
+    let prorrateo = 0;
 
-        if (dia !== diaCorte) {
-            if (dia < diaCorte) {
-                diasProrrateo = diaCorte - dia;
-            } else {
-                const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
-                diasProrrateo = (ultimoDiaMes - dia) + diaCorte;
-            }
-            const tarifaDiaria = tarifaMonto / 30;
-            prorrateo = Math.round(tarifaDiaria * diasProrrateo * 100) / 100;
-        }
-
-        let fechaVencimiento;
-        if (dia <= diaCorte) {
-            fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth(), diaCorte);
+    // Calcular prorrateo si el día de instalación NO es igual al día de corte
+    if (dia !== diaCorte) {
+        if (dia < diaCorte) {
+            diasProrrateo = diaCorte - dia;
         } else {
-            fechaVencimiento = new Date(fecha.getFullYear(), fecha.getMonth() + 1, diaCorte);
+            const ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+            diasProrrateo = (ultimoDiaMes - dia) + diaCorte;
         }
+        const tarifaDiaria = tarifaMonto / 30;
+        prorrateo = Math.round(tarifaDiaria * diasProrrateo * 100) / 100;
+    }
 
-        let total = costoInstalacion;
-        if (prorrateo > 0) {
-            total += prorrateo;
-        } else {
-            total += tarifaMonto;
-        }
+    // Calcular fecha primer vencimiento (prorrateo)
+    let fechaVencProrrateo;
+    if (dia <= diaCorte) {
+        fechaVencProrrateo = new Date(fecha.getFullYear(), fecha.getMonth(), diaCorte);
+    } else {
+        fechaVencProrrateo = new Date(fecha.getFullYear(), fecha.getMonth() + 1, diaCorte);
+    }
 
-        preview.innerHTML = `
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Concepto</th>
-                        <th class="text-right">Monto</th>
-                        <th>Vencimiento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${costoInstalacion > 0 ? `
-                    <tr>
-                        <td>Instalación</td>
-                        <td class="text-right">$${costoInstalacion.toFixed(2)}</td>
-                        <td>${fecha.toLocaleDateString('es-MX')}</td>
-                    </tr>
-                    ` : ''}
-                    ${prorrateo > 0 ? `
-                    <tr>
-                        <td>Prorrateo (${diasProrrateo} días)</td>
-                        <td class="text-right">$${prorrateo.toFixed(2)}</td>
-                        <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
-                    </tr>
-                    ` : `
-                    <tr>
-                        <td>Primera Mensualidad</td>
-                        <td class="text-right">$${tarifaMonto.toFixed(2)}</td>
-                        <td>${fechaVencimiento.toLocaleDateString('es-MX')}</td>
-                    </tr>
-                    `}
-                </tbody>
-                <tfoot>
-                    <tr class="font-bold">
-                        <td>Total a Pagar</td>
-                        <td class="text-right text-primary">$${total.toFixed(2)}</td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
-            <p class="text-sm text-muted mt-2">
-                * Día de corte: ${diaCorte} de cada mes. 
-                Siguiente mensualidad: $${tarifaMonto.toFixed(2)}
-            </p>
+    // Fecha vencimiento primera mensualidad (1 mes después del prorrateo)
+    let fechaVencMensualidad = new Date(fechaVencProrrateo);
+    fechaVencMensualidad.setMonth(fechaVencMensualidad.getMonth() + 1);
+
+    // Calcular total
+    let total = costoInstalacion + tarifaMonto; // Siempre incluye primera mensualidad
+    if (prorrateo > 0) {
+        total += prorrateo;
+    }
+
+    // Renderizar preview
+    let rows = '';
+    
+    // 1. Instalación (si aplica)
+    if (costoInstalacion > 0) {
+        rows += `
+            <tr>
+                <td>Instalación</td>
+                <td class="text-right">$${costoInstalacion.toFixed(2)}</td>
+                <td>${fecha.toLocaleDateString('es-MX')}</td>
+            </tr>
         `;
-    },
+    }
+    
+    // 2. Prorrateo (si aplica)
+    if (prorrateo > 0) {
+        rows += `
+            <tr>
+                <td>Prorrateo (${diasProrrateo} días)</td>
+                <td class="text-right">$${prorrateo.toFixed(2)}</td>
+                <td>${fechaVencProrrateo.toLocaleDateString('es-MX')}</td>
+            </tr>
+        `;
+    }
+    
+    // 3. Primera mensualidad (SIEMPRE)
+    rows += `
+        <tr>
+            <td>Primera Mensualidad</td>
+            <td class="text-right">$${tarifaMonto.toFixed(2)}</td>
+            <td>${prorrateo > 0 ? fechaVencMensualidad.toLocaleDateString('es-MX') : fechaVencProrrateo.toLocaleDateString('es-MX')}</td>
+        </tr>
+    `;
+
+    preview.innerHTML = `
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Concepto</th>
+                    <th class="text-right">Monto</th>
+                    <th>Vencimiento</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+            <tfoot>
+                <tr class="font-bold">
+                    <td>Total a Pagar</td>
+                    <td class="text-right text-primary">$${total.toFixed(2)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <p class="text-sm text-muted mt-2">
+            * Día de corte: ${diaCorte} de cada mes. 
+            Mensualidad recurrente: $${tarifaMonto.toFixed(2)}
+        </p>
+    `;
+},
 
     async guardarServicio(e) {
         e.preventDefault();
