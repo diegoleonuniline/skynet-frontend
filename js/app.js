@@ -41,19 +41,14 @@ const App = {
     // ============================================
     
     init() {
-        // Initialize state
         State.init();
-        
-        // Setup router
         window.addEventListener('hashchange', () => this.handleRoute());
-        
-        // Handle initial route
         this.handleRoute();
         
-        // Close dropdowns on click outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown')) {
                 $$('.dropdown.active').forEach(d => d.classList.remove('active'));
+                $$('.dropdown-menu.show').forEach(d => d.classList.remove('show'));
             }
         });
     },
@@ -65,7 +60,6 @@ const App = {
     handleRoute() {
         const { path, params } = Utils.getHashParams();
         
-        // Find matching route
         let route = null;
         let routeParams = {};
         
@@ -78,7 +72,6 @@ const App = {
             }
         }
         
-        // Default route
         if (!route) {
             if (State.isAuthenticated()) {
                 window.location.hash = '#/clientes';
@@ -88,23 +81,18 @@ const App = {
             return;
         }
         
-        // Check authentication
         if (route.requiresAuth && !State.isAuthenticated()) {
             window.location.hash = '#/login';
             return;
         }
         
-        // Redirect if already logged in
         if (path === '/login' && State.isAuthenticated()) {
             window.location.hash = '#/clientes';
             return;
         }
         
-        // Render layout and view
         this.renderLayout(route.layout);
         this.renderView(route.view, routeParams);
-        
-        // Update document title
         document.title = `${route.title} | ${CONFIG.APP_NAME}`;
     },
     
@@ -249,11 +237,9 @@ const App = {
                 </div>
             `;
             
-            // Setup global search
             this.setupGlobalSearch();
         }
         
-        // Update active nav item
         this.updateActiveNav();
     },
     
@@ -350,11 +336,8 @@ const App = {
         if (!container) return;
         
         this.currentView = view;
-        
-        // Render view HTML
         container.innerHTML = view.render(params);
         
-        // Initialize view
         if (view.init) {
             await view.init(params.id || params);
         }
