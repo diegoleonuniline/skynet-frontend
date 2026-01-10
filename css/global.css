@@ -559,7 +559,6 @@ input, select, textarea { font-family: inherit; }
   padding: 4px; 
   background: var(--bg-secondary); 
   border-radius: var(--radius-lg); 
-  width: fit-content; 
   margin-bottom: 20px; 
 }
 
