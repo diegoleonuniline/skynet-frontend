@@ -276,20 +276,17 @@ async function abrirModalPago() {
     <small>PNG, JPG, PDF hasta 5MB</small>
   `;
   
-  // Recargar métodos
   await cargarMetodosPago();
   
-  // Mostrar resumen
-  const adeudo = parseFloat(clienteActual?.saldo_pendiente) || 0;
+  // Leer adeudo del DOM (ya calculado por cargarCargos)
+  const adeudoTexto = document.getElementById('adeudoTotal').textContent;
+  document.getElementById('pagoAdeudoTotal').textContent = adeudoTexto;
+  
+  // Saldo a favor
   const saldoFavor = parseFloat(clienteActual?.saldo_favor) || 0;
-  document.getElementById('pagoAdeudoTotal').textContent = formatoMoneda(adeudo);
   document.getElementById('pagoSaldoFavor').textContent = formatoMoneda(saldoFavor);
   
   document.getElementById('modalPago').classList.add('active');
-}
-
-function cerrarModalPago() {
-  document.getElementById('modalPago').classList.remove('active');
 }
 
 async function cargarMetodosPago() {
