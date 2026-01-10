@@ -194,6 +194,9 @@ async function cargarCargos(clienteId) {
     const data = await fetchGet(`/api/cargos?cliente_id=${clienteId}`);
     if (!data.ok || !data.cargos?.length) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">check_circle</span><p>Sin cargos pendientes</p></div></td></tr>`;
+      document.getElementById('adeudoTotal').textContent = formatoMoneda(0);
+      document.getElementById('estadoCuenta').textContent = 'Cuenta al corriente';
+      document.getElementById('estadoCuenta').className = 'detail-stat__sub success';
       return;
     }
     
@@ -210,6 +213,20 @@ async function cargarCargos(clienteId) {
         <td><span class="badge badge--${estadoClass}">${estadoTexto}</span></td>
       </tr>
     `}).join('');
+
+    // Calcular adeudo total
+    const adeudoTotal = data.cargos.reduce((sum, c) => sum + (parseFloat(c.pendiente) || 0), 0);
+    document.getElementById('adeudoTotal').textContent = formatoMoneda(adeudoTotal);
+    
+    const estadoCuenta = document.getElementById('estadoCuenta');
+    if (adeudoTotal > 0) {
+      estadoCuenta.textContent = 'Tiene adeudo pendiente';
+      estadoCuenta.className = 'detail-stat__sub danger';
+    } else {
+      estadoCuenta.textContent = 'Cuenta al corriente';
+      estadoCuenta.className = 'detail-stat__sub success';
+    }
+
   } catch (err) { 
     console.error('Error:', err);
     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; 
