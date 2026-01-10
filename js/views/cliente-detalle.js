@@ -3,6 +3,8 @@
 // ============================================
 
 const ClienteDetalleView = {
+    cliente: null,
+
     render() {
         const isNew = window.location.hash.includes('nuevo');
         
@@ -12,9 +14,11 @@ const ClienteDetalleView = {
         return this.renderDetalle();
     },
 
-    renderFormulario() {
+    renderFormulario(cliente = null) {
         const estados = State.catalogos.estados || [];
         const zonas = State.catalogos.zonas || [];
+        const estatusCliente = State.catalogos.estatus_cliente || [];
+        const isEdit = !!cliente;
 
         return `
             <div class="page-content">
@@ -22,19 +26,51 @@ const ClienteDetalleView = {
                 <nav class="breadcrumb">
                     <a href="#/clientes" class="breadcrumb-link">Clientes</a>
                     <span class="breadcrumb-sep">${ICONS.chevronRight}</span>
-                    <span class="breadcrumb-current">Registrar Nuevo Cliente</span>
+                    <span class="breadcrumb-current">${isEdit ? 'Editar Cliente' : 'Registrar Nuevo Cliente'}</span>
                 </nav>
 
                 <!-- Header -->
                 <div class="page-header">
                     <div class="page-header-left">
-                        <h1 class="page-title">Registro Skynet</h1>
-                        <p class="page-subtitle">Complete la información para agregar un nuevo suscriptor a la red Skynet.</p>
+                        <h1 class="page-title">${isEdit ? 'Editar Cliente' : 'Registro Skynet'}</h1>
+                        <p class="page-subtitle">${isEdit ? 'Modifique la información del cliente.' : 'Complete la información para agregar un nuevo suscriptor a la red Skynet.'}</p>
                     </div>
                 </div>
 
                 <!-- Formulario -->
                 <form id="form-cliente" class="form-sections">
+                    <input type="hidden" name="id" value="${cliente?.id || ''}">
+
+                    <!-- Estatus (solo en edición) -->
+                    ${isEdit ? `
+                    <section class="form-section">
+                        <div class="form-section-header">
+                            ${ICONS.settings}
+                            <h2>Estado del Cliente</h2>
+                        </div>
+                        <div class="form-section-body">
+                            <div class="form-grid cols-3">
+                                <div class="form-group">
+                                    <label class="form-label">Código</label>
+                                    <input type="text" class="form-input" value="${cliente?.codigo || ''}" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Estatus</label>
+                                    <select name="estatus_cliente_id" class="form-input">
+                                        ${estatusCliente.map(e => `
+                                            <option value="${e.id}" ${cliente?.estatus_cliente_id == e.id ? 'selected' : ''}>${e.nombre}</option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Fecha Registro</label>
+                                    <input type="text" class="form-input" value="${cliente?.created_at ? new Date(cliente.created_at).toLocaleDateString('es-MX') : ''}" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    ` : ''}
+
                     <!-- Datos Personales -->
                     <section class="form-section">
                         <div class="form-section-header">
@@ -45,27 +81,27 @@ const ClienteDetalleView = {
                             <div class="form-grid cols-3">
                                 <div class="form-group">
                                     <label class="form-label required">Nombre</label>
-                                    <input type="text" name="nombre" class="form-input" placeholder="Nombre(s)" required>
+                                    <input type="text" name="nombre" class="form-input" placeholder="Nombre(s)" value="${cliente?.nombre || ''}" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Apellido Paterno</label>
-                                    <input type="text" name="apellido_paterno" class="form-input" placeholder="Apellido paterno">
+                                    <input type="text" name="apellido_paterno" class="form-input" placeholder="Apellido paterno" value="${cliente?.apellido_paterno || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Apellido Materno</label>
-                                    <input type="text" name="apellido_materno" class="form-input" placeholder="Apellido materno">
+                                    <input type="text" name="apellido_materno" class="form-input" placeholder="Apellido materno" value="${cliente?.apellido_materno || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Teléfono Principal</label>
-                                    <input type="tel" name="telefono1" class="form-input" placeholder="(000) 000-0000">
+                                    <input type="tel" name="telefono1" class="form-input" placeholder="(000) 000-0000" value="${cliente?.telefono1 || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Teléfono Secundario</label>
-                                    <input type="tel" name="telefono2" class="form-input" placeholder="(000) 000-0000">
+                                    <input type="tel" name="telefono2" class="form-input" placeholder="(000) 000-0000" value="${cliente?.telefono2 || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Teléfono Subcliente</label>
-                                    <input type="tel" name="telefono3_subcliente" class="form-input" placeholder="(000) 000-0000">
+                                    <input type="tel" name="telefono3_subcliente" class="form-input" placeholder="(000) 000-0000" value="${cliente?.telefono3_subcliente || ''}">
                                 </div>
                             </div>
                         </div>
@@ -81,30 +117,30 @@ const ClienteDetalleView = {
                             <div class="form-grid cols-3">
                                 <div class="form-group col-span-2">
                                     <label class="form-label">Calle</label>
-                                    <input type="text" name="calle" class="form-input" placeholder="Nombre de la calle">
+                                    <input type="text" name="calle" class="form-input" placeholder="Nombre de la calle" value="${cliente?.calle || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Código Postal</label>
-                                    <input type="text" name="codigo_postal" class="form-input" placeholder="00000">
+                                    <input type="text" name="codigo_postal" class="form-input" placeholder="00000" value="${cliente?.codigo_postal || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Número Exterior</label>
-                                    <input type="text" name="numero_exterior" class="form-input" placeholder="123">
+                                    <input type="text" name="numero_exterior" class="form-input" placeholder="123" value="${cliente?.numero_exterior || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Número Interior</label>
-                                    <input type="text" name="numero_interior" class="form-input" placeholder="Depto 4B">
+                                    <input type="text" name="numero_interior" class="form-input" placeholder="Depto 4B" value="${cliente?.numero_interior || ''}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Estado</label>
-                                    <select name="estado_id" class="form-input" onchange="ClienteDetalleView.cargarCiudades(this.value)">
+                                    <select name="estado_id" class="form-input" id="select-estado" onchange="ClienteDetalleView.cargarCiudades(this.value)">
                                         <option value="">Seleccionar...</option>
-                                        ${estados.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('')}
+                                        ${estados.map(e => `<option value="${e.id}" ${cliente?.estado_id == e.id ? 'selected' : ''}>${e.nombre}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Ciudad</label>
-                                    <select name="ciudad_id" id="select-ciudad" class="form-input">
+                                    <select name="ciudad_id" id="select-ciudad" class="form-input" data-selected="${cliente?.ciudad_id || ''}">
                                         <option value="">Seleccionar...</option>
                                     </select>
                                 </div>
@@ -112,7 +148,7 @@ const ClienteDetalleView = {
                                     <label class="form-label">Zona</label>
                                     <select name="zona_id" class="form-input">
                                         <option value="">Seleccionar...</option>
-                                        ${zonas.map(z => `<option value="${z.id}">${z.nombre}</option>`).join('')}
+                                        ${zonas.map(z => `<option value="${z.id}" ${cliente?.zona_id == z.id ? 'selected' : ''}>${z.nombre}</option>`).join('')}
                                     </select>
                                 </div>
                             </div>
@@ -121,12 +157,12 @@ const ClienteDetalleView = {
 
                     <!-- Botones -->
                     <div class="form-actions">
-                        <button type="button" class="btn btn-outline" onclick="window.location.hash='#/clientes'">
+                        <button type="button" class="btn btn-outline" onclick="window.location.hash='${isEdit ? '#/cliente/' + cliente.id : '#/clientes'}'">
                             Cancelar
                         </button>
                         <button type="submit" class="btn btn-primary">
                             ${ICONS.save}
-                            <span>Guardar Cliente</span>
+                            <span>${isEdit ? 'Actualizar Cliente' : 'Guardar Cliente'}</span>
                         </button>
                     </div>
                 </form>
@@ -196,6 +232,34 @@ const ClienteDetalleView = {
                             ${ICONS.edit}
                             <span>Editar</span>
                         </button>
+                        <div class="dropdown">
+                            <button class="btn btn-outline btn-icon" onclick="this.nextElementSibling.classList.toggle('show')">
+                                ${ICONS.moreVertical}
+                            </button>
+                            <div class="dropdown-menu">
+                                ${estatus === 'activo' ? `
+                                    <a class="dropdown-item text-warning" onclick="ClienteDetalleView.cambiarEstatus('SUSPENDIDO')">
+                                        ${ICONS.alertCircle} Suspender
+                                    </a>
+                                    <a class="dropdown-item text-danger" onclick="ClienteDetalleView.cambiarEstatus('CANCELADO')">
+                                        ${ICONS.x} Cancelar
+                                    </a>
+                                ` : ''}
+                                ${estatus === 'suspendido' ? `
+                                    <a class="dropdown-item text-success" onclick="ClienteDetalleView.cambiarEstatus('ACTIVO')">
+                                        ${ICONS.check} Reactivar
+                                    </a>
+                                    <a class="dropdown-item text-danger" onclick="ClienteDetalleView.cambiarEstatus('CANCELADO')">
+                                        ${ICONS.x} Cancelar
+                                    </a>
+                                ` : ''}
+                                ${estatus === 'cancelado' ? `
+                                    <a class="dropdown-item text-success" onclick="ClienteDetalleView.cambiarEstatus('ACTIVO')">
+                                        ${ICONS.check} Reactivar
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -316,7 +380,7 @@ const ClienteDetalleView = {
                                         <div class="ine-upload ${cliente.ine_frente ? 'has-file' : ''}" 
                                              onclick="ClienteDetalleView.subirINE('FRENTE')">
                                             ${cliente.ine_frente 
-                                                ? `<img src="${CONFIG.API_URL}/uploads/ine/${cliente.ine_frente}" alt="INE Frente">`
+                                                ? `<img src="${cliente.ine_frente}" alt="INE Frente">`
                                                 : `${ICONS.upload}<span>Subir Imagen</span><span class="ine-hint">PNG, JPG hasta 10MB</span>`
                                             }
                                             ${cliente.ine_frente ? `<div class="ine-verified">${ICONS.check}</div>` : ''}
@@ -330,7 +394,7 @@ const ClienteDetalleView = {
                                         <div class="ine-upload ${cliente.ine_reverso ? 'has-file' : ''}"
                                              onclick="ClienteDetalleView.subirINE('REVERSO')">
                                             ${cliente.ine_reverso 
-                                                ? `<img src="${CONFIG.API_URL}/uploads/ine/${cliente.ine_reverso}" alt="INE Reverso">`
+                                                ? `<img src="${cliente.ine_reverso}" alt="INE Reverso">`
                                                 : `${ICONS.upload}<span>Subir Imagen</span><span class="ine-hint">PNG, JPG hasta 10MB</span>`
                                             }
                                             ${cliente.ine_reverso ? `<div class="ine-verified">${ICONS.check}</div>` : ''}
@@ -366,10 +430,14 @@ const ClienteDetalleView = {
     },
 
     async init() {
-        const isNew = window.location.hash.includes('nuevo');
+        const hash = window.location.hash;
+        const isNew = hash.includes('nuevo');
+        const isEdit = hash.includes('editar');
         
         if (isNew) {
             this.initFormulario();
+        } else if (isEdit) {
+            await this.cargarClienteParaEditar();
         } else {
             await this.cargarCliente();
             this.initTabs();
@@ -384,6 +452,12 @@ const ClienteDetalleView = {
             e.preventDefault();
             await this.guardarCliente();
         });
+
+        // Cargar ciudades si hay estado seleccionado
+        const estadoSelect = $('#select-estado');
+        if (estadoSelect?.value) {
+            this.cargarCiudades(estadoSelect.value);
+        }
     },
 
     initTabs() {
@@ -402,7 +476,7 @@ const ClienteDetalleView = {
         const id = window.location.hash.split('/').pop();
         
         try {
-            const res = await API.request(`/clientes/${id}`);
+            const res = await API.get(`/clientes/${id}`);
             
             if (res.success) {
                 this.cliente = res.data;
@@ -425,56 +499,128 @@ const ClienteDetalleView = {
         }
     },
 
+    async cargarClienteParaEditar() {
+        const parts = window.location.hash.split('/');
+        const id = parts[parts.indexOf('editar') - 1] || parts[2];
+        
+        try {
+            const res = await API.get(`/clientes/${id}`);
+            
+            if (res.success) {
+                this.cliente = res.data;
+                // Re-renderizar con formulario de edición
+                const container = $('.page-content')?.parentElement || $('#app');
+                container.innerHTML = this.renderFormulario(res.data);
+                this.initFormulario();
+            }
+        } catch (error) {
+            Components.toast.error('Error al cargar cliente');
+            window.location.hash = '#/clientes';
+        }
+    },
+
     async cargarCiudades(estadoId) {
         const select = $('#select-ciudad');
         if (!select || !estadoId) {
-            select.innerHTML = '<option value="">Seleccionar...</option>';
+            if (select) select.innerHTML = '<option value="">Seleccionar...</option>';
             return;
         }
 
         try {
-            const res = await API.request(`/catalogos/ciudades/estado/${estadoId}`);
+            const res = await API.get(`/catalogos/ciudades/estado/${estadoId}`);
             if (res.success) {
+                const selectedId = select.dataset.selected;
                 select.innerHTML = '<option value="">Seleccionar...</option>' +
-                    res.data.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+                    res.data.map(c => `<option value="${c.id}" ${c.id == selectedId ? 'selected' : ''}>${c.nombre}</option>`).join('');
             }
         } catch (error) {
             console.error('Error cargando ciudades:', error);
         }
     },
 
-  async guardarCliente() {
-    const form = $('#form-cliente');
-    const formData = new FormData(form);
-    const data = {};
-    
-    for (let [key, value] of formData.entries()) {
-        data[key] = value || null;
-    }
-
-    const btn = form.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
-
-    try {
-        const res = await API.post('/clientes', data);  // <-- CAMBIA AQUÍ
+    async guardarCliente() {
+        const form = $('#form-cliente');
+        const formData = new FormData(form);
+        const data = {};
         
-        if (res.success) {
-            Components.toast.success('Cliente creado correctamente');
-            window.location.hash = `#/cliente/${res.data.id}`;
-        } else {
-            Components.toast.error(res.message || 'Error al guardar');
+        for (let [key, value] of formData.entries()) {
+            data[key] = value || null;
         }
-    } catch (error) {
-        Components.toast.error(error.message || 'Error al guardar cliente');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `${ICONS.save}<span>Guardar Cliente</span>`;
-    }
-},
+
+        const id = data.id;
+        delete data.id;
+
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
+
+        try {
+            let res;
+            if (id) {
+                // Actualizar
+                res = await API.put(`/clientes/${id}`, data);
+            } else {
+                // Crear nuevo
+                res = await API.post('/clientes', data);
+            }
+            
+            if (res.success) {
+                Components.toast.success(id ? 'Cliente actualizado' : 'Cliente creado');
+                window.location.hash = `#/cliente/${id || res.data.id}`;
+            } else {
+                Components.toast.error(res.message || 'Error al guardar');
+            }
+        } catch (error) {
+            Components.toast.error(error.message || 'Error al guardar cliente');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `${ICONS.save}<span>${id ? 'Actualizar Cliente' : 'Guardar Cliente'}</span>`;
+        }
+    },
+
+    async cambiarEstatus(nuevoEstatus) {
+        if (!this.cliente) return;
+
+        const estatusList = State.catalogos.estatus_cliente || [];
+        const estatusObj = estatusList.find(e => e.nombre.toUpperCase() === nuevoEstatus);
+        
+        if (!estatusObj) {
+            Components.toast.error('Estatus no encontrado');
+            return;
+        }
+
+        const confirmMsg = {
+            'SUSPENDIDO': '¿Suspender este cliente?',
+            'CANCELADO': '¿Cancelar este cliente? Esta acción puede afectar sus servicios.',
+            'ACTIVO': '¿Reactivar este cliente?'
+        };
+
+        if (!confirm(confirmMsg[nuevoEstatus] || `¿Cambiar estatus a ${nuevoEstatus}?`)) {
+            return;
+        }
+
+        try {
+            const res = await API.put(`/clientes/${this.cliente.id}`, {
+                estatus_cliente_id: estatusObj.id
+            });
+
+            if (res.success) {
+                Components.toast.success(`Cliente ${nuevoEstatus.toLowerCase()}`);
+                await this.cargarCliente(); // Recargar
+            } else {
+                Components.toast.error(res.message || 'Error al cambiar estatus');
+            }
+        } catch (error) {
+            Components.toast.error(error.message);
+        }
+    },
+
+    editar() {
+        if (!this.cliente) return;
+        window.location.hash = `#/cliente/${this.cliente.id}/editar`;
+    },
 
     async cargarServicios() {
-        // TODO: Cargar servicios del cliente
         const tbody = $('#tabla-servicios');
         if (this.cliente?.servicios?.length) {
             tbody.innerHTML = this.cliente.servicios.map(s => `
@@ -495,29 +641,56 @@ const ClienteDetalleView = {
 
     async cargarNotas() {
         const container = $('#lista-notas');
-        // TODO: Cargar notas desde API
-        container.innerHTML = `
-            <div class="empty-state small">
-                ${ICONS.fileText}
-                <p>No hay notas registradas</p>
-            </div>
-        `;
+        if (!container || !this.cliente) return;
+
+        try {
+            const res = await API.get(`/clientes/${this.cliente.id}/notas`);
+            if (res.success && res.data.length) {
+                container.innerHTML = res.data.map(nota => `
+                    <div class="nota-item">
+                        <div class="nota-header">
+                            <span class="nota-autor">${nota.usuario || 'Sistema'}</span>
+                            <span class="nota-fecha">${new Date(nota.created_at).toLocaleDateString('es-MX')}</span>
+                        </div>
+                        <p class="nota-texto">${nota.nota}</p>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state small">
+                        ${ICONS.fileText}
+                        <p>No hay notas registradas</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            container.innerHTML = '<p class="text-muted text-center">Error al cargar notas</p>';
+        }
     },
 
     registrarPago() {
         Components.toast.info('Función de pago en desarrollo');
     },
 
-    editar() {
-        Components.toast.info('Función de edición en desarrollo');
-    },
-
     nuevoServicio() {
         Components.toast.info('Función en desarrollo');
     },
 
-    nuevaNota() {
-        Components.toast.info('Función en desarrollo');
+    async nuevaNota() {
+        if (!this.cliente) return;
+
+        const nota = prompt('Escribe la nota:');
+        if (!nota?.trim()) return;
+
+        try {
+            const res = await API.post(`/clientes/${this.cliente.id}/notas`, { nota: nota.trim() });
+            if (res.success) {
+                Components.toast.success('Nota agregada');
+                this.cargarNotas();
+            }
+        } catch (error) {
+            Components.toast.error(error.message);
+        }
     },
 
     subirINE(tipo) {
