@@ -178,6 +178,9 @@ function renderizarCliente(c) {
     if (tel) window.open(`https://wa.me/52${tel}`, '_blank');
   };
   
+  // Verificar si mostrar botón de instalación
+  verificarInstalacion();
+  
   renderizarINE(c);
 }
 
@@ -798,4 +801,270 @@ async function guardarEstadoEquipo() {
       toastExito('Estado creado');
     } else { toastError(data.mensaje || 'Error'); }
   } catch (err) { btnLoading(btn, false); toastError('Error'); }
+}
+
+// ========================================
+// INSTALACIÓN
+// ========================================
+
+let equiposParaInstalar = [];
+let cargosCalculados = null;
+
+function verificarInstalacion() {
+  const btn = document.getElementById('btnInstalacion');
+  if (!btn || !clienteActual) return;
+  
+  // Mostrar botón si NO tiene instalación (fecha_instalacion es null)
+  if (!clienteActual.fecha_instalacion) {
+    btn.style.display = 'inline-flex';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+async function abrirModalInstalacion() {
+  if (!clienteActual) return;
+  
+  // Reset form
+  document.getElementById('formInstalacion').reset();
+  document.getElementById('instFechaInstalacion').value = new Date().toISOString().split('T')[0];
+  document.getElementById('instDiaCorte').value = clienteActual.dia_corte || 10;
+  document.getElementById('previewCargos').style.display = 'none';
+  equiposParaInstalar = [];
+  cargosCalculados = null;
+  
+  // Cargar planes
+  llenarSelect('instPlan', planes);
+  if (clienteActual.plan_id) {
+    document.getElementById('instPlan').value = clienteActual.plan_id;
+    const plan = planes.find(p => p.id === clienteActual.plan_id);
+    if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
+  }
+  
+  // Evento cambio de plan
+  document.getElementById('instPlan').onchange = (e) => {
+    const plan = planes.find(p => p.id === e.target.value);
+    if (plan) document.getElementById('instTarifa').value = plan.precio_mensual;
+  };
+  
+  // Renderizar equipos
+  renderizarEquiposInstalacion();
+  
+  document.getElementById('modalInstalacion').classList.add('active');
+}
+
+function cerrarModalInstalacion() {
+  document.getElementById('modalInstalacion').classList.remove('active');
+}
+
+function renderizarEquiposInstalacion() {
+  const container = document.getElementById('equiposInstalacion');
+  
+  if (equiposParaInstalar.length === 0) {
+    container.innerHTML = `<p class="text-muted" style="text-align: center; padding: 12px;">Sin equipos agregados</p>`;
+    return;
+  }
+  
+  container.innerHTML = equiposParaInstalar.map((eq, idx) => {
+    const tipo = tiposEquipo.find(t => t.id === eq.tipo);
+    return `
+    <div style="display: flex; gap: 8px; align-items: center; padding: 8px; background: var(--bg-input); border-radius: var(--radius-sm); margin-bottom: 8px;">
+      <span class="badge" style="background: var(--accent-primary)20; color: var(--accent-primary);">${tipo?.nombre || 'Equipo'}</span>
+      <span style="flex: 1; font-size: 13px;">${eq.marca || ''} ${eq.modelo || ''} ${eq.serie ? '- S/N: ' + eq.serie : ''}</span>
+      <button type="button" class="btn btn-sm" onclick="quitarEquipoInstalacion(${idx})" style="padding: 4px 8px;">
+        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--danger);">close</span>
+      </button>
+    </div>
+  `}).join('');
+}
+
+function agregarEquipoInstalacion() {
+  // Crear mini modal o usar prompt simple
+  const tipoId = tiposEquipo.length > 0 ? tiposEquipo[0].id : null;
+  const estadoId = estadosEquipo.length > 0 ? estadosEquipo[0].id : null;
+  
+  equiposParaInstalar.push({
+    tipo: tipoId,
+    estado: estadoId,
+    marca: '',
+    modelo: '',
+    serie: '',
+    mac: ''
+  });
+  
+  // Abrir modal de equipo para editar
+  editarEquipoInstalacion(equiposParaInstalar.length - 1);
+}
+
+function editarEquipoInstalacion(idx) {
+  const eq = equiposParaInstalar[idx];
+  
+  // Usar el modal de equipo existente pero en modo instalación
+  document.getElementById('modalEquipoTitulo').textContent = 'Agregar Equipo de Instalación';
+  document.getElementById('formEquipo').reset();
+  document.getElementById('equipoId').value = 'inst_' + idx;
+  
+  if (eq) {
+    document.getElementById('equipoTipo').value = eq.tipo || '';
+    document.getElementById('equipoMarca').value = eq.marca || '';
+    document.getElementById('equipoModelo').value = eq.modelo || '';
+    document.getElementById('equipoSerial').value = eq.serie || '';
+    document.getElementById('equipoMac').value = eq.mac || '';
+    document.getElementById('equipoEstado').value = eq.estado || '';
+  }
+  
+  document.getElementById('equipoFechaInstalacion').value = document.getElementById('instFechaInstalacion').value;
+  
+  document.getElementById('modalEquipo').classList.add('active');
+}
+
+function quitarEquipoInstalacion(idx) {
+  equiposParaInstalar.splice(idx, 1);
+  renderizarEquiposInstalacion();
+}
+
+// Sobrescribir guardarEquipo para manejar modo instalación
+const guardarEquipoOriginal = guardarEquipo;
+guardarEquipo = async function() {
+  const id = document.getElementById('equipoId').value;
+  
+  // Si es modo instalación
+  if (id && id.startsWith('inst_')) {
+    const idx = parseInt(id.replace('inst_', ''));
+    
+    equiposParaInstalar[idx] = {
+      tipo: document.getElementById('equipoTipo').value,
+      estado: document.getElementById('equipoEstado').value,
+      marca: document.getElementById('equipoMarca').value,
+      modelo: document.getElementById('equipoModelo').value,
+      serie: document.getElementById('equipoSerial').value,
+      mac: document.getElementById('equipoMac').value.toUpperCase(),
+      ip: document.getElementById('equipoIp').value,
+      notas: document.getElementById('equipoNotas').value
+    };
+    
+    cerrarModalEquipo();
+    renderizarEquiposInstalacion();
+    toastExito('Equipo agregado');
+    return;
+  }
+  
+  // Sino, usar función original
+  await guardarEquipoOriginal();
+};
+
+async function calcularCargosInstalacion() {
+  const fechaInstalacion = document.getElementById('instFechaInstalacion').value;
+  const diaCorte = parseInt(document.getElementById('instDiaCorte').value);
+  const tarifa = parseFloat(document.getElementById('instTarifa').value);
+  const costoInstalacion = parseFloat(document.getElementById('instCostoInstalacion').value) || 0;
+  
+  if (!fechaInstalacion || !tarifa) {
+    toastAdvertencia('Completa fecha y tarifa');
+    return;
+  }
+  
+  try {
+    const data = await fetchPost('/api/instalaciones/calcular', {
+      cliente_id: clienteActual.id,
+      fecha_instalacion: fechaInstalacion,
+      dia_corte: diaCorte,
+      tarifa_mensual: tarifa,
+      costo_instalacion: costoInstalacion
+    });
+    
+    if (data.ok) {
+      cargosCalculados = data.cargos;
+      mostrarPreviewCargos(data.cargos);
+    } else {
+      toastError(data.mensaje || 'Error al calcular');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al calcular cargos');
+  }
+}
+
+function mostrarPreviewCargos(cargos) {
+  const container = document.getElementById('listaCargosPreview');
+  const preview = document.getElementById('previewCargos');
+  
+  if (!cargos || cargos.length === 0) {
+    preview.style.display = 'none';
+    return;
+  }
+  
+  let total = 0;
+  container.innerHTML = cargos.map(c => {
+    total += parseFloat(c.monto);
+    return `
+    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+      <div>
+        <strong style="font-size: 13px;">${c.concepto}</strong>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">${c.descripcion || ''}</p>
+      </div>
+      <strong style="color: var(--text-primary);">${formatoMoneda(c.monto)}</strong>
+    </div>
+  `}).join('');
+  
+  document.getElementById('totalCargosPreview').textContent = formatoMoneda(total);
+  preview.style.display = 'block';
+}
+
+async function confirmarInstalacion() {
+  const btn = document.getElementById('btnConfirmarInstalacion');
+  
+  const fechaInstalacion = document.getElementById('instFechaInstalacion').value;
+  const diaCorte = parseInt(document.getElementById('instDiaCorte').value);
+  const planId = document.getElementById('instPlan').value;
+  const tarifa = parseFloat(document.getElementById('instTarifa').value);
+  const costoInstalacion = parseFloat(document.getElementById('instCostoInstalacion').value) || 0;
+  const tecnico = document.getElementById('instTecnico').value;
+  const notas = document.getElementById('instNotas').value;
+  
+  if (!fechaInstalacion || !tarifa || !planId) {
+    toastAdvertencia('Completa los campos requeridos');
+    return;
+  }
+  
+  btnLoading(btn, true);
+  
+  try {
+    const data = await fetchPost('/api/instalaciones', {
+      cliente_id: clienteActual.id,
+      fecha_instalacion: fechaInstalacion,
+      dia_corte: diaCorte,
+      plan_id: planId,
+      tarifa_mensual: tarifa,
+      costo_instalacion: costoInstalacion,
+      tecnico_instalador: tecnico,
+      notas_instalacion: notas,
+      equipos: equiposParaInstalar
+    });
+    
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalInstalacion();
+      
+      let mensaje = '¡Instalación registrada!';
+      if (data.cargos_generados) {
+        mensaje += ` Se generaron ${data.cargos_generados} cargos.`;
+      }
+      if (data.equipos_registrados) {
+        mensaje += ` ${data.equipos_registrados} equipos instalados.`;
+      }
+      
+      toastExito(mensaje);
+      
+      // Recargar todo
+      cargarCliente(clienteActual.id);
+    } else {
+      toastError(data.mensaje || 'Error al registrar instalación');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al registrar instalación');
+  }
 }

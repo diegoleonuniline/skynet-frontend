@@ -94,6 +94,9 @@
           </div>
         </div>
         <div class="profile-card__actions">
+          <button class="btn btn-success" onclick="abrirModalInstalacion()" id="btnInstalacion" style="display: none;">
+            <span class="material-symbols-outlined">construction</span>Registrar Instalación
+          </button>
           <button class="btn btn-primary" onclick="abrirModalPago()">
             <span class="material-symbols-outlined">payments</span>Registrar Pago
           </button>
@@ -531,6 +534,89 @@
     <div class="modal__footer">
       <button type="button" class="btn btn-secondary" onclick="cerrarModalEstadoEquipo()">Cancelar</button>
       <button type="button" class="btn btn-primary" id="btnGuardarEstadoEquipo" onclick="guardarEstadoEquipo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registrar Instalación -->
+<div class="modal-overlay" id="modalInstalacion">
+  <div class="modal" style="max-width: 700px;">
+    <div class="modal__header">
+      <h3 class="modal__title"><span class="material-symbols-outlined">construction</span> Registrar Instalación</h3>
+      <button class="modal__close" onclick="cerrarModalInstalacion()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <form id="formInstalacion">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fecha de Instalación *</label>
+            <input type="date" class="form-input" id="instFechaInstalacion" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Día de Corte *</label>
+            <input type="number" class="form-input" id="instDiaCorte" value="10" min="1" max="28" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Plan *</label>
+            <select class="form-select" id="instPlan" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tarifa Mensual *</label>
+            <input type="number" class="form-input" id="instTarifa" step="0.01" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Costo de Instalación</label>
+          <input type="number" class="form-input" id="instCostoInstalacion" step="0.01" value="0" placeholder="0.00">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Técnico Instalador</label>
+          <input type="text" class="form-input" id="instTecnico" placeholder="Nombre del técnico">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notas de Instalación</label>
+          <textarea class="form-input" id="instNotas" rows="2" placeholder="Observaciones..."></textarea>
+        </div>
+        
+        <!-- Equipos a instalar -->
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <label class="form-label" style="margin: 0;">Equipos a Instalar</label>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="agregarEquipoInstalacion()">
+              <span class="material-symbols-outlined">add</span>Agregar
+            </button>
+          </div>
+          <div id="equiposInstalacion"></div>
+        </div>
+      </form>
+      
+      <!-- Preview de cargos -->
+      <div id="previewCargos" style="display: none; margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius-md);">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-secondary);">
+          <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">receipt</span>
+          Cargos que se generarán:
+        </h4>
+        <div id="listaCargosPreview"></div>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+          <strong>Total a Pagar:</strong>
+          <strong id="totalCargosPreview" style="color: var(--accent-primary);">$0.00</strong>
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalInstalacion()">Cancelar</button>
+      <button type="button" class="btn btn-secondary" onclick="calcularCargosInstalacion()">
+        <span class="material-symbols-outlined">calculate</span>Calcular Cargos
+      </button>
+      <button type="button" class="btn btn-success" id="btnConfirmarInstalacion" onclick="confirmarInstalacion()">
+        <span class="material-symbols-outlined">check</span>Confirmar Instalación
+      </button>
     </div>
   </div>
 </div>
