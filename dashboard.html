@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Skynet ISP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <span class="material-symbols-outlined">cell_tower</span>
+        </div>
+        <span class="sidebar-title">Skynet ISP</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="dashboard.html" class="nav-item active">
+            <span class="material-symbols-outlined">dashboard</span>
+            Dashboard
+          </a>
+          <a href="clientes.html" class="nav-item">
+            <span class="material-symbols-outlined">people</span>
+            Clientes
+          </a>
+          <a href="pagos.html" class="nav-item">
+            <span class="material-symbols-outlined">payments</span>
+            Pagos
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Reportes</div>
+          <a href="reportes.html?tipo=adeudos" class="nav-item">
+            <span class="material-symbols-outlined">warning</span>
+            Adeudos
+          </a>
+          <a href="reportes.html?tipo=ingresos" class="nav-item">
+            <span class="material-symbols-outlined">trending_up</span>
+            Ingresos
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Sistema</div>
+          <a href="catalogos.html" class="nav-item">
+            <span class="material-symbols-outlined">category</span>
+            Catálogos
+          </a>
+          <a href="usuarios.html" class="nav-item">
+            <span class="material-symbols-outlined">admin_panel_settings</span>
+            Usuarios
+          </a>
+        </div>
+      </nav>
+    </aside>
+    <div class="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="btn-menu" onclick="toggleSidebar()">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <h1 class="page-title">Dashboard</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="user-info">
+            <div>
+              <div id="userName" class="user-name">Usuario</div>
+              <div id="userRole" class="user-role">Rol</div>
+            </div>
+            <div id="userAvatar" class="user-avatar">US</div>
+          </div>
+          <button class="btn btn--ghost" onclick="cerrarSesion()" title="Cerrar sesión">
+            <span class="material-symbols-outlined">logout</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--primary">
+              <span class="material-symbols-outlined">people</span>
+            </div>
+            <div class="stat-info">
+              <div id="statActivos" class="stat-value">-</div>
+              <div class="stat-label">Clientes Activos</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--success">
+              <span class="material-symbols-outlined">attach_money</span>
+            </div>
+            <div class="stat-info">
+              <div id="statIngreso" class="stat-value">-</div>
+              <div class="stat-label">Ingreso Potencial</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--danger">
+              <span class="material-symbols-outlined">error</span>
+            </div>
+            <div class="stat-info">
+              <div id="statAdeudo" class="stat-value">-</div>
+              <div class="stat-label">Total Adeudos</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon--warning">
+              <span class="material-symbols-outlined">person_off</span>
+            </div>
+            <div class="stat-info">
+              <div id="statCancelados" class="stat-value">-</div>
+              <div class="stat-label">Cancelados</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+          <!-- Clientes por Ciudad -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <span class="material-symbols-outlined">location_city</span>
+                Clientes por Ciudad
+              </h3>
+            </div>
+            <div class="card-body card-body--no-padding">
+              <div class="table-container">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Ciudad</th>
+                      <th class="text-right">Cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaCiudades">
+                    <tr><td colspan="2" class="text-center text-muted">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clientes con Adeudo -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <span class="material-symbols-outlined">warning</span>
+                Clientes con Adeudo
+              </h3>
+              <a href="reportes.html?tipo=adeudos" class="btn btn--sm btn--secondary">Ver todos</a>
+            </div>
+            <div class="card-body card-body--no-padding">
+              <div class="table-container">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Cliente</th>
+                      <th class="text-right">Adeudo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tablaAdeudos">
+                    <tr><td colspan="2" class="text-center text-muted">Cargando...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await cargarEstadisticas();
+      await cargarAdeudos();
+    });
+
+    async function cargarEstadisticas() {
+      const data = await fetchGet('/api/clientes/estadisticas');
+      if (data.ok) {
+        const e = data.estadisticas;
+        document.getElementById('statActivos').textContent = e.activos;
+        document.getElementById('statIngreso').textContent = formatoMoneda(e.ingreso_potencial);
+        document.getElementById('statAdeudo').textContent = formatoMoneda(e.total_adeudo);
+        document.getElementById('statCancelados').textContent = e.cancelados;
+
+        // Tabla ciudades
+        const tablaCiudades = document.getElementById('tablaCiudades');
+        if (data.por_ciudad && data.por_ciudad.length > 0) {
+          tablaCiudades.innerHTML = data.por_ciudad.map(c => `
+            <tr>
+              <td>${c.ciudad || 'Sin ciudad'}</td>
+              <td class="text-right font-bold">${c.cantidad}</td>
+            </tr>
+          `).join('');
+        } else {
+          tablaCiudades.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Sin datos</td></tr>';
+        }
+      }
+    }
+
+    async function cargarAdeudos() {
+      const data = await fetchGet('/api/pagos/reporte/adeudos');
+      const tabla = document.getElementById('tablaAdeudos');
+      
+      if (data.ok && data.clientes && data.clientes.length > 0) {
+        tabla.innerHTML = data.clientes.slice(0, 10).map(c => `
+          <tr onclick="window.location.href='cliente-detalle.html?id=${c.id}'" style="cursor:pointer">
+            <td>
+              <div class="font-bold">${c.nombre} ${c.apellido_paterno || ''}</div>
+              <div class="text-muted" style="font-size:12px">${c.numero_cliente || ''}</div>
+            </td>
+            <td class="text-right text-danger font-bold">${formatoMoneda(c.saldo_pendiente)}</td>
+          </tr>
+        `).join('');
+      } else {
+        tabla.innerHTML = '<tr><td colspan="2" class="text-center text-muted">Sin adeudos 🎉</td></tr>';
+      }
+    }
+  </script>
+</body>
+</html>
