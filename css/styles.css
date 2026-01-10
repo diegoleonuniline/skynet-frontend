@@ -868,3 +868,50 @@ a:hover {
     display: none;
   }
 }
+/* Modal grande */
+.modal-lg {
+    max-width: 700px;
+}
+
+/* Preview de cargos */
+.cargos-preview {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.cargos-preview .table {
+    margin: 0;
+}
+
+.cargos-preview .table th,
+.cargos-preview .table td {
+    padding: 8px 12px;
+}
+
+.table-sm th,
+.table-sm td {
+    padding: 6px 10px;
+    font-size: 14px;
+}
+
+/* Form section title */
+.form-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Spinner pequeño */
+.spinner-sm {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--bg-secondary);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+}
