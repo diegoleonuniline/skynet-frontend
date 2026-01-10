@@ -335,18 +335,157 @@ async function cargarEquipos(clienteId) {
   try {
     const data = await fetchGet(`/api/equipos?cliente_id=${clienteId}`);
     if (!data.ok || !data.equipos?.length) {
-      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><span class="material-symbols-outlined">router</span><p>Sin equipos registrados</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">router</span><p>Sin equipos registrados</p><button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()" style="margin-top: 12px;"><span class="material-symbols-outlined">add</span>Agregar Primer Equipo</button></div></td></tr>`;
       return;
     }
     tbody.innerHTML = data.equipos.map(e => `
       <tr>
-        <td>${e.marca || ''} ${e.modelo || ''}</td>
+        <td><span class="badge badge--${e.tipo || 'otro'}">${formatoTipoEquipo(e.tipo)}</span></td>
+        <td><strong>${e.marca || '-'}</strong> ${e.modelo || ''}</td>
         <td><code style="font-size: 12px; color: var(--text-muted);">${e.mac || '--'}</code></td>
         <td>${e.serial || '--'}</td>
-        <td><span class="equipment-status ${e.estado === 'activo' ? 'online' : 'offline'}">${e.estado === 'activo' ? 'En línea' : 'Desconectado'}</span></td>
+        <td><span class="equipment-status ${e.estado === 'activo' ? 'online' : 'offline'}">${formatoEstadoEquipo(e.estado)}</span></td>
+        <td>
+          <div class="table__actions">
+            <button class="table__action-btn" onclick="editarEquipo('${e.id}')" title="Editar"><span class="material-symbols-outlined">edit</span></button>
+            <button class="table__action-btn" onclick="eliminarEquipo('${e.id}')" title="Eliminar"><span class="material-symbols-outlined">delete</span></button>
+          </div>
+        </td>
       </tr>
     `).join('');
-  } catch (err) { tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Error al cargar</td></tr>'; }
+  } catch (err) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Error al cargar</td></tr>'; }
+}
+
+function formatoTipoEquipo(tipo) {
+  const tipos = { router: 'Router', ont: 'ONT', onu: 'ONU', antena: 'Antena', switch: 'Switch', otro: 'Otro' };
+  return tipos[tipo] || tipo || 'Equipo';
+}
+
+function formatoEstadoEquipo(estado) {
+  const estados = { activo: 'Activo', inactivo: 'Inactivo', en_reparacion: 'En Reparación', dado_de_baja: 'Dado de Baja' };
+  return estados[estado] || estado || 'Desconocido';
+}
+
+// ========================================
+// CRUD EQUIPOS
+// ========================================
+
+let equipoAEliminar = null;
+
+function abrirModalEquipo() {
+  document.getElementById('modalEquipoTitulo').textContent = 'Agregar Equipo';
+  document.getElementById('formEquipo').reset();
+  document.getElementById('equipoId').value = '';
+  document.getElementById('equipoFechaInstalacion').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modalEquipo').classList.add('active');
+}
+
+async function editarEquipo(id) {
+  try {
+    const data = await fetchGet(`/api/equipos/${id}`);
+    if (!data.ok) { toastError('Error al cargar equipo'); return; }
+    
+    const e = data.equipo;
+    document.getElementById('modalEquipoTitulo').textContent = 'Editar Equipo';
+    document.getElementById('equipoId').value = e.id;
+    document.getElementById('equipoTipo').value = e.tipo || '';
+    document.getElementById('equipoMarca').value = e.marca || '';
+    document.getElementById('equipoModelo').value = e.modelo || '';
+    document.getElementById('equipoSerial').value = e.serial || '';
+    document.getElementById('equipoMac').value = e.mac || '';
+    document.getElementById('equipoIp').value = e.ip || '';
+    document.getElementById('equipoEstado').value = e.estado || 'activo';
+    document.getElementById('equipoFechaInstalacion').value = e.fecha_instalacion?.split('T')[0] || '';
+    document.getElementById('equipoNotas').value = e.notas || '';
+    
+    document.getElementById('modalEquipo').classList.add('active');
+  } catch (err) {
+    console.error('Error:', err);
+    toastError('Error al cargar equipo');
+  }
+}
+
+function cerrarModalEquipo() {
+  document.getElementById('modalEquipo').classList.remove('active');
+}
+
+async function guardarEquipo() {
+  const id = document.getElementById('equipoId').value;
+  const btn = document.getElementById('btnGuardarEquipo');
+  
+  const datos = {
+    cliente_id: clienteActual.id,
+    tipo: document.getElementById('equipoTipo').value,
+    marca: document.getElementById('equipoMarca').value,
+    modelo: document.getElementById('equipoModelo').value,
+    serial: document.getElementById('equipoSerial').value,
+    mac: document.getElementById('equipoMac').value.toUpperCase(),
+    ip: document.getElementById('equipoIp').value,
+    estado: document.getElementById('equipoEstado').value,
+    fecha_instalacion: document.getElementById('equipoFechaInstalacion').value,
+    notas: document.getElementById('equipoNotas').value
+  };
+  
+  if (!datos.tipo) {
+    toastAdvertencia('Selecciona el tipo de equipo');
+    return;
+  }
+  
+  btnLoading(btn, true);
+  
+  try {
+    const data = id 
+      ? await fetchPut(`/api/equipos/${id}`, datos) 
+      : await fetchPost('/api/equipos', datos);
+    
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalEquipo();
+      cargarEquipos(clienteActual.id);
+      toastExito(id ? 'Equipo actualizado' : 'Equipo agregado correctamente');
+    } else {
+      toastError(data.mensaje || 'Error al guardar');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al guardar equipo');
+  }
+}
+
+function eliminarEquipo(id) {
+  equipoAEliminar = id;
+  document.getElementById('modalConfirmarEliminar').classList.add('active');
+}
+
+function cerrarModalConfirmar() {
+  document.getElementById('modalConfirmarEliminar').classList.remove('active');
+  equipoAEliminar = null;
+}
+
+async function confirmarEliminarEquipo() {
+  if (!equipoAEliminar) return;
+  
+  const btn = document.getElementById('btnConfirmarEliminar');
+  btnLoading(btn, true);
+  
+  try {
+    const data = await fetchDelete(`/api/equipos/${equipoAEliminar}`);
+    btnLoading(btn, false);
+    
+    if (data.ok) {
+      cerrarModalConfirmar();
+      cargarEquipos(clienteActual.id);
+      toastExito('Equipo eliminado correctamente');
+    } else {
+      toastError(data.mensaje || 'Error al eliminar');
+    }
+  } catch (err) {
+    console.error('Error:', err);
+    btnLoading(btn, false);
+    toastError('Error al eliminar equipo');
+  }
 }
 
 async function cargarPagos(clienteId) {

@@ -140,6 +140,14 @@
 .equipment-status.offline { color: var(--text-muted); }
 .equipment-status.offline::before { background: var(--text-muted); }
 
+/* Equipment Type Badges */
+.badge--router { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.badge--ont { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.badge--onu { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.badge--antena { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.badge--switch { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+.badge--otro { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+
 /* Empty State */
 .empty-state { padding: 48px 24px; text-align: center; color: var(--text-muted); }
 .empty-state .material-symbols-outlined { font-size: 48px; opacity: 0.5; margin-bottom: 8px; }

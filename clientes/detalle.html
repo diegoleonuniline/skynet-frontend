@@ -201,12 +201,14 @@
           <div class="card detail-panel active" id="panel-equipos">
             <div class="card__header">
               <div class="card__title"><span class="material-symbols-outlined">router</span>Equipos Instalados</div>
-              <button class="btn btn-sm btn-secondary">Administrar</button>
+              <button class="btn btn-sm btn-primary" onclick="abrirModalEquipo()">
+                <span class="material-symbols-outlined">add</span>Agregar Equipo
+              </button>
             </div>
             <div class="table-container">
               <table class="table">
-                <thead><tr><th>Dispositivo</th><th>MAC Address</th><th>No. Serie</th><th>Estado</th></tr></thead>
-                <tbody id="tablaEquipos"><tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr></tbody>
+                <thead><tr><th>Tipo</th><th>Marca / Modelo</th><th>MAC Address</th><th>No. Serie</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="tablaEquipos"><tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -279,6 +281,112 @@
       </div>
     </div>
   </main>
+</div>
+
+<!-- Modal Agregar/Editar Equipo -->
+<div class="modal-overlay" id="modalEquipo">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal__header">
+      <h3 class="modal__title" id="modalEquipoTitulo">Agregar Equipo</h3>
+      <button class="modal__close" onclick="cerrarModalEquipo()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <form id="formEquipo">
+        <input type="hidden" id="equipoId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo de Equipo *</label>
+            <select class="form-select" id="equipoTipo" required>
+              <option value="">Seleccionar...</option>
+              <option value="router">Router</option>
+              <option value="ont">ONT</option>
+              <option value="onu">ONU</option>
+              <option value="antena">Antena</option>
+              <option value="switch">Switch</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Marca</label>
+            <input type="text" class="form-input" id="equipoMarca" placeholder="Ej. TP-Link, Huawei">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Modelo</label>
+            <input type="text" class="form-input" id="equipoModelo" placeholder="Ej. HG8145V5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. de Serie</label>
+            <input type="text" class="form-input" id="equipoSerial" placeholder="Número de serie">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">MAC Address</label>
+            <input type="text" class="form-input" id="equipoMac" placeholder="XX:XX:XX:XX:XX:XX" style="text-transform: uppercase;">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dirección IP</label>
+            <input type="text" class="form-input" id="equipoIp" placeholder="192.168.1.1">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Estado *</label>
+            <select class="form-select" id="equipoEstado" required>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+              <option value="en_reparacion">En Reparación</option>
+              <option value="dado_de_baja">Dado de Baja</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha de Instalación</label>
+            <input type="date" class="form-input" id="equipoFechaInstalacion">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Ubicación / Notas</label>
+          <input type="text" class="form-input" id="equipoNotas" placeholder="Ej. Instalado en sala, poste #45">
+        </div>
+      </form>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalEquipo()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btnGuardarEquipo" onclick="guardarEquipo()">
+        <span class="material-symbols-outlined">save</span>Guardar Equipo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal-overlay" id="modalConfirmarEliminar">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal__header">
+      <h3 class="modal__title">Confirmar Eliminación</h3>
+      <button class="modal__close" onclick="cerrarModalConfirmar()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal__body">
+      <div style="text-align: center; padding: 20px 0;">
+        <span class="material-symbols-outlined" style="font-size: 48px; color: var(--danger); margin-bottom: 16px;">warning</span>
+        <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">¿Estás seguro de eliminar este equipo?</p>
+        <p style="font-size: 14px; color: var(--text-muted);">Esta acción no se puede deshacer.</p>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModalConfirmar()">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="btnConfirmarEliminar" onclick="confirmarEliminarEquipo()">
+        <span class="material-symbols-outlined">delete</span>Eliminar
+      </button>
+    </div>
+  </div>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
