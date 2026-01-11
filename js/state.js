@@ -93,36 +93,66 @@ const State = {
             return this.catalogos[nombre];
         }
         
-        const methodMap = {
-            'roles': 'getRoles',
-            'estados': 'getEstados',
-            'ciudades': 'getCiudades',
-            'colonias': 'getColonias',
-            'zonas': 'getZonas',
-            'bancos': 'getBancos',
-            'metodosPago': 'getMetodosPago',
-            'conceptosCobro': 'getConceptosCobro',
-            'cargosTipo': 'getCargosTipo',
-            'tarifas': 'getTarifas',
-            'estatusCliente': 'getEstatusCliente',
-            'estatusServicio': 'getEstatusServicio',
-            'tipoEquipo': 'getTipoEquipo',
-            'marcasEquipo': 'getMarcasEquipo',
-            'modelosEquipo': 'getModelosEquipo',
-            'motivosCancelacion': 'getMotivosCancelacion'
-        };
-        
-        const method = methodMap[nombre];
-        if (!method) {
-            console.error('Catálogo no encontrado:', nombre);
-            return [];
-        }
+        let res;
         
         try {
-            const response = await API.catalogos[method]();
-            if (response.success) {
-                this.catalogos[nombre] = response.data;
-                return response.data;
+            switch (nombre) {
+                case 'roles':
+                    res = await API.get('/catalogos/roles');
+                    break;
+                case 'estados':
+                    res = await API.get('/catalogos/estados');
+                    break;
+                case 'ciudades':
+                    res = await API.get('/catalogos/ciudades');
+                    break;
+                case 'colonias':
+                    res = await API.get('/catalogos/colonias');
+                    break;
+                case 'zonas':
+                    res = await API.get('/catalogos/zonas');
+                    break;
+                case 'bancos':
+                    res = await API.get('/catalogos/bancos');
+                    break;
+                case 'metodosPago':
+                    res = await API.get('/catalogos/metodos-pago');
+                    break;
+                case 'conceptosCobro':
+                    res = await API.get('/catalogos/conceptos-cobro');
+                    break;
+                case 'cargosTipo':
+                    res = await API.get('/catalogos/cargos-tipo');
+                    break;
+                case 'tarifas':
+                    res = await API.get('/catalogos/tarifas');
+                    break;
+                case 'estatusCliente':
+                    res = await API.get('/catalogos/estatus-cliente');
+                    break;
+                case 'estatusServicio':
+                    res = await API.get('/catalogos/estatus-servicio');
+                    break;
+                case 'tipoEquipo':
+                    res = await API.get('/catalogos/tipo-equipo');
+                    break;
+                case 'marcasEquipo':
+                    res = await API.get('/catalogos/marcas-equipo');
+                    break;
+                case 'modelosEquipo':
+                    res = await API.get('/catalogos/modelos-equipo');
+                    break;
+                case 'motivosCancelacion':
+                    res = await API.get('/catalogos/motivos-cancelacion');
+                    break;
+                default:
+                    console.error('Catálogo no encontrado:', nombre);
+                    return [];
+            }
+            
+            if (res && res.success) {
+                this.catalogos[nombre] = res.data;
+                return res.data;
             }
         } catch (error) {
             console.error(`Error loading catalogo ${nombre}:`, error);
@@ -133,9 +163,18 @@ const State = {
     
     async preloadCatalogos() {
         const catalogosToLoad = [
-            'estados', 'ciudades', 'zonas', 'tarifas', 
-            'estatusCliente', 'estatusServicio', 'tipoEquipo',
-            'marcasEquipo', 'metodosPago', 'bancos', 'conceptosCobro'
+            'estados', 
+            'ciudades', 
+            'zonas', 
+            'tarifas', 
+            'estatusCliente', 
+            'estatusServicio', 
+            'tipoEquipo',
+            'marcasEquipo', 
+            'metodosPago', 
+            'bancos', 
+            'conceptosCobro',
+            'motivosCancelacion'
         ];
         
         await Promise.all(catalogosToLoad.map(c => this.getCatalogo(c)));
