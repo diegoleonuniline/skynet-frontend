@@ -704,130 +704,164 @@ const ClienteDetalleView = {
     // CARGAR ESTADO DE CUENTA
     // ============================================
 
-    async cargarEstadoCuenta() {
-        const container = $('#lista-pagos');
-        if (!container || !this.cliente) return;
+   async cargarEstadoCuenta() {
+    const container = $('#lista-pagos');
+    if (!container || !this.cliente) return;
 
-        const cargos = this.cliente.cargos || [];
-        const pagos = this.cliente.pagos || [];
+    const cargos = this.cliente.cargos || [];
+    const pagos = this.cliente.pagos || [];
 
-        if (cargos.length === 0 && pagos.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state small" style="padding: 2rem;">
-                    ${ICONS.fileText}
-                    <p>Sin movimientos registrados</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Combinar cargos y pagos, ordenar por fecha
-        const movimientos = [
-            ...cargos.map(c => ({
-                tipo: 'cargo',
-                fecha: c.fecha_vencimiento,
-                concepto: c.concepto || c.descripcion || 'Cargo',
-                descripcion: c.descripcion,
-                monto: parseFloat(c.monto),
-                saldo: parseFloat(c.saldo_pendiente),
-                estatus: c.estatus,
-                servicio: c.servicio_codigo
-            })),
-            ...pagos.map(p => ({
-                tipo: 'pago',
-                fecha: p.fecha_pago,
-                concepto: `Pago - ${p.metodo_pago || 'Efectivo'}`,
-                monto: parseFloat(p.monto_total),
-                recibo: p.numero_recibo,
-                estatus: p.estatus,
-                servicio: p.servicio_codigo
-            }))
-        ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
+    if (cargos.length === 0 && pagos.length === 0) {
         container.innerHTML = `
-            <table class="table">
-                <thead>
+            <div class="empty-state small" style="padding: 2rem;">
+                ${ICONS.fileText}
+                <p>Sin movimientos registrados</p>
+                <button class="btn btn-sm btn-primary mt-4" onclick="ClienteDetalleView.nuevoCargo()">
+                    ${ICONS.plus} Agregar Cargo
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    // Combinar cargos y pagos, ordenar por fecha
+    const movimientos = [
+        ...cargos.map(c => ({
+            tipo: 'cargo',
+            id: c.id,
+            fecha: c.fecha_vencimiento,
+            concepto: c.concepto || c.descripcion || 'Cargo',
+            descripcion: c.descripcion,
+            monto: parseFloat(c.monto),
+            saldo: parseFloat(c.saldo_pendiente),
+            estatus: c.estatus,
+            servicio: c.servicio_codigo
+        })),
+        ...pagos.map(p => ({
+            tipo: 'pago',
+            id: p.id,
+            fecha: p.fecha_pago,
+            concepto: `Pago - ${p.metodo_pago || 'Efectivo'}`,
+            monto: parseFloat(p.monto_total),
+            recibo: p.numero_recibo,
+            estatus: p.estatus,
+            servicio: p.servicio_codigo
+        }))
+    ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    container.innerHTML = `
+        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+            <button class="btn btn-sm btn-primary" onclick="ClienteDetalleView.nuevoCargo()">
+                ${ICONS.plus} Agregar Cargo
+            </button>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Concepto</th>
+                    <th>Servicio</th>
+                    <th class="text-center">Estatus</th>
+                    <th class="text-right">Cargo</th>
+                    <th class="text-right">Abono</th>
+                    <th class="text-right">Saldo</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${movimientos.map(m => `
                     <tr>
-                        <th>Fecha</th>
-                        <th>Concepto</th>
-                        <th>Servicio</th>
-                        <th class="text-center">Estatus</th>
-                        <th class="text-right">Cargo</th>
-                        <th class="text-right">Abono</th>
-                        <th class="text-right">Saldo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${movimientos.map(m => `
-                        <tr>
-                            <td>${new Date(m.fecha).toLocaleDateString('es-MX')}</td>
-                            <td>
-                                <div class="d-flex align-center gap-2">
-                                    <span class="${m.tipo === 'cargo' ? 'text-danger' : 'text-success'}" style="width:16px;height:16px;">
-                                        ${m.tipo === 'cargo' ? ICONS.fileText : ICONS.dollarSign}
-                                    </span>
-                                    <div>
-                                        ${m.concepto}
-                                        ${m.descripcion && m.descripcion !== m.concepto ? `<div class="text-xs text-muted">${m.descripcion}</div>` : ''}
-                                        ${m.recibo ? `<div class="text-xs text-muted">${m.recibo}</div>` : ''}
+                        <td>${new Date(m.fecha).toLocaleDateString('es-MX')}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="${m.tipo === 'cargo' ? 'text-danger' : 'text-success'}" style="width:16px;height:16px;">
+                                    ${m.tipo === 'cargo' ? ICONS.fileText : ICONS.dollarSign}
+                                </span>
+                                <div>
+                                    ${m.concepto}
+                                    ${m.descripcion && m.descripcion !== m.concepto ? `<div class="text-xs text-muted">${m.descripcion}</div>` : ''}
+                                    ${m.recibo ? `<div class="text-xs text-muted">${m.recibo}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="text-xs text-muted">${m.servicio || '-'}</span></td>
+                        <td class="text-center">
+                            <span class="badge badge-${m.estatus === 'PAGADO' || m.estatus === 'APLICADO' ? 'success' : m.estatus === 'PENDIENTE' ? 'warning' : m.estatus === 'PARCIAL' ? 'info' : 'danger'}">
+                                ${m.estatus}
+                            </span>
+                        </td>
+                        <td class="text-right ${m.tipo === 'cargo' ? 'text-danger' : ''}">
+                            ${m.tipo === 'cargo' ? '$' + m.monto.toFixed(2) : '-'}
+                        </td>
+                        <td class="text-right ${m.tipo === 'pago' ? 'text-success' : ''}">
+                            ${m.tipo === 'pago' ? '$' + m.monto.toFixed(2) : '-'}
+                        </td>
+                        <td class="text-right">
+                            ${m.tipo === 'cargo' && m.saldo > 0 ? '<span class="text-danger">$' + m.saldo.toFixed(2) + '</span>' : '-'}
+                        </td>
+                        <td class="text-center">
+                            ${m.tipo === 'cargo' && m.estatus !== 'PAGADO' && m.estatus !== 'CANCELADO' ? `
+                                <div class="dropdown" style="display: inline-block;">
+                                    <button class="btn-icon" onclick="this.nextElementSibling.classList.toggle('show')">
+                                        ${ICONS.moreVertical}
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" onclick="ClienteDetalleView.editarCargo(${m.id})">
+                                            ${ICONS.edit} Editar
+                                        </a>
+                                        <a class="dropdown-item text-danger" onclick="ClienteDetalleView.cancelarCargo(${m.id})">
+                                            ${ICONS.x} Cancelar
+                                        </a>
                                     </div>
                                 </div>
-                            </td>
-                            <td><span class="text-xs text-muted">${m.servicio || '-'}</span></td>
-                            <td class="text-center">
-                                <span class="badge badge-${m.estatus === 'PAGADO' || m.estatus === 'APLICADO' ? 'success' : m.estatus === 'PENDIENTE' ? 'warning' : m.estatus === 'PARCIAL' ? 'info' : 'danger'}">
-                                    ${m.estatus}
-                                </span>
-                            </td>
-                            <td class="text-right ${m.tipo === 'cargo' ? 'text-danger' : ''}">
-                                ${m.tipo === 'cargo' ? '$' + m.monto.toFixed(2) : '-'}
-                            </td>
-                            <td class="text-right ${m.tipo === 'pago' ? 'text-success' : ''}">
-                                ${m.tipo === 'pago' ? '$' + m.monto.toFixed(2) : '-'}
-                            </td>
-                            <td class="text-right">
-                                ${m.tipo === 'cargo' && m.saldo > 0 ? '<span class="text-danger">$' + m.saldo.toFixed(2) + '</span>' : '-'}
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-    },
+                            ` : '-'}
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+},
 
     // ============================================
     // CARGAR NOTAS
     // ============================================
 
-    async cargarNotas() {
-        const container = $('#lista-notas');
-        if (!container || !this.cliente) return;
+   async cargarNotas() {
+    const container = $('#lista-notas');
+    if (!container || !this.cliente) return;
 
-        try {
-            const res = await API.get(`/clientes/${this.cliente.id}/notas`);
-            if (res.success && res.data.length) {
-                container.innerHTML = res.data.map(nota => `
-                    <div class="nota-item" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
-                        <div class="nota-header" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span class="nota-autor" style="font-weight: 600;">${nota.creado_por || 'Sistema'}</span>
-                            <span class="nota-fecha text-muted" style="font-size: 0.75rem;">${new Date(nota.created_at).toLocaleDateString('es-MX')}</span>
+    try {
+        const res = await API.get(`/clientes/${this.cliente.id}/notas`);
+        if (res.success && res.data.length) {
+            container.innerHTML = res.data.map(nota => `
+                <div class="nota-item" style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 600;">${nota.creado_por || 'Sistema'}</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">${new Date(nota.created_at).toLocaleDateString('es-MX')}</span>
+                            </div>
+                            <p style="margin: 0; color: var(--text-secondary);">${nota.nota}</p>
                         </div>
-                        <p class="nota-texto" style="margin: 0; color: var(--text-secondary);">${nota.nota}</p>
+                        <button class="btn-icon text-danger" onclick="ClienteDetalleView.eliminarNota(${nota.id})" title="Eliminar">
+                            ${ICONS.trash}
+                        </button>
                     </div>
-                `).join('');
-            } else {
-                container.innerHTML = `
-                    <div class="empty-state small" style="padding: 2rem;">
-                        ${ICONS.fileText}
-                        <p>No hay notas registradas</p>
-                    </div>
-                `;
-            }
-        } catch (error) {
-            container.innerHTML = '<p class="text-muted text-center" style="padding: 2rem;">Error al cargar notas</p>';
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `
+                <div class="empty-state small" style="padding: 2rem;">
+                    ${ICONS.fileText}
+                    <p>No hay notas registradas</p>
+                </div>
+            `;
         }
-    },
-
+    } catch (error) {
+        container.innerHTML = '<p class="text-muted text-center" style="padding: 2rem;">Error al cargar notas</p>';
+    }
+},
     // ============================================
     // ACCIONES SERVICIO
     // ============================================
@@ -1218,6 +1252,342 @@ const ClienteDetalleView = {
         };
         input.click();
     },
+    // ============================================
+// CARGOS MANUALES
+// ============================================
+
+async nuevoCargo() {
+    if (!this.cliente || !this.cliente.servicios?.length) {
+        Components.toast.error('El cliente debe tener al menos un servicio');
+        return;
+    }
+
+    // Cargar catálogo de conceptos
+    await State.getCatalogo('conceptosCobro');
+    const conceptos = State.catalogos.conceptosCobro || [];
+    const servicios = this.cliente.servicios;
+
+    const modalHTML = `
+        <div class="modal-backdrop" id="modal-cargo">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Agregar Cargo</h2>
+                    <button class="btn-icon" onclick="ClienteDetalleView.cerrarModalCargo()">
+                        ${ICONS.x}
+                    </button>
+                </div>
+                <form id="form-cargo" onsubmit="ClienteDetalleView.guardarCargo(event)">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label required">Servicio</label>
+                            <select name="servicio_id" class="form-input" required>
+                                ${servicios.map(s => `
+                                    <option value="${s.id}">${s.codigo} - ${s.tarifa_nombre || 'Sin plan'}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label required">Concepto</label>
+                            <select name="concepto_id" class="form-input" required>
+                                <option value="">Seleccionar...</option>
+                                ${conceptos.map(c => `
+                                    <option value="${c.id}" data-monto="${c.monto_default || 0}">${c.nombre}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="form-grid cols-2">
+                            <div class="form-group">
+                                <label class="form-label required">Monto</label>
+                                <input type="number" name="monto" class="form-input" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label required">Fecha Vencimiento</label>
+                                <input type="date" name="fecha_vencimiento" class="form-input" 
+                                       value="${new Date().toISOString().split('T')[0]}" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Descripción</label>
+                            <input type="text" name="descripcion" class="form-input" placeholder="Descripción del cargo (opcional)">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="ClienteDetalleView.cerrarModalCargo()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            ${ICONS.plus} Agregar Cargo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Auto-completar monto cuando selecciona concepto
+    const conceptoSelect = document.querySelector('#form-cargo [name="concepto_id"]');
+    conceptoSelect.addEventListener('change', function() {
+        const monto = this.selectedOptions[0]?.dataset?.monto || 0;
+        if (parseFloat(monto) > 0) {
+            document.querySelector('#form-cargo [name="monto"]').value = monto;
+        }
+    });
+},
+
+async guardarCargo(e) {
+    e.preventDefault();
+    const form = $('#form-cargo');
+    const formData = new FormData(form);
+
+    const data = {
+        servicio_id: formData.get('servicio_id'),
+        concepto_id: formData.get('concepto_id'),
+        monto: parseFloat(formData.get('monto')),
+        fecha_vencimiento: formData.get('fecha_vencimiento'),
+        descripcion: formData.get('descripcion') || null
+    };
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
+
+    try {
+        const res = await API.post('/cargos', data);
+        
+        if (res.success) {
+            Components.toast.success('Cargo agregado');
+            this.cerrarModalCargo();
+            await this.cargarCliente();
+        } else {
+            Components.toast.error(res.message || 'Error al agregar cargo');
+        }
+    } catch (error) {
+        Components.toast.error(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${ICONS.plus} Agregar Cargo`;
+    }
+},
+
+cerrarModalCargo() {
+    const modal = $('#modal-cargo');
+    if (modal) modal.remove();
+},
+
+async editarCargo(cargoId) {
+    try {
+        const res = await API.get(`/cargos/${cargoId}`);
+        if (!res.success) {
+            Components.toast.error('Error al cargar cargo');
+            return;
+        }
+
+        const cargo = res.data;
+        
+        if (cargo.estatus === 'PAGADO') {
+            Components.toast.error('No se puede editar un cargo pagado');
+            return;
+        }
+
+        const modalHTML = `
+            <div class="modal-backdrop" id="modal-cargo">
+                <div class="modal">
+                    <div class="modal-header">
+                        <h2>Editar Cargo</h2>
+                        <button class="btn-icon" onclick="ClienteDetalleView.cerrarModalCargo()">
+                            ${ICONS.x}
+                        </button>
+                    </div>
+                    <form id="form-cargo-editar" onsubmit="ClienteDetalleView.actualizarCargo(event, ${cargoId})">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label">Concepto</label>
+                                <input type="text" class="form-input" value="${cargo.concepto || ''}" disabled>
+                            </div>
+                            <div class="form-grid cols-2">
+                                <div class="form-group">
+                                    <label class="form-label required">Monto</label>
+                                    <input type="number" name="monto" class="form-input" step="0.01" min="0" 
+                                           value="${cargo.monto}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label required">Fecha Vencimiento</label>
+                                    <input type="date" name="fecha_vencimiento" class="form-input" 
+                                           value="${cargo.fecha_vencimiento?.split('T')[0] || ''}" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Descripción</label>
+                                <input type="text" name="descripcion" class="form-input" 
+                                       value="${cargo.descripcion || ''}" placeholder="Descripción del cargo">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline" onclick="ClienteDetalleView.cerrarModalCargo()">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                ${ICONS.save} Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    } catch (error) {
+        Components.toast.error(error.message);
+    }
+},
+
+async actualizarCargo(e, cargoId) {
+    e.preventDefault();
+    const form = $('#form-cargo-editar');
+    const formData = new FormData(form);
+
+    const data = {
+        monto: parseFloat(formData.get('monto')),
+        fecha_vencimiento: formData.get('fecha_vencimiento'),
+        descripcion: formData.get('descripcion') || null
+    };
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
+
+    try {
+        const res = await API.put(`/cargos/${cargoId}`, data);
+        
+        if (res.success) {
+            Components.toast.success('Cargo actualizado');
+            this.cerrarModalCargo();
+            await this.cargarCliente();
+        } else {
+            Components.toast.error(res.message || 'Error al actualizar');
+        }
+    } catch (error) {
+        Components.toast.error(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${ICONS.save} Guardar Cambios`;
+    }
+},
+
+async cancelarCargo(cargoId) {
+    const motivo = prompt('Motivo de cancelación:');
+    if (motivo === null) return;
+
+    try {
+        const res = await API.post(`/cargos/${cargoId}/cancelar`, { motivo });
+        
+        if (res.success) {
+            Components.toast.success('Cargo cancelado');
+            await this.cargarCliente();
+        } else {
+            Components.toast.error(res.message);
+        }
+    } catch (error) {
+        Components.toast.error(error.message);
+    }
+},
+
+// ============================================
+// NOTAS (Mejorado)
+// ============================================
+
+async nuevaNota() {
+    if (!this.cliente) return;
+
+    const modalHTML = `
+        <div class="modal-backdrop" id="modal-nota">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Nueva Nota</h2>
+                    <button class="btn-icon" onclick="ClienteDetalleView.cerrarModalNota()">
+                        ${ICONS.x}
+                    </button>
+                </div>
+                <form id="form-nota" onsubmit="ClienteDetalleView.guardarNota(event)">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label required">Nota</label>
+                            <textarea name="nota" class="form-input" rows="4" 
+                                      placeholder="Escribe la nota aquí..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" onclick="ClienteDetalleView.cerrarModalNota()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            ${ICONS.save} Guardar Nota
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.querySelector('#form-nota textarea').focus();
+},
+
+async guardarNota(e) {
+    e.preventDefault();
+    const form = $('#form-nota');
+    const nota = form.querySelector('[name="nota"]').value.trim();
+
+    if (!nota) {
+        Components.toast.error('La nota no puede estar vacía');
+        return;
+    }
+
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner-sm"></div> Guardando...';
+
+    try {
+        const res = await API.post(`/clientes/${this.cliente.id}/notas`, { nota });
+        
+        if (res.success) {
+            Components.toast.success('Nota agregada');
+            this.cerrarModalNota();
+            this.cargarNotas();
+        } else {
+            Components.toast.error(res.message || 'Error al guardar nota');
+        }
+    } catch (error) {
+        Components.toast.error(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `${ICONS.save} Guardar Nota`;
+    }
+},
+
+cerrarModalNota() {
+    const modal = $('#modal-nota');
+    if (modal) modal.remove();
+},
+
+async eliminarNota(notaId) {
+    if (!confirm('¿Eliminar esta nota?')) return;
+
+    try {
+        const res = await API.delete(`/clientes/${this.cliente.id}/notas/${notaId}`);
+        
+        if (res.success) {
+            Components.toast.success('Nota eliminada');
+            this.cargarNotas();
+        } else {
+            Components.toast.error(res.message);
+        }
+    } catch (error) {
+        Components.toast.error(error.message);
+    }
+},
 
     descargarINE() {
         if (this.cliente?.ine_frente) {
@@ -1230,4 +1600,6 @@ const ClienteDetalleView = {
             Components.toast.info('No hay documentos INE registrados');
         }
     }
+
+    
 };
